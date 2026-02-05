@@ -1,0 +1,413 @@
+
+import React, { useState, useRef } from 'react';
+import { Company, AccountingAccount } from '../types';
+import { Plus, Building2, Globe, Mail, Phone, Palette, Hash, X, CheckCircle, Power, ShieldAlert, Database, Settings, ToggleLeft, ToggleRight, ImageIcon, Upload, Trash2, Shield, ChevronRight } from 'lucide-react';
+
+interface CompanyManagerProps {
+  companies: Company[];
+  onCreate: (c: Company) => void;
+  onSelect: (c: Company) => void;
+  onUpdate: (id: string, updates: Partial<Company>) => void;
+  activeId?: string;
+}
+
+const DEFAULT_ACCOUNTS: AccountingAccount[] = [
+  { id: 'acc-1', code: '512000', label: 'Banque Principale', type: 'Treasury' },
+  { id: 'acc-2', code: '512001', label: 'Banque Secondaire', type: 'Treasury' },
+  { id: 'acc-4', code: '445710', label: 'TVA Collectée', type: 'Vat' },
+  { id: 'acc-5', code: '706000', label: 'Ventes de Services', type: 'Revenue' },
+];
+
+const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, onCreate, onSelect, onUpdate, activeId }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [form, setForm] = useState<Partial<Company>>({
+    id: Math.random().toString(36).substr(2, 9),
+    name: '',
+    address: '',
+    email: '',
+    phone: '',
+    logoUrl: '',
+    currency: 'MAD',
+    defaultVatRates: [20, 14, 10, 7, 0],
+    numberingFormat: 'FAC-{YYYY}-{000}',
+    primaryColor: '#007AFF',
+    accountingPlan: [...DEFAULT_ACCOUNTS],
+    active: true,
+    country: 'maroc'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name) return;
+    if (editingCompany) {
+      onUpdate(editingCompany.id, form as Company);
+      setEditingCompany(null);
+    } else {
+      onCreate(form as Company);
+    }
+    setShowForm(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setForm({
+      id: Math.random().toString(36).substr(2, 9),
+      name: '', address: '', email: '', phone: '', website: '', logoUrl: '',
+      ice: '', ifNum: '', rc: '', taxePro: '', siren: '', naf: '', tvaIntra: '',
+      currency: 'MAD', defaultVatRates: [20, 14, 10, 7, 0],
+      numberingFormat: 'FAC-{YYYY}-{000}', primaryColor: '#007AFF',
+      accountingPlan: [...DEFAULT_ACCOUNTS], active: true, country: 'maroc',
+      bankAccount: '', bankName: '', swiftCode: ''
+    });
+  };
+
+  const startEdit = (c: Company) => {
+    setEditingCompany(c);
+    setForm(c);
+    setShowForm(true);
+  };
+
+  const toggleActive = (c: Company) => {
+    const nextStatus = !c.active;
+    onUpdate(c.id, { active: nextStatus });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm(prev => ({ ...prev, logoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="space-y-10 animate-in fade-in duration-700">
+      <header className="flex justify-between items-end mb-4">
+        <div>
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <Building2 className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black text-slate-800 tracking-tighter uppercase">Mes Sociétés</h1>
+              <p className="text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] mt-1">Environnements SaaS Multi-Tenant</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {companies.map(c => (
+          <div
+            key={c.id}
+            className={`group relative cursor-pointer transition-all duration-500 hover:scale-[1.02] ${!c.active ? 'opacity-80 grayscale-[0.5]' : ''}`}
+            onClick={() => c.active && onSelect(c)}
+          >
+            <div className={`relative bg-white rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 ${activeId === c.id ? 'ring-4 ring-offset-4 ring-blue-500/30' : ''}`}>
+
+              {/* Premium Header */}
+              <div
+                className="h-32 relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${c.primaryColor || '#1e293b'}, ${c.primaryColor ? c.primaryColor + 'dd' : '#0f172a'})`
+                }}
+              >
+                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+
+                <div className="absolute top-5 left-6 flex gap-2">
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/10">
+                    {c.currency}
+                  </span>
+                </div>
+
+                <div className="absolute top-5 right-6">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleActive(c); }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 transition-all ${c.active ? 'bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30' : 'bg-red-500/20 text-red-100 hover:bg-red-500/30'}`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${c.active ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
+                    <span className="text-[9px] font-black uppercase tracking-wider">{c.active ? 'Actif' : 'Inactif'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Body Content */}
+              <div className="px-8 pb-8 pt-0 relative">
+                {/* Floating Logo */}
+                <div className="relative -mt-12 mb-4 flex justify-between items-end">
+                  <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-2 border-4 border-white transform transition-transform group-hover:-translate-y-2">
+                    {c.logoUrl ? (
+                      <img src={c.logoUrl} className="w-full h-full object-contain" alt={c.name} />
+                    ) : (
+                      <Building2 className={`w-10 h-10`} style={{ color: c.primaryColor || '#1e293b' }} />
+                    )}
+                  </div>
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); startEdit(c); }}
+                      className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Information */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-2xl font-black text-gray-900 leading-none mb-2">{c.name}</h3>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2">
+                      <Globe className="w-3 h-3" /> {c.website || 'Pas de site web'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 py-4 border-t border-gray-100 border-dashed">
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{c.country === 'france' ? 'SIREN' : 'I.C.E'}</span>
+                      <p className="text-xs font-bold text-gray-700 font-mono">{(c.country === 'france' ? c.siren : c.ice) || '---'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{c.country === 'france' ? 'NAF' : 'R.C'}</span>
+                      <p className="text-xs font-bold text-gray-700 font-mono">{(c.country === 'france' ? c.naf : c.rc) || '---'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Pays</span>
+                      <p className="text-xs font-bold text-gray-700 uppercase">{c.country || 'maroc'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Téléphone</span>
+                      <p className="text-xs font-bold text-gray-700 font-mono truncate">{c.phone || '---'}</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      disabled={!c.active}
+                      onClick={(e) => { e.stopPropagation(); c.active && onSelect(c); }}
+                      className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-[0.2em] transition-all overflow-hidden relative group/btn
+                         ${c.active ? 'text-white shadow-lg hover:shadow-xl hover:scale-[1.02]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+                         `}
+                      style={{ backgroundColor: c.active ? (c.primaryColor || '#1e293b') : undefined }}
+                    >
+                      {c.active && <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>}
+                      Access Workspace <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Add New Company Card */}
+        <div
+          onClick={() => { resetForm(); setEditingCompany(null); setShowForm(true); }}
+          className="group cursor-pointer transition-all duration-500 hover:scale-[1.02]"
+        >
+          <div className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border-2 border-dashed border-gray-200 hover:border-blue-400">
+            <div className="h-44 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+              <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Plus className="w-10 h-10 text-blue-500" />
+              </div>
+            </div>
+            <div className="p-6 text-center">
+              <h3 className="text-xl font-black text-gray-700 mb-2">Nouvelle Société</h3>
+              <p className="text-sm text-gray-400 mb-4">Créer un nouvel environnement</p>
+              <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm">
+                <Plus className="w-4 h-4" />
+                Ajouter
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-blue-900/40 backdrop-blur-md overflow-y-auto">
+          <form onSubmit={handleSubmit} className="glass p-10 rounded-[3rem] max-w-4xl w-full shadow-2xl border-2 border-white/50 space-y-8 animate-in zoom-in-95 my-10">
+            <div className="flex justify-between items-center">
+              <h3 className="text-3xl font-black uppercase tracking-tighter italic">
+                {editingCompany ? "Paramètres Société" : "Nouveau Tenant"}
+              </h3>
+              <button type="button" onClick={() => setShowForm(false)} className="text-gray-400 hover:text-red-500"><X /></button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-blue-800 block mb-2">Dénomination Sociale</label>
+                  <input className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl px-4 py-3 outline-none font-bold text-sm" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-blue-800 block mb-2">Devise Système</label>
+                  <select className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl px-4 py-3 outline-none font-bold text-sm" value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}>
+                    <option value="MAD">MAD (DH)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="USD">USD ($)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-blue-800 block mb-2">Pays</label>
+                  <select className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl px-4 py-3 outline-none font-bold text-sm" value={form.country} onChange={e => setForm({ ...form, country: e.target.value as 'maroc' | 'france' })}>
+                    <option value="maroc">Maroc 🇲🇦</option>
+                    <option value="france">France 🇫🇷</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="col-span-full">
+                <label className="text-[10px] font-black uppercase tracking-widest text-blue-800 block mb-2">Logo de l'entreprise</label>
+                <div className="flex items-center gap-6 bg-blue-50/30 p-6 rounded-[2rem] border-2 border-dashed border-blue-100">
+                  <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-gray-100">
+                    {form.logoUrl ? (
+                      <div className="relative w-full h-full group">
+                        <img src={form.logoUrl} className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, logoUrl: '' }))}
+                          className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-6 h-6" />
+                        </button>
+                      </div>
+                    ) : (
+                      <ImageIcon className="w-10 h-10 text-gray-200" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-6 py-3 bg-white border border-blue-200 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-50 transition-all"
+                    >
+                      <Upload className="w-4 h-4" /> Sélectionner un fichier
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ou URL :</span>
+                      <input
+                        placeholder="https://..."
+                        className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-1 text-[9px] font-bold outline-none"
+                        value={form.logoUrl && !form.logoUrl.startsWith('data:') ? form.logoUrl : ''}
+                        onChange={e => setForm({ ...form, logoUrl: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black uppercase text-blue-400 border-b pb-2 tracking-[0.2em]">Identifiants Légaux ({form.country === 'france' ? 'France' : 'Maroc'})</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {form.country === 'france' ? (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Siren</label>
+                        <input placeholder="Ex: 123 456 789" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.siren || ''} onChange={e => setForm({ ...form, siren: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Code NAF</label>
+                        <input placeholder="Ex: 6201Z" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.naf || ''} onChange={e => setForm({ ...form, naf: e.target.value })} />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">N° TVA Intracommunautaire</label>
+                        <input placeholder="Ex: FR 12 345678901" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.tvaIntra || ''} onChange={e => setForm({ ...form, tvaIntra: e.target.value })} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">I.F</label>
+                        <input placeholder="Ex: 01010101" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.ifNum || ''} onChange={e => setForm({ ...form, ifNum: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">ICE</label>
+                        <input placeholder="Ex: 001234..." className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.ice || ''} onChange={e => setForm({ ...form, ice: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">R.C</label>
+                        <input placeholder="Ex: 12345" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.rc || ''} onChange={e => setForm({ ...form, rc: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Taxe Pro (T.P)</label>
+                        <input placeholder="Ex: 121212" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.taxePro || ''} onChange={e => setForm({ ...form, taxePro: e.target.value })} />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <h4 className="text-[10px] font-black uppercase text-blue-400 border-b pb-2 mt-6 tracking-[0.2em]">Coordonnées Bancaires</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Nom de la Banque (BQ)</label>
+                    <input placeholder="Ex: Attijariwafa Bank" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.bankName || ''} onChange={e => setForm({ ...form, bankName: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Compte Bancaire (RIB/IBAN)</label>
+                    <input placeholder="Saisir votre compte..." className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.bankAccount || ''} onChange={e => setForm({ ...form, bankAccount: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Code SWIFT</label>
+                    <input placeholder="Ex: BCMAMAMA" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.swiftCode || ''} onChange={e => setForm({ ...form, swiftCode: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black uppercase text-blue-400 border-b pb-2 tracking-[0.2em]">Branding</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Couleur Primaire</label>
+                    <div className="flex items-center gap-3">
+                      <input type="color" className="w-10 h-10 rounded-lg border-none outline-none cursor-pointer" value={form.primaryColor} onChange={e => setForm({ ...form, primaryColor: e.target.value })} />
+                      <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest font-mono">{form.primaryColor}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Email Contact</label>
+                    <input placeholder="email@societe.com" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Téléphone</label>
+                    <input placeholder="+33 1 23 45 67 89" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase text-gray-400 ml-1">Site Web</label>
+                    <input placeholder="www.exemple.com" className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold" value={form.website || ''} onChange={e => setForm({ ...form, website: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-span-full space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-blue-800 block">Adresse du Siège</label>
+                <textarea rows={2} placeholder="Saisir l'adresse légale..." className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-10 border-t border-blue-50">
+              <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-4 font-black uppercase text-xs text-gray-400">Annuler</button>
+              <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-blue-200">
+                Enregistrer Société
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CompanyManager;

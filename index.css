@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+:root {
+  /* EBP / Office Style Palette */
+  --ribbon-bg: #f3f4f6;
+  --ribbon-border: #e5e7eb;
+  --ribbon-tab-active: #ffffff;
+  --ribbon-tab-text: #374151;
+  --ribbon-tab-active-text: #2563eb;
+
+  --grid-header-bg: #e2e8f0;
+  /* Darker gray for headers like Excel/EBP */
+  --grid-header-text: #1e293b;
+  --grid-border: #cbd5e1;
+  /* Distinct borders */
+  --grid-row-hover: #eff6ff;
+  --grid-row-alt: #f8fafc;
+  --grid-selected: #bfdbfe;
+
+  --app-bg: #cbd5e1;
+  /* Desktop app background feel */
+}
+
+/* EBP Grid Style Utility */
+.ebp-grid {
+  @apply w-full border-collapse border border-[--grid-border] bg-white text-[11px] font-medium;
+}
+
+.ebp-grid th {
+  @apply bg-[--grid-header-bg] text-[--grid-header-text] border border-[--grid-border] px-2 py-1 text-left font-bold select-none cursor-default;
+  background-image: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+}
+
+.ebp-grid td {
+  @apply border border-[--grid-border] px-2 py-0.5 text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis h-6;
+}
+
+.ebp-grid tr:nth-child(even) {
+  @apply bg-[--grid-row-alt];
+}
+
+.ebp-grid tr:hover td {
+  @apply bg-[--grid-row-hover];
+}
+
+.ebp-grid tr.selected td {
+  @apply bg-[--grid-selected] border-blue-300;
+}
+
+/* Custom Scrollbar for dense data */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border: 2px solid #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Standard Print Approach for SPAs */
+/* ============================================================
+   ROBUST SPA PRINT STRATEGY (V3 - Absolute & Clean)
+   Combines absolute positioning reliability with clean margins
+   ============================================================ */
+@media print {
+
+  /* 1. Page Configuration */
+  @page {
+    size: A4;
+    margin: 0;
+    /* Control margins manually in the print area */
+  }
+
+  /* 2. Global Reset - Hide EVERYTHING by default */
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+    /* Build a wall, hide it all */
+  }
+
+  /* 3. The Resurrection - Bring back ONLY the invoice */
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* 4. Absolute Positioning Strategy
+     This breaks the invoice out of any "overflow: hidden" or "fixed"
+     modal containers that cause the blank page issue.
+  */
+  .print-area {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+
+    /* Dimensions */
+    width: 210mm !important;
+    /* Strict A4 width */
+    min-height: 297mm !important;
+
+    /* Layout & Spacing */
+    margin: 0 !important;
+    padding: 10mm 15mm !important;
+    /* Standard printable margins INSIDE the absolute box */
+
+    /* Appearance */
+    background: white !important;
+    /* Cover anything behind it */
+    z-index: 9999999 !important;
+    /* Float above everything */
+    border: none !important;
+    box-shadow: none !important;
+
+    /* Reset text/colors */
+    font-size: 12pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 5. Cleanup */
+  .no-print,
+  nav,
+  aside,
+  button,
+  footer,
+  .preview-controls,
+  [role="dialog"]>*:not(.print-area) {
+    display: none !important;
+  }
+}
