@@ -29,6 +29,9 @@ import { LogOut, Shield, Loader2 } from 'lucide-react';
 import { sendInvoiceEmailWithPdf } from './utils/emailService';
 import InvoicePreview from './components/InvoicePreview';
 import { useRef } from 'react';
+import Register from './components/Register';
+import LockScreen from './components/LockScreen';
+import OnboardingSteps from './components/OnboardingSteps';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -45,6 +48,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProgramMode, setIsProgramMode] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [view, setView] = useState<'login' | 'register' | 'onboarding_steps' | 'app'>('login');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
 
   const [allInvoicesMap, setAllInvoicesMap] = useState<{ [key: string]: Invoice[] }>({});
   const [backgroundEmailQueue, setBackgroundEmailQueue] = useState<Invoice[]>([]);
@@ -60,13 +65,25 @@ const App: React.FC = () => {
           if (res.success) {
             setUser(res.user);
             setIsAuthenticated(true);
+            setView('app');
+
+            // Check subscription
+            try {
+              const sub = await api.getSubscriptionStatus();
+              setSubscriptionStatus(sub);
+            } catch (e) { console.error("Sub check fail", e); }
+
           } else {
             localStorage.removeItem('mj_token');
+            setView('login');
           }
         } catch (e) {
           console.error("Session verification failed", e);
           localStorage.removeItem('mj_token');
+          setView('login');
         }
+      } else {
+        setView('login');
       }
       setIsLoading(false);
     };
@@ -351,10 +368,25 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [executeShortcut, shortcuts]);
 
-  const handleLogin = (loggedUser: any, token: string) => {
+  const handleLogin = async (loggedUser: any, token: string) => {
     localStorage.setItem('mj_token', token);
     setUser(loggedUser);
     setIsAuthenticated(true);
+    setView('app');
+    try {
+      const sub = await api.getSubscriptionStatus();
+      setSubscriptionStatus(sub);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRegister = (newUser: any, token: string) => {
+    localStorage.setItem('mj_token', token);
+    setUser(newUser);
+    setIsAuthenticated(true);
+    setSubscriptionStatus({ status: 'trial', trialEndsAt: newUser.trialEndsAt });
+    setView('onboarding_steps');
   };
 
   const handleLogout = () => {
@@ -363,6 +395,7 @@ const App: React.FC = () => {
     setUser(null);
     setIsProgramMode(false);
     setActiveCompany(null);
+    setView('login');
   };
 
   useEffect(() => {
@@ -598,7 +631,7 @@ const App: React.FC = () => {
       case 'audit': return <AuditLogViewer companyId={activeCompany?.id} />;
       case 'shortcuts': return <ShortcutManager shortcuts={shortcuts} onSave={(s) => api.saveShortcuts(activeCompany!.id, user.id, s).then(() => loadCompanyData())} />;
       case 'tools': return <Calculator />;
-      case 'help': return <Guide />;
+      // case 'help': return <Guide />;
       case 'templates': return <TemplateManager templates={templates} company={activeCompany!} onSave={(t) => api.saveTemplate(t).then(() => loadCompanyData())} />;
       // New document creation views with table-based interface
       case 'nouveau-devis': return <DocumentCreator
@@ -632,7 +665,27 @@ const App: React.FC = () => {
   };
 
   if (isLoading) return <div className="h-screen flex items-center justify-center bg-[#020817]"><div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div></div>;
-  if (!isAuthenticated) return <Login onLogin={handleLogin} />;
+
+  if (!isAuthenticated) {
+    if (view === 'register') return <Register onRegister={handleRegister} onNavigateToLogin={() => setView('login')} />;
+    return <Login onLogin={handleLogin} onRegister={() => setView('register')} />;
+  }
+
+  if (view === 'onboarding_steps') {
+    return <OnboardingSteps user={user} onFinish={() => setView('app')} />;
+  }
+
+  // Check Lock
+  if (subscriptionStatus && subscriptionStatus.isLocked) {
+    return <LockScreen
+      trialEndsAt={subscriptionStatus.trialEndsAt}
+      onUnlock={() => {
+        setSubscriptionStatus({ ...subscriptionStatus, isLocked: false, status: 'active' });
+      }}
+      onLogout={handleLogout}
+    />;
+  }
+
   if (showOnboarding) return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
 
   return (

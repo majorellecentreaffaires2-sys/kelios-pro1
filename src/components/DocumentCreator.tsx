@@ -178,7 +178,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
               {isEditing ? `Modifier` : `Nouveau`}
             </h1>
             <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
-              {(['Standard', 'Devis', 'Proforma', 'Avoir'] as InvoiceType[]).map((t) => (
+              {(['Standard', 'Devis', 'Proforma', 'Avoir', 'Batiment'] as InvoiceType[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setCurrentType(t)}

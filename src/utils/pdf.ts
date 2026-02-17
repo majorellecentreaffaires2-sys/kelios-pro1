@@ -3,10 +3,13 @@ import { jsPDF } from 'jspdf';
 
 export const generatePdfBase64 = async (element: HTMLElement, primaryColor: string = '#2563eb'): Promise<string> => {
   const canvas = await html2canvas(element, {
-    scale: 2,
+    scale: 3,
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
+    allowTaint: true,
+    windowWidth: 794,
+    windowHeight: 1123,
     onclone: (clonedDoc) => {
       let fullCss = '';
       Array.from(document.styleSheets).forEach(sheet => {
@@ -79,16 +82,60 @@ export const generatePdfBase64 = async (element: HTMLElement, primaryColor: stri
 
       const fallback = clonedDoc.createElement('style');
       fallback.innerHTML = `
-        :root {
-          --color-primary: ${primaryColor};
-          --color-blue-50: #eff6ff; --color-blue-100: #dbeafe; --color-blue-500: #3b82f6; --color-blue-600: #2563eb;
-          --color-gray-50: #f9fafb; --color-gray-100: #f3f4f6; --color-gray-200: #e5e7eb; --color-gray-300: #d1d5db;
-          --color-gray-400: #9ca3af; --color-gray-500: #6b7280; --color-gray-600: #4b5563;
-          --color-gray-700: #374151; --color-gray-800: #1f2937; --color-gray-900: #111827;
-          --color-emerald-50: #ecfdf5; --color-emerald-600: #059669; --color-purple-600: #9333ea;
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
-        * { border-color: #e5e7eb !important; }
-        .print-area { background: white !important; color: black !important; }
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 210mm;
+          height: 297mm;
+          background: white;
+          color: #000;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+          line-height: 1.5;
+        }
+        .print-area {
+          width: 210mm !important;
+          min-height: 297mm !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          color: #000 !important;
+          box-shadow: none !important;
+          page-break-after: always;
+        }
+        img {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          max-width: 100%;
+          height: auto;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse !important;
+          border-spacing: 0;
+        }
+        td, th {
+          display: table-cell;
+          vertical-align: middle;
+          border-collapse: collapse !important;
+        }
+        /* Ensure text is always black unless specifically styled */
+        p, span, div, h1, h2, h3, h4, h5, h6, td, th {
+          color: inherit;
+        }
+        /* Override tailwind text colors for print */
+        .text-white { color: white !important; }
+        .text-gray-900 { color: #111827 !important; }
+        .text-gray-800 { color: #1f2937 !important; }
+        .text-gray-700 { color: #374151 !important; }
+        .text-gray-600 { color: #4b5563 !important; }
+        .text-gray-500 { color: #6b7280 !important; }
+        .text-gray-400 { color: #9ca3af !important; }
       `;
       clonedDoc.head.appendChild(fallback);
     }

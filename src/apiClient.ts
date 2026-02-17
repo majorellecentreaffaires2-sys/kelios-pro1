@@ -101,7 +101,10 @@ export const api = {
   createInvoice: (invoice: Invoice) => request<Invoice>(`${API_BASE}/invoices`, 'POST', invoice),
   updateInvoice: (invoice: Invoice) => request<Invoice>(`${API_BASE}/invoices`, 'PUT', invoice),
   deleteInvoice: (id: string) => request<void>(`${API_BASE}/invoices/${id}`, 'DELETE'),
-  sendInvoiceByEmail: (id: string, emailData: any) => request<any>(`${API_BASE}/invoices/${id}/send`, 'POST', emailData)
+  sendInvoiceByEmail: (id: string, emailData: any) => request<any>(`${API_BASE}/invoices/${id}/send`, 'POST', emailData),
+  register: (userData: any) => request<any>(`${API_BASE}/register`, 'POST', userData),
+  getSubscriptionStatus: () => request<any>(`${API_BASE}/subscription/status`, 'GET'),
+  paySubscription: () => request<any>(`${API_BASE}/subscription/pay`, 'POST')
 };
 
 // Generic API client for new endpoints

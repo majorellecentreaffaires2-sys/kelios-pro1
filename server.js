@@ -18,7 +18,8 @@ import nodemailer from 'nodemailer';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+app.set('trust proxy', 1);
+app.use(express.urlencoded({ extended: true }));
 // --- SECURITY MIDDLEWARE ---
 // Set security headers
 app.use(helmet());
@@ -32,7 +33,7 @@ app.use(hpp());
 // Rate limiting for general API endpoints
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Increased limit to 1000 requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -125,6 +126,20 @@ async function initDb() {
     const connection = await pool.getConnection();
     console.log('Connecté à MySQL avec succès.');
 
+    // Function to safely add columns (MySQL compatible)
+    const addColumn = async (table, column, definition) => {
+      try {
+        await connection.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+        console.log(`✅ Column added: ${table}.${column}`);
+      } catch (err) {
+        if (err.errno === 1060 || err.code === 'ER_DUP_FIELDNAME') {
+          // Column already exists, ignore
+        } else {
+          console.error(`❌ Error adding column ${table}.${column}:`, err.message);
+        }
+      }
+    };
+
     await connection.query(`CREATE TABLE IF NOT EXISTS audit_logs (
       id VARCHAR(255) PRIMARY KEY,
       companyId VARCHAR(255),
@@ -140,7 +155,7 @@ async function initDb() {
       id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(255) UNIQUE,
       password VARCHAR(255),
-      role VARCHAR(50)
+      role VARCHAR(50) DEFAULT 'admin'
     )`);
 
     await connection.query(`CREATE TABLE IF NOT EXISTS companies (
@@ -154,6 +169,12 @@ async function initDb() {
       ifNum VARCHAR(255),
       rc VARCHAR(255),
       taxePro VARCHAR(255),
+      tp VARCHAR(50),
+      bp VARCHAR(50),
+      rcs VARCHAR(50),
+      siren VARCHAR(50),
+      naf VARCHAR(50),
+      tvaIntra VARCHAR(50),
       logoUrl LONGTEXT,
       currency VARCHAR(10),
       defaultVatRates JSON,
@@ -163,7 +184,8 @@ async function initDb() {
       country VARCHAR(50) DEFAULT 'maroc',
       bankAccount VARCHAR(255),
       bankName VARCHAR(255),
-      swiftCode VARCHAR(50)
+      swiftCode VARCHAR(50),
+      accountingPlan JSON
     )`);
 
     await connection.query(`CREATE TABLE IF NOT EXISTS articles (
@@ -180,63 +202,6 @@ async function initDb() {
       stockMin INT DEFAULT 0,
       trackStock TINYINT(1) DEFAULT 0,
       INDEX (companyId)
-    )`);
-
-    // Add missing columns for articles
-    await connection.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'product'`).catch(() => { });
-    await connection.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS stockQuantity INT DEFAULT 0`).catch(() => { });
-    await connection.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS stockMin INT DEFAULT 0`).catch(() => { });
-    await connection.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS trackStock TINYINT(1) DEFAULT 0`).catch(() => { });
-
-    // Create recurring schedules table
-    await connection.query(`CREATE TABLE IF NOT EXISTS recurring_schedules (
-      id VARCHAR(255) PRIMARY KEY,
-      companyId VARCHAR(255),
-      invoiceTemplateId VARCHAR(255),
-      clientId VARCHAR(255),
-      frequency VARCHAR(20),
-      startDate DATE,
-      nextRunDate DATE,
-      endDate DATE,
-      isActive TINYINT(1) DEFAULT 1,
-      lastRunDate DATE,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      INDEX (companyId),
-      INDEX (nextRunDate)
-    )`);
-
-    // Create reminder settings table
-    await connection.query(`CREATE TABLE IF NOT EXISTS reminder_settings (
-      id VARCHAR(255) PRIMARY KEY,
-      companyId VARCHAR(255) UNIQUE,
-      enableAutoReminder TINYINT(1) DEFAULT 0,
-      reminderDays JSON,
-      reminderEmailSubject TEXT,
-      reminderEmailBody TEXT,
-      enableDueDateNotification TINYINT(1) DEFAULT 0,
-      dueDateDaysBefore INT DEFAULT 3,
-      enableMonthlyReport TINYINT(1) DEFAULT 0,
-      monthlyReportDay INT DEFAULT 1,
-      monthlyReportEmail VARCHAR(255),
-      INDEX (companyId)
-    )`);
-
-    // Create scheduled emails table
-    await connection.query(`CREATE TABLE IF NOT EXISTS scheduled_emails (
-      id VARCHAR(255) PRIMARY KEY,
-      companyId VARCHAR(255),
-      invoiceId VARCHAR(255),
-      type VARCHAR(50),
-      recipientEmail VARCHAR(255),
-      subject TEXT,
-      body TEXT,
-      scheduledDate DATETIME,
-      sentAt DATETIME,
-      status VARCHAR(20) DEFAULT 'pending',
-      errorMessage TEXT,
-      INDEX (companyId),
-      INDEX (status),
-      INDEX (scheduledDate)
     )`);
 
     await connection.query(`CREATE TABLE IF NOT EXISTS clients (
@@ -261,51 +226,25 @@ async function initDb() {
       remiseDefault FLOAT DEFAULT 0,
       category VARCHAR(100),
       logoUrl LONGTEXT,
+      civility VARCHAR(50),
+      taxNum VARCHAR(50),
+      country VARCHAR(20) DEFAULT 'maroc',
+      paymentDelay INT DEFAULT 0,
+      accountingAccount VARCHAR(50),
+      encoursAutorise DECIMAL(15, 2) DEFAULT 0,
+      soldeInitial DECIMAL(15, 2) DEFAULT 0,
+      isBlocked TINYINT(1) DEFAULT 0,
+      taxePro VARCHAR(50),
+      cnss VARCHAR(50),
+      siret VARCHAR(50),
+      tp VARCHAR(50),
+      bp VARCHAR(50),
+      rcs VARCHAR(50),
+      bankAccount VARCHAR(255),
+      bankName VARCHAR(255),
+      swiftCode VARCHAR(50),
       INDEX (companyId)
     )`);
-
-    await connection.query(`CREATE TABLE IF NOT EXISTS vat_rates (
-      id VARCHAR(255) PRIMARY KEY,
-      companyId VARCHAR(255),
-      rate DECIMAL(5, 2) NOT NULL,
-      label VARCHAR(255) NOT NULL,
-      description TEXT,
-      active TINYINT(1) DEFAULT 1,
-      defaultRate TINYINT(1) DEFAULT 0,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      INDEX (companyId),
-      FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE
-    )`);
-
-    // Add missing columns if they don't exist (for existing databases)
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS category VARCHAR(100)`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS logoUrl LONGTEXT`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS civility VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS taxNum VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS country VARCHAR(20) DEFAULT 'maroc'`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS paymentDelay INT DEFAULT 0`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS accountingAccount VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS encoursAutorise DECIMAL(15, 2) DEFAULT 0`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS soldeInitial DECIMAL(15, 2) DEFAULT 0`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS isBlocked BOOLEAN DEFAULT FALSE`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS taxePro VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS cnss VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS siret VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS siren VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS naf VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS tvaIntra VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS active TINYINT(1) DEFAULT 1`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS accountingPlan JSON`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS website VARCHAR(255)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS country VARCHAR(50) DEFAULT 'maroc'`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS bankAccount VARCHAR(255)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS bankName VARCHAR(255)`).catch(() => { });
-    await connection.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS swiftCode VARCHAR(50)`).catch(() => { });
-    await connection.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paymentTerms VARCHAR(255)`).catch(() => { });
-    await connection.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paymentMethod VARCHAR(255)`).catch(() => { });
-
-    await connection.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'User'`).catch(() => { });
 
     await connection.query(`CREATE TABLE IF NOT EXISTS invoices (
       id VARCHAR(255) PRIMARY KEY,
@@ -330,12 +269,128 @@ async function initDb() {
       convertedFromId VARCHAR(255),
       validatedAt DATETIME,
       legalArchiveUntil DATETIME,
+      paymentTerms VARCHAR(255),
+      paymentMethod VARCHAR(255),
       INDEX (companyId)
     )`);
 
-    // Add missing columns for existing databases
-    await connection.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS relanceHistory JSON`).catch(() => { });
-    await connection.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS convertedFromId VARCHAR(255)`).catch(() => { });
+    await connection.query(`CREATE TABLE IF NOT EXISTS recurring_schedules (
+      id VARCHAR(255) PRIMARY KEY,
+      companyId VARCHAR(255),
+      invoiceTemplateId VARCHAR(255),
+      clientId VARCHAR(255),
+      frequency VARCHAR(20),
+      startDate DATE,
+      nextRunDate DATE,
+      endDate DATE,
+      isActive TINYINT(1) DEFAULT 1,
+      lastRunDate DATE,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (companyId),
+      INDEX (nextRunDate)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS reminder_settings (
+      id VARCHAR(255) PRIMARY KEY,
+      companyId VARCHAR(255) UNIQUE,
+      enableAutoReminder TINYINT(1) DEFAULT 0,
+      reminderDays JSON,
+      reminderEmailSubject TEXT,
+      reminderEmailBody TEXT,
+      enableDueDateNotification TINYINT(1) DEFAULT 0,
+      dueDateDaysBefore INT DEFAULT 3,
+      enableMonthlyReport TINYINT(1) DEFAULT 0,
+      monthlyReportDay INT DEFAULT 1,
+      monthlyReportEmail VARCHAR(255),
+      INDEX (companyId)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS scheduled_emails (
+      id VARCHAR(255) PRIMARY KEY,
+      companyId VARCHAR(255),
+      invoiceId VARCHAR(255),
+      type VARCHAR(50),
+      recipientEmail VARCHAR(255),
+      subject TEXT,
+      body TEXT,
+      scheduledDate DATETIME,
+      sentAt DATETIME,
+      status VARCHAR(20) DEFAULT 'pending',
+      errorMessage TEXT,
+      INDEX (companyId),
+      INDEX (status),
+      INDEX (scheduledDate)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS vat_rates (
+      id VARCHAR(255) PRIMARY KEY,
+      companyId VARCHAR(255),
+      rate DECIMAL(5, 2) NOT NULL,
+      label VARCHAR(255) NOT NULL,
+      description TEXT,
+      active TINYINT(1) DEFAULT 1,
+      defaultRate TINYINT(1) DEFAULT 0,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX (companyId),
+      FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE
+    )`);
+
+    // --- MIGRATIONS (Adding missing columns to existing tables) ---
+
+    // Companies
+    await addColumn('companies', 'tp', "VARCHAR(50)");
+    await addColumn('companies', 'bp', "VARCHAR(50)");
+    await addColumn('companies', 'rcs', "VARCHAR(50)");
+    await addColumn('companies', 'siren', "VARCHAR(50)");
+    await addColumn('companies', 'naf', "VARCHAR(50)");
+    await addColumn('companies', 'tvaIntra', "VARCHAR(50)");
+    await addColumn('companies', 'active', "TINYINT(1) DEFAULT 1");
+    await addColumn('companies', 'accountingPlan', "JSON");
+    await addColumn('companies', 'website', "VARCHAR(255)");
+    await addColumn('companies', 'country', "VARCHAR(50) DEFAULT 'maroc'");
+    await addColumn('companies', 'bankAccount', "VARCHAR(255)");
+    await addColumn('companies', 'bankName', "VARCHAR(255)");
+    await addColumn('companies', 'swiftCode', "VARCHAR(50)");
+    await addColumn('companies', 'companyType', "VARCHAR(50) DEFAULT 'Standard'");
+
+    // Clients
+    await addColumn('clients', 'category', "VARCHAR(100)");
+    await addColumn('clients', 'logoUrl', "LONGTEXT");
+    await addColumn('clients', 'civility', "VARCHAR(50)");
+    await addColumn('clients', 'taxNum', "VARCHAR(50)");
+    await addColumn('clients', 'country', "VARCHAR(20) DEFAULT 'maroc'");
+    await addColumn('clients', 'paymentDelay', "INT DEFAULT 0");
+    await addColumn('clients', 'accountingAccount', "VARCHAR(50)");
+    await addColumn('clients', 'encoursAutorise', "DECIMAL(15, 2) DEFAULT 0");
+    await addColumn('clients', 'soldeInitial', "DECIMAL(15, 2) DEFAULT 0");
+    await addColumn('clients', 'isBlocked', "TINYINT(1) DEFAULT 0");
+    await addColumn('clients', 'taxePro', "VARCHAR(50)");
+    await addColumn('clients', 'cnss', "VARCHAR(50)");
+    await addColumn('clients', 'siret', "VARCHAR(50)");
+    await addColumn('clients', 'tp', "VARCHAR(50)");
+    await addColumn('clients', 'bp', "VARCHAR(50)");
+    await addColumn('clients', 'rcs', "VARCHAR(50)");
+    await addColumn('clients', 'bankAccount', "VARCHAR(255)");
+    await addColumn('clients', 'bankName', "VARCHAR(255)");
+    await addColumn('clients', 'swiftCode', "VARCHAR(50)");
+
+    // Articles
+    await addColumn('articles', 'type', "VARCHAR(20) DEFAULT 'product'");
+    await addColumn('articles', 'stockQuantity', "INT DEFAULT 0");
+    await addColumn('articles', 'stockMin', "INT DEFAULT 0");
+    await addColumn('articles', 'trackStock', "TINYINT(1) DEFAULT 0");
+
+    // Invoices
+    await addColumn('invoices', 'paymentTerms', "VARCHAR(255)");
+    await addColumn('invoices', 'paymentMethod', "VARCHAR(255)");
+    await addColumn('invoices', 'relanceHistory', "JSON");
+    await addColumn('invoices', 'convertedFromId', "VARCHAR(255)");
+    await addColumn('invoices', 'validatedAt', "DATETIME");
+    await addColumn('invoices', 'legalArchiveUntil', "DATETIME");
+
+    // Users
+    await addColumn('users', 'role', "VARCHAR(50) DEFAULT 'User'");
 
     await connection.query(`CREATE TABLE IF NOT EXISTS templates (
       id VARCHAR(255) PRIMARY KEY,
@@ -355,12 +410,19 @@ async function initDb() {
       PRIMARY KEY (companyId, userId)
     )`);
 
+    await addColumn('users', 'subscriptionStatus', "VARCHAR(20) DEFAULT 'trial'");
+    await addColumn('users', 'trialEndsAt', "DATETIME");
+    await addColumn('users', 'plan', "VARCHAR(50) DEFAULT 'monthly_200'");
+    await addColumn('users', 'lastPaymentDate', "DATETIME");
+
     // SuperAdmin par défaut - Identifiants robustes
     const [rows] = await connection.query('SELECT * FROM users WHERE username = ?', ['admin']);
     if (rows.length === 0) {
       const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Majorlle2025!';
       const hashedPassword = await bcrypt.hash(initialPassword, 12);
-      await connection.query('INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)', ['u1', 'admin', hashedPassword, 'SuperAdmin']);
+      // Admin gets unlimited active status
+      await connection.query('INSERT INTO users (id, username, password, role, subscriptionStatus, trialEndsAt) VALUES (?, ?, ?, ?, ?, ?)',
+        ['u1', 'admin', hashedPassword, 'SuperAdmin', 'active', new Date(Date.now() + 1000 * 365 * 24 * 60 * 60 * 1000)]);
       console.log('Compte Admin créé avec le mot de passe défini dans l\'environnement.');
     }
 
@@ -386,30 +448,136 @@ const authenticateToken = (req, res, next) => {
 };
 
 // --- AUTHENTIFICATION ---
+
+// REGISTER
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ success: false, message: 'Champs requis' });
+
+  try {
+    const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+    if (existing.length > 0) return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur est déjà pris' });
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const userId = Math.random().toString(36).substr(2, 9);
+
+    // 5 days trial
+    const trialEndsAt = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+    await pool.query(
+      'INSERT INTO users (id, username, password, role, subscriptionStatus, trialEndsAt, plan) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userId, username, hashedPassword, 'User', 'trial', trialEndsAt, 'monthly_200']
+    );
+
+    const token = jwt.sign(
+      { id: userId, username, role: 'User' },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      user: { id: userId, username, role: 'User', subscriptionStatus: 'trial', trialEndsAt },
+      token
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// SUBSCRIPTION
+app.get('/api/subscription/status', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT subscriptionStatus, trialEndsAt, plan, lastPaymentDate FROM users WHERE id = ?', [req.user.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+
+    const user = rows[0];
+    const now = new Date();
+    const trialEnds = new Date(user.trialEndsAt);
+
+    // Auto-lock if trial expired and not active
+    if (user.subscriptionStatus === 'trial' && now > trialEnds) {
+      await pool.query('UPDATE users SET subscriptionStatus = ? WHERE id = ?', ['locked', req.user.id]);
+      user.subscriptionStatus = 'locked';
+    }
+
+    res.json({
+      success: true,
+      status: user.subscriptionStatus,
+      trialEndsAt: user.trialEndsAt,
+      isLocked: user.subscriptionStatus === 'locked'
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/subscription/pay', authenticateToken, async (req, res) => {
+  try {
+    // Simulate payment
+    const newStatus = 'active';
+    const lastPaymentDate = new Date();
+
+    await pool.query('UPDATE users SET subscriptionStatus = ?, lastPaymentDate = ? WHERE id = ?', [newStatus, lastPaymentDate, req.user.id]);
+
+    res.json({ success: true, status: 'active' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 app.post('/api/login',
   loginLimiter,
   [
-    body('username').trim().escape().notEmpty(),
+    body('username').trim().notEmpty(),
     body('password').notEmpty()
   ],
   async (req, res) => {
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, message: 'Données invalides' });
     }
 
-    const { username, password } = req.body;
+    const username = req.body.username;
+    const password = req.body.password;
+
     try {
-      const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-      if (rows.length === 0) return res.json({ success: false, message: 'Identifiants invalides' });
+      const [rows] = await pool.query(
+        'SELECT * FROM users WHERE username = ?',
+        [username]
+      );
+
+      if (rows.length === 0) {
+        return res.json({ success: false, message: 'Identifiants invalides' });
+      }
+
       const user = rows[0];
+
       const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.json({ success: false, message: 'Identifiants invalides' });
-      // Token expires in 7 days for better session persistence
-      const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-      res.json({ success: true, user: { id: user.id, username: user.username, role: user.role }, token });
-    } catch (e) { res.status(500).json({ error: 'Erreur interne du serveur' }); }
+      if (!match) {
+        return res.json({ success: false, message: 'Identifiants invalides' });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.json({
+        success: true,
+        user: { id: user.id, username: user.username, role: user.role },
+        token
+      });
+
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: 'Erreur interne du serveur' });
+    }
   });
+
 
 // Endpoint to verify current session and return user data
 app.get('/api/me', authenticateToken, (req, res) => {
@@ -445,7 +613,8 @@ app.post('/api/companies', authenticateToken, async (req, res) => {
       ...c,
       defaultVatRates: JSON.stringify(c.defaultVatRates || [20, 14, 10, 7, 0]),
       accountingPlan: JSON.stringify(c.accountingPlan || []),
-      active: 1
+      active: 1,
+      companyType: c.companyType || 'Standard'
     });
     res.json(c);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -460,7 +629,8 @@ app.put('/api/companies/:id', authenticateToken, async (req, res) => {
     'ice', 'ifNum', 'rc', 'taxePro', 'siren', 'naf', 'tvaIntra',
     'logoUrl', 'currency', 'defaultVatRates', 'numberingFormat',
     'primaryColor', 'active', 'accountingPlan',
-    'country', 'bankAccount', 'bankName', 'swiftCode'
+    'country', 'bankAccount', 'bankName', 'swiftCode', 'tp', 'bp', 'rcs',
+    'companyType'
   ];
 
   const filteredUpdates = {};

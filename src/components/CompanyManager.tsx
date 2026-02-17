@@ -36,7 +36,8 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, onCreate, on
     primaryColor: '#007AFF',
     accountingPlan: [...DEFAULT_ACCOUNTS],
     active: true,
-    country: 'maroc'
+    country: 'maroc',
+    companyType: 'Standard'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,7 +61,7 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, onCreate, on
       currency: 'MAD', defaultVatRates: [20, 14, 10, 7, 0],
       numberingFormat: 'FAC-{YYYY}-{000}', primaryColor: '#007AFF',
       accountingPlan: [...DEFAULT_ACCOUNTS], active: true, country: 'maroc',
-      bankAccount: '', bankName: '', swiftCode: ''
+      bankAccount: '', bankName: '', swiftCode: '', companyType: 'Standard'
     });
   };
 
@@ -258,6 +259,16 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, onCreate, on
                   <select className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl px-4 py-3 outline-none font-bold text-sm" value={form.country} onChange={e => setForm({ ...form, country: e.target.value as 'maroc' | 'france' })}>
                     <option value="maroc">Maroc 🇲🇦</option>
                     <option value="france">France 🇫🇷</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-blue-800 block mb-2">Type de Société</label>
+                  <select className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl px-4 py-3 outline-none font-bold text-sm" value={form.companyType || 'Standard'} onChange={e => setForm({ ...form, companyType: e.target.value as any })}>
+                    <option value="Standard">Standard</option>
+                    <option value="Batiment">Bâtiment / Construction</option>
+                    <option value="Services">Services / Conseil</option>
+                    <option value="Commerce">Commerce / Retail</option>
+                    <option value="Transport">Transport / Logistique</option>
                   </select>
                 </div>
               </div>
