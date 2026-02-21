@@ -42,7 +42,7 @@ router.delete('/vat-rates/:id', authenticateToken, async (req, res) => {
 router.get('/templates', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM templates WHERE companyId = ?', [req.query.companyId]);
-        res.json(rows.map(r => ({ ...r, items: JSON.parse(r.items || '[]') })));
+        res.json(rows.map(r => ({ ...r, items: Array.isArray(r.items) ? r.items : JSON.parse(r.items || '[]') })));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
