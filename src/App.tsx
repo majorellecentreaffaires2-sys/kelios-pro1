@@ -24,14 +24,17 @@ import Calculator from './components/Calculator';
 import AutomationCenter from './components/AutomationCenter';
 import Coordonnees from './components/Coordonnees';
 import Login from './components/Login';
+import UserManager from './components/UserManager';
+import GlobalClientManager from './components/GlobalClientManager';
 import { api, apiClient } from './apiClient';
-import { LogOut, Shield, Loader2 } from 'lucide-react';
+import { LogOut, Shield, Loader2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { sendInvoiceEmailWithPdf } from './utils/emailService';
 import InvoicePreview from './components/InvoicePreview';
 import { useRef } from 'react';
 import Register from './components/Register';
 import LockScreen from './components/LockScreen';
 import OnboardingSteps from './components/OnboardingSteps';
+import Checkout from './components/Checkout';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -47,11 +50,14 @@ const App: React.FC = () => {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProgramMode, setIsProgramMode] = useState(false);
+  const [portfolioTab, setPortfolioTab] = useState<'companies' | 'users' | 'clients'>('companies');
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [view, setView] = useState<'login' | 'register' | 'onboarding_steps' | 'app'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'onboarding_steps' | 'app' | 'checkout'>('login');
   const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
   const [allInvoicesMap, setAllInvoicesMap] = useState<{ [key: string]: Invoice[] }>({});
+  const [allGlobalClients, setAllGlobalClients] = useState<any[]>([]);
   const [backgroundEmailQueue, setBackgroundEmailQueue] = useState<Invoice[]>([]);
   const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const bgPdfContainerRef = useRef<HTMLDivElement>(null);
@@ -109,6 +115,16 @@ const App: React.FC = () => {
         }));
       }
       setAllInvoicesMap(invMap);
+
+      // Load users if SuperAdmin
+      if (user?.role === 'SuperAdmin') {
+        const [userData, clientData] = await Promise.all([
+          api.getUsers(),
+          api.getAllClients()
+        ]);
+        setAvailableUsers(userData || []);
+        setAllGlobalClients(clientData || []);
+      }
     } catch (e) {
       console.error("Failed to refresh portfolio", e);
     } finally {
@@ -121,6 +137,16 @@ const App: React.FC = () => {
       refreshPortfolio();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'SuperAdmin') {
+      if (portfolioTab === 'users') {
+        api.getUsers().then(data => setAvailableUsers(data || []));
+      } else if (portfolioTab === 'clients') {
+        api.getAllClients().then(data => setAllGlobalClients(data || []));
+      }
+    }
+  }, [portfolioTab, isAuthenticated, user]);
 
   const loadCompanyData = useCallback(async () => {
     if (!activeCompany || !user) return;
@@ -441,14 +467,21 @@ const App: React.FC = () => {
     try {
       const { autoSendEmail, ...invoiceData } = invoice;
 
-      // Save/Update invoice
-      await api.updateInvoice(invoiceData as Invoice);
+      // Check if invoice exists to decide between create or update
+      const existing = invoices.find(inv => inv.id === invoice.id);
+
+      if (existing) {
+        await api.updateInvoice(invoiceData as Invoice);
+      } else {
+        await api.createInvoice(invoiceData as Invoice);
+      }
 
       // Handle automatic email sending if requested
       if (autoSendEmail && invoiceData.client?.email) {
         setBackgroundEmailQueue(prev => [...prev, invoiceData as Invoice]);
       }
 
+      alert("Document enregistré avec succès !");
       setEditingInvoice(null);
       await loadCompanyData();
       refreshPortfolio();
@@ -675,61 +708,124 @@ const App: React.FC = () => {
     return <OnboardingSteps user={user} onFinish={() => setView('app')} />;
   }
 
+  if (view === 'checkout') {
+    return <Checkout
+      user={user}
+      onSuccess={async () => {
+        try {
+          const sub = await api.getSubscriptionStatus();
+          setSubscriptionStatus(sub);
+          setView('app');
+        } catch (e) {
+          console.error(e);
+          setView('app');
+        }
+      }}
+      onCancel={() => setView('app')}
+    />;
+  }
+
   // Check Lock
   if (subscriptionStatus && subscriptionStatus.isLocked) {
     return <LockScreen
       trialEndsAt={subscriptionStatus.trialEndsAt}
-      onUnlock={() => {
-        setSubscriptionStatus({ ...subscriptionStatus, isLocked: false, status: 'active' });
-      }}
+      onPay={() => setView('checkout')}
       onLogout={handleLogout}
     />;
   }
 
   if (showOnboarding) return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
 
+  const trialDaysLeft = subscriptionStatus?.status === 'trial'
+    ? Math.ceil((new Date(subscriptionStatus.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
   return (
     <div className="flex flex-col h-screen bg-[var(--app-bg)]">
-      <TopMenu onAction={(id) => id === 'exit' ? handleLogout() : executeShortcut(id)} />
+      <TopMenu
+        onAction={(id) => id === 'exit' ? handleLogout() : executeShortcut(id)}
+        trialDaysLeft={trialDaysLeft}
+        onUpgrade={() => setView('checkout')}
+      />
+
       <div className="flex flex-1 overflow-hidden">
         {isProgramMode && <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} companies={companies} activeCompany={activeCompany} onSelectCompany={handleEnterCompany} onExit={() => setIsProgramMode(false)} />}
         <main className="flex-1 p-4 overflow-y-auto bg-[var(--app-bg)]">
           {!isProgramMode ? (
-            <div className="space-y-10">
-              <div className="flex justify-between items-end">
-                <div>
-                  <h1 className="text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">Portfolio Management</h1>
-                  <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-2">Vue d'ensemble des environnements SaaS</p>
+            <div className="max-w-7xl mx-auto space-y-12 py-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div className="animate-in slide-in-from-left-5 duration-700">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-100">
+                      <Shield className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Console d'Administration</span>
+                  </div>
+                  <h1 className="text-6xl font-extrabold text-slate-900 tracking-tighter leading-none mb-3">Portfolio <span className="text-blue-600 italic">Cloud</span>.</h1>
+                  <p className="text-slate-500 font-medium text-lg">Gérez vos environnements de production et structures juridiques.</p>
                 </div>
-                <div className="flex items-center gap-4">
+
+                <div className="flex items-center gap-4 animate-in slide-in-from-right-5 duration-700">
                   {user?.role === 'SuperAdmin' && (
-                    <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
-                      <Shield className="w-4 h-4 text-blue-600" />
-                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{user.username}</span>
+                    <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner mr-4">
+                      <button
+                        onClick={() => setPortfolioTab('companies')}
+                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === 'companies' ? 'bg-white text-blue-600 shadow-lg border border-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                        Sociétés
+                      </button>
+                      <button
+                        onClick={() => setPortfolioTab('users')}
+                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === 'users' ? 'bg-white text-blue-600 shadow-lg border border-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                        Clients SaaS
+                      </button>
+                      <button
+                        onClick={() => setPortfolioTab('clients')}
+                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === 'clients' ? 'bg-white text-blue-600 shadow-lg border border-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                        Centre Client Global
+                      </button>
                     </div>
                   )}
-                  <button
-                    onClick={() => { setActiveTab('global-reporting'); setIsProgramMode(true); }}
-                    className="px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:scale-105 transition-all"
-                  >
-                    Tableau de Bord Consolidé
-                  </button>
+                  <div className="hidden lg:flex flex-col items-end mr-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opérateur Système</p>
+                    <p className="text-sm font-extrabold text-slate-900">{user?.username}</p>
+                  </div>
                   <button
                     onClick={handleLogout}
-                    className="px-6 py-4 bg-red-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-200 hover:bg-red-600 hover:scale-105 transition-all flex items-center gap-2"
+                    className="px-6 py-4 bg-slate-900 text-white rounded-[1.25rem] font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-3"
                   >
                     <LogOut className="w-4 h-4" />
                     Déconnexion
                   </button>
                 </div>
               </div>
-              <CompanyManager
-                companies={companies}
-                onCreate={(c) => api.createCompany(c).then(() => refreshPortfolio())}
-                onSelect={handleEnterCompany}
-                onUpdate={handleUpdateCompany}
-                activeId={activeCompany?.id}
-              />
+
+              <div className="relative">
+                {/* Visual Accent */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-100/30 blur-[100px] rounded-full pointer-events-none"></div>
+
+                {portfolioTab === 'companies' ? (
+                  <CompanyManager
+                    companies={companies}
+                    users={user?.role === 'SuperAdmin' ? availableUsers : undefined}
+                    onCreate={(c) => api.createCompany(c).then(() => refreshPortfolio())}
+                    onSelect={handleEnterCompany}
+                    onUpdate={handleUpdateCompany}
+                    activeId={activeCompany?.id}
+                  />
+                ) : portfolioTab === 'users' ? (
+                  <UserManager
+                    users={availableUsers}
+                    onRefresh={refreshPortfolio}
+                  />
+                ) : (
+                  <GlobalClientManager
+                    clients={allGlobalClients}
+                  />
+                )}
+              </div>
             </div>
           ) : renderContent()}
         </main>

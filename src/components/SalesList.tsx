@@ -198,6 +198,7 @@ const SalesList: React.FC<SalesListProps> = ({
             <option value="all">Tous les types</option>
             <option value="Standard">Factures</option>
             <option value="Devis">Devis</option>
+            <option value="Dev">Dev</option>
             <option value="Avoir">Avoirs</option>
           </select>
 

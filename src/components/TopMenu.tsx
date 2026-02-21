@@ -7,6 +7,8 @@ import {
 
 interface TopMenuProps {
   onAction: (id: string) => void;
+  trialDaysLeft?: number | null;
+  onUpgrade?: () => void;
 }
 
 interface RibbonButton {
@@ -16,7 +18,7 @@ interface RibbonButton {
   size?: 'large' | 'small';
 }
 
-const TopMenu: React.FC<TopMenuProps> = ({ onAction }) => {
+const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade }) => {
   const [activeTab, setActiveTab] = useState('accueil');
 
   // Favorites - Quick access actions
@@ -128,9 +130,24 @@ const TopMenu: React.FC<TopMenuProps> = ({ onAction }) => {
           </button>
         ))}
 
+        {trialDaysLeft !== undefined && trialDaysLeft !== null && trialDaysLeft > 0 && (
+          <div className="ml-auto flex items-center gap-3 px-4 py-1 bg-amber-50 rounded-t-lg border-t border-x border-amber-100/50 mr-2">
+            <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin-slow" />
+            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+              Essai : <span className="font-black">{trialDaysLeft}j restants</span>
+            </span>
+            <button
+              onClick={onUpgrade}
+              className="px-2 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase rounded hover:bg-amber-700 transition-colors"
+            >
+              🚀 Upgrade
+            </button>
+          </div>
+        )}
+
         <button
           onClick={() => onAction('exit')}
-          className="ml-auto px-4 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50 rounded-t-md transition-colors"
+          className={`${trialDaysLeft ? "" : "ml-auto"} px-4 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50 rounded-t-md transition-colors`}
         >
           Quitter
         </button>

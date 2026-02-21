@@ -17,7 +17,8 @@ const LOC_LABELS = {
     quote: "Devis",
     proforma: "Facture Proforma",
     creditNote: "Avoir",
-    batiment: "Facture",
+    batiment: "DEVIS",
+    dev: "DEVIS",
     date: "Date",
     dueDate: "Échéance",
     number: "N°",
@@ -115,7 +116,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
   const lang = displayInvoice.language || 'fr';
   const l = LOC_LABELS[lang as keyof typeof LOC_LABELS];
-  const primaryColor = displayInvoice.primaryColor || '#2563eb';
+  const primaryColor = '#111827'; // Force black/dark gray as requested
   const tpl = displayInvoice.visualTemplate || 'Professional';
   const isValidated = !!displayInvoice.validatedAt;
 
@@ -125,6 +126,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       case 'Proforma': return l.proforma;
       case 'Avoir': return l.creditNote;
       case 'Batiment': return (l as any).batiment || 'Facture ';
+      case 'Dev': return (l as any).dev || 'Facture Dev';
       default: return l.invoice;
     }
   };
@@ -390,45 +392,91 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
   const renderBatimentBlock = () => {
     if (displayInvoice.type?.toLowerCase() !== 'batiment') return null;
     return (
-      <div className="mt-8 space-y-6 page-break-inside-avoid">
-        <div className="border-t border-b border-gray-200 py-3 text-xs">
-          <p><span className="font-semibold">Arrêtée la présente facture à la somme de :</span> <span className="italic font-bold">{formatCurrency(totalTtc)} {displayInvoice.currency}</span></p>
+      <div className="mt-2 text-[10px] text-gray-800 page-break-inside-avoid border-t-2 border-gray-100 pt-2">
+        <div className="mb-3 font-medium">
+          Arrêtée la présente facture à la somme de : <span className="font-bold italic">{formatCurrency(totalTtc)} {displayInvoice.currency}</span>
         </div>
 
-        <div className="text-xs space-y-2 font-medium text-gray-700 max-w-lg">
-          <div className="flex justify-between w-full border-b border-gray-100 pb-1">
-            <span>Acompte de 8% à la commande, soit:</span>
-            <span className="font-bold">{formatCurrency(totalTtc * 0.08)} {displayInvoice.currency}</span>
-          </div>
-          <div className="flex justify-between w-full border-b border-gray-100 pb-1">
-            <span>Versement de 37% au début des travaux, soit:</span>
-            <span className="font-bold">{formatCurrency(totalTtc * 0.37)} {displayInvoice.currency}</span>
-          </div>
-          <div className="flex justify-between w-full border-b border-gray-100 pb-1">
-            <span>Versement de 50% à mi-chantier, soit:</span>
-            <span className="font-bold">{formatCurrency(totalTtc * 0.50)} {displayInvoice.currency}</span>
-          </div>
-          <div className="flex justify-between w-full border-b border-gray-100 pb-1">
-            <span>Le solde de 5% à la présentation de la facture, soit:</span>
-            <span className="font-bold">{formatCurrency(totalTtc * 0.05)} {displayInvoice.currency}</span>
-          </div>
-        </div>
-
-        <div className="text-xs font-bold pt-4">
-          <div className="mb-8">Avec mention: "Bon pour acceptation et exécution des travaux" : <span className="inline-block w-64 border-b border-black"></span></div>
-          <div className="flex justify-between pr-20 items-end">
-            <div>
-              <p className="mb-8">Date : ____ / ____ / ________</p>
+        <div className="flex justify-between items-start gap-8">
+          {/* Left: Payment Breakdown */}
+          <div className="w-1/2 space-y-1">
+            <h4 className="font-bold border-b border-gray-200 pb-1 mb-1 text-gray-500 uppercase text-[9px]">Échéancier</h4>
+            <div className="flex justify-between">
+              <span>Acompte 8% (Com.)</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.08)}</span>
             </div>
-            <div>
-              <p className="mb-4">Signature et Cachet :</p>
-              <div className="h-24 w-48 border border-gray-300 bg-gray-50/30 rounded"></div>
+            <div className="flex justify-between">
+              <span>Début Tx 37%</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.37)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Mi-chantier 50%</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.50)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-black border-t border-gray-100 pt-1">
+              <span>Solde 5% (Fin)</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.05)}</span>
             </div>
           </div>
+
+          {/* Right: Signature */}
+          <div className="w-1/2">
+            <h4 className="font-bold border-b border-gray-200 pb-1 mb-1 text-gray-500 uppercase text-[9px]">Validation client</h4>
+            <div className="text-[9px] italic mb-4">
+              "Bon pour acceptation et exécution des travaux"
+            </div>
+
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="mb-6">Le ____/____/________</p>
+                <p>À _______________</p>
+              </div>
+              <div className="text-center">
+                <div className="h-16 w-32 border border-gray-300 bg-gray-50 rounded flex items-center justify-center text-gray-300 text-[8px]">
+                  Cachet & Signature
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="text-center text-xs text-gray-500 italic border px-4 py-2 mt-4 rounded">
-          Sous réserve de tout supplément et en vous remerciant pour votre confiance
+        <div className="text-center text-[8px] text-gray-400 mt-3 italic">
+          sous réserve de tout supplément et en vous remerciant pour votre confiance
+        </div>
+      </div>
+    );
+  };
+
+  const renderDevBlock = () => {
+    if (displayInvoice.type?.toLowerCase() !== 'dev') return null;
+    return (
+      <div className="mt-4 text-[10px] text-gray-800 page-break-inside-avoid border-t-2 border-gray-100 pt-3">
+        <div className="flex justify-between items-start gap-8">
+          <div className="w-1/2 space-y-1">
+            <h4 className="font-bold border-b border-gray-200 pb-1 mb-1 text-gray-500 uppercase text-[9px]">Plan de Règlement S.D.P</h4>
+            <div className="flex justify-between italic">
+              <span>Accompte à la signature (30%)</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.30)} {displayInvoice.currency}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Premier Versement (30%)</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.30)} {displayInvoice.currency}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Second Versement (35%)</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.35)} {displayInvoice.currency}</span>
+            </div>
+            <div className="flex justify-between font-bold text-black border-t border-gray-100 pt-1">
+              <span>Solde à la livraison (5%)</span>
+              <span className="font-mono">{formatCurrency(totalTtc * 0.05)} {displayInvoice.currency}</span>
+            </div>
+          </div>
+          <div className="w-1/2 text-right">
+            <div className="inline-block p-4 border-2 border-dashed border-gray-200 rounded-xl">
+              <p className="text-[8px] uppercase text-gray-400 font-bold mb-8">Accord Client (Signature & Cachet)</p>
+              <div className="h-12"></div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -642,8 +690,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             </div>
           )}
           <div className="text-right">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{l.paymentTerms}</p>
-            <p className="text-sm text-gray-600">{displayInvoice.paymentMethod || 'Virement bancaire'}</p>
             <p className="text-sm text-gray-600 mt-1">{l.dueDate}: {formatDate(displayInvoice.dueDate)}</p>
           </div>
         </div>
@@ -842,6 +888,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
       <div className="px-12 pb-4">
         {renderBatimentBlock()}
+        {renderDevBlock()}
       </div>
 
       {/* Notes */}
@@ -935,8 +982,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           <p className="font-medium">{formatDate(displayInvoice.dueDate)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Mode de paiement</p>
-          <p className="font-medium">{displayInvoice.paymentMethod || 'Virement'}</p>
         </div>
       </div>
 
@@ -1118,8 +1163,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           <p className="font-medium">{displayInvoice.client.code || '-'}</p>
         </div>
         <div>
-          <p className="text-gray-400 uppercase font-semibold">Mode Règlement</p>
-          <p className="font-medium">{displayInvoice.paymentMethod || 'Virement'}</p>
         </div>
       </div>
 
@@ -1270,6 +1313,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
       <div className="px-10 pb-4">
         {renderBatimentBlock()}
+        {renderDevBlock()}
       </div>
 
       {/* Amount in words & Notes */}

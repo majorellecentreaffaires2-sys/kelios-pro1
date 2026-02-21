@@ -7,7 +7,8 @@ export type InvoiceType =
   | "Avoir"
   | "Recurrente"
   | "Livraison"
-  | "Batiment";
+  | "Batiment"
+  | "Dev";
 
 export type InvoiceStatus =
   | "Brouillon"
@@ -54,10 +55,11 @@ export interface RelanceEntry {
   notes?: string;
 }
 
-export type CompanyType = "Standard" | "Batiment" | "Services" | "Commerce" | "Transport";
+export type CompanyType = "Standard" | "Batiment" | "Services" | "Commerce" | "Transport" | "Dev";
 
 export interface Company {
   id: string;
+  userId?: string;
   name: string;
   address: string;
   email: string;

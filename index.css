@@ -1,9 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* EBP / Office Style Palette */
+  /* Premium Pro Light Palette */
+  --pro-primary: #2563eb;
+  --pro-primary-hover: #1d4ed8;
+  --pro-bg: #f8fafc;
+  --pro-card-bg: rgba(255, 255, 255, 0.8);
+  --pro-card-border: rgba(226, 232, 240, 0.6);
+  --pro-text-main: #0f172a;
+  --pro-text-muted: #64748b;
+  --pro-accent: #8b5cf6;
+
+  /* Legacy EBP / Office Style Palette (kept for compatibility if needed) */
   --ribbon-bg: #f3f4f6;
   --ribbon-border: #e5e7eb;
   --ribbon-tab-active: #ffffff;
@@ -11,16 +23,19 @@
   --ribbon-tab-active-text: #2563eb;
 
   --grid-header-bg: #e2e8f0;
-  /* Darker gray for headers like Excel/EBP */
   --grid-header-text: #1e293b;
   --grid-border: #cbd5e1;
-  /* Distinct borders */
   --grid-row-hover: #eff6ff;
   --grid-row-alt: #f8fafc;
   --grid-selected: #bfdbfe;
 
-  --app-bg: #cbd5e1;
-  /* Desktop app background feel */
+  --app-bg: #f1f5f9;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  background-color: var(--app-bg);
+  color: var(--pro-text-main);
 }
 
 /* EBP Grid Style Utility */

@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Company } from '../types';
-import { Building2, Mail, Phone, Globe, MapPin, Hash, Save, Edit3, X, CheckCircle } from 'lucide-react';
+import {
+  Building2, Mail, Phone, Globe, MapPin, Hash, Save, Edit3, X,
+  CheckCircle, ShieldCheck, Sparkles, Image as ImageIcon, Palette,
+  Globe2, Landmark, Fingerprint, Map as MapIcon, CreditCard
+} from 'lucide-react';
 
 interface CoordonneesProps {
   company: Company;
@@ -11,6 +15,10 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Company>>({ ...company });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  useEffect(() => {
+    setForm({ ...company });
+  }, [company]);
 
   const handleSave = async () => {
     setSaveStatus('saving');
@@ -31,277 +39,319 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
     setIsEditing(false);
   };
 
+  const accentColor = company.primaryColor || '#2563eb';
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic text-gray-900">Coordonnées Société</h1>
-          <p className="text-sm text-gray-500 font-medium">Informations complètes de votre entreprise</p>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 max-w-6xl mx-auto pb-20">
+      {/* Dynamic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100" style={{ backgroundColor: accentColor }}>
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: accentColor }}>Identité Corporative</span>
+          </div>
+          <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-none">
+            Configuration <span className="italic opacity-50 font-serif">Société</span>
+          </h1>
+          <p className="text-slate-500 font-medium text-lg max-w-lg">
+            Gérez les informations légales, fiscales et visuelles de votre entité de facturation.
+          </p>
         </div>
+
         <div className="flex gap-3">
           {isEditing ? (
             <>
               <button
                 onClick={handleCancel}
-                className="px-6 py-3 bg-gray-100 text-gray-600 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-200 transition-all"
+                className="px-8 py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-slate-50 hover:border-slate-200 transition-all shadow-sm"
               >
                 <X className="w-4 h-4" /> Annuler
               </button>
               <button
                 onClick={handleSave}
                 disabled={saveStatus === 'saving'}
-                className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all"
+                className="px-10 py-4 bg-slate-900 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-200 disabled:opacity-50"
               >
                 {saveStatus === 'saving' ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Enregistrement...</>
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Mise à jour...</>
                 ) : saveStatus === 'saved' ? (
-                  <><CheckCircle className="w-4 h-4" /> Enregistré</>
+                  <><CheckCircle className="w-4 h-4 text-emerald-400" /> Enregistré</>
                 ) : (
-                  <><Save className="w-4 h-4" /> Enregistrer</>
+                  <><Save className="w-4 h-4" /> Sauvegarder</>
                 )}
               </button>
             </>
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all"
+              className="px-10 py-5 bg-white border-2 border-slate-900 text-slate-900 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-slate-900 hover:text-white transition-all shadow-lg group"
             >
-              <Edit3 className="w-4 h-4" /> Modifier
+              <Edit3 className="w-4 h-4 group-hover:rotate-12 transition-transform" /> Éditer le Profil
             </button>
           )}
         </div>
       </div>
 
-      {/* Company Card Preview */}
-      <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100">
-        {/* Header with color */}
-        <div
-          className="h-32 relative overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${company.primaryColor || '#1e293b'}, ${company.primaryColor ? company.primaryColor + 'dd' : '#0f172a'})`
-          }}
-        >
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
-          <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-5 left-6 flex gap-2">
-            <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/10">
-              {company.currency}
-            </span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Logo and Name */}
-        <div className="px-10 pb-10 pt-0 relative">
-          <div className="relative -mt-12 mb-6 flex items-end gap-6">
-            <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-2 border-4 border-white">
-              {company.logoUrl ? (
-                <img src={company.logoUrl} className="w-full h-full object-contain" alt={company.name} />
-              ) : (
-                <Building2 className="w-10 h-10" style={{ color: company.primaryColor || '#1e293b' }} />
-              )}
+        {/* Left Column: Brand & Hero Preview */}
+        <div className="lg:col-span-1 space-y-8">
+          <div className="bg-white rounded-[3rem] border border-slate-200/60 shadow-2xl shadow-slate-200/50 overflow-hidden relative group">
+            <div className="h-40 relative" style={{ backgroundColor: accentColor }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent"></div>
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
+              <div className="absolute top-6 right-6">
+                <ShieldCheck className="w-6 h-6 text-white/50" />
+              </div>
             </div>
-            <div className="pb-2">
-              <h2 className="text-3xl font-black text-gray-900">{company.name}</h2>
-              <p className="text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] mt-1">Environnement SaaS</p>
-            </div>
-          </div>
 
-          {/* Information Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Contact Info */}
-            <div className="space-y-6">
-              <h3 className="text-[10px] font-black uppercase text-blue-400 border-b pb-2 tracking-[0.2em]">Coordonnées de Contact</h3>
+            <div className="px-8 pb-10">
+              <div className="relative -mt-14 mb-8">
+                <div className="w-28 h-28 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center p-3 border-8 border-white group-hover:scale-105 transition-transform duration-500">
+                  {company.logoUrl ? (
+                    <img src={company.logoUrl} className="w-full h-full object-contain" alt={company.name} />
+                  ) : (
+                    <Building2 className="w-12 h-12" style={{ color: accentColor }} />
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-8">
+                <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-tight">{company.name}</h2>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compte Majorlle Actif</span>
+                </div>
+              </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-blue-600" />
-                  </div>
-                  {isEditing ? (
-                    <input
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.email || ''}
-                      onChange={e => setForm({ ...form, email: e.target.value })}
-                      placeholder="email@societe.com"
-                    />
-                  ) : (
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase">Email</p>
-                      <p className="font-bold text-gray-700">{company.email || 'Non renseigné'}</p>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Devise Système</span>
+                  <span className="font-extrabold text-slate-900 uppercase">{company.currency}</span>
                 </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-blue-600" />
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Identité Visuelle</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">{accentColor}</span>
+                    <div className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ backgroundColor: accentColor }}></div>
                   </div>
-                  {isEditing ? (
-                    <input
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.phone || ''}
-                      onChange={e => setForm({ ...form, phone: e.target.value })}
-                      placeholder="+212 5XX XX XX XX"
-                    />
-                  ) : (
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase">Téléphone</p>
-                      <p className="font-bold text-gray-700">{company.phone || 'Non renseigné'}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-blue-600" />
-                  </div>
-                  {isEditing ? (
-                    <input
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.website || ''}
-                      onChange={e => setForm({ ...form, website: e.target.value })}
-                      placeholder="www.societe.com"
-                    />
-                  ) : (
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase">Site Web</p>
-                      <p className="font-bold text-gray-700">{company.website || 'Non renseigné'}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-blue-600" />
-                  </div>
-                  {isEditing ? (
-                    <textarea
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      rows={3}
-                      value={form.address || ''}
-                      onChange={e => setForm({ ...form, address: e.target.value })}
-                      placeholder="Adresse complète..."
-                    />
-                  ) : (
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase">Adresse</p>
-                      <p className="font-bold text-gray-700">{company.address || 'Non renseignée'}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Legal Info */}
-            <div className="space-y-6">
-              <h3 className="text-[10px] font-black uppercase text-blue-400 border-b pb-2 tracking-[0.2em]">Identifiants Légaux</h3>
+            {/* Visual Decoration */}
+            <div className="absolute bottom-0 right-0 p-8 pointer-events-none opacity-5">
+              <Sparkles className="w-24 h-24" />
+            </div>
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> I.C.E
-                  </label>
-                  {isEditing ? (
-                    <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.ice || ''}
-                      onChange={e => setForm({ ...form, ice: e.target.value })}
-                    />
-                  ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.ice || '---'}</p>
-                  )}
-                </div>
+          {/* Branding Control (When Editing) */}
+          {isEditing && (
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-blue-100 p-8 space-y-6 shadow-xl animate-in zoom-in-95 duration-500">
+              <div className="flex items-center gap-3">
+                <Palette className="w-5 h-5 text-blue-600" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Personnalisation</h3>
+              </div>
 
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> I.F
-                  </label>
-                  {isEditing ? (
+                  <label className="text-[10px] font-black text-slate-400 uppercase">Logo (URL)</label>
+                  <div className="relative">
+                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                     <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.ifNum || ''}
-                      onChange={e => setForm({ ...form, ifNum: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-xs font-bold outline-none focus:border-blue-500 focus:bg-white transition-all"
+                      value={form.logoUrl || ''}
+                      onChange={e => setForm({ ...form, logoUrl: e.target.value })}
+                      placeholder="https://..."
                     />
-                  ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.ifNum || '---'}</p>
-                  )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> R.C
-                  </label>
-                  {isEditing ? (
+                  <label className="text-[10px] font-black text-slate-400 uppercase">Couleur Primaire</label>
+                  <div className="flex gap-3">
                     <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.rc || ''}
-                      onChange={e => setForm({ ...form, rc: e.target.value })}
+                      type="color"
+                      className="w-12 h-12 bg-transparent border-none outline-none cursor-pointer"
+                      value={form.primaryColor || '#2563eb'}
+                      onChange={e => setForm({ ...form, primaryColor: e.target.value })}
                     />
-                  ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.rc || '---'}</p>
-                  )}
+                    <input
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-mono font-bold outline-none focus:border-blue-500 focus:bg-white transition-all"
+                      value={form.primaryColor || '#2563eb'}
+                      onChange={e => setForm({ ...form, primaryColor: e.target.value })}
+                    />
+                  </div>
                 </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> Taxe Pro
-                  </label>
-                  {isEditing ? (
-                    <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.taxePro || ''}
-                      onChange={e => setForm({ ...form, taxePro: e.target.value })}
-                    />
-                  ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.taxePro || '---'}</p>
-                  )}
-                </div>
+        {/* Right Column: Information Forms */}
+        <div className="lg:col-span-2 space-y-8">
 
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> SIREN
-                  </label>
-                  {isEditing ? (
-                    <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.siren || ''}
-                      onChange={e => setForm({ ...form, siren: e.target.value })}
-                    />
-                  ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.siren || '---'}</p>
-                  )}
+          {/* Section: Contact & Localisation */}
+          <div className="bg-white rounded-[3rem] border border-slate-200/60 p-10 shadow-xl space-y-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 rounded-[1.25rem] flex items-center justify-center text-blue-600">
+                  <Globe2 className="w-6 h-6" />
                 </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Canaux de Communication</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Visibilité sur vos documents de sortie</p>
+                </div>
+              </div>
+            </div>
 
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> Code NAF
-                  </label>
-                  {isEditing ? (
-                    <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.naf || ''}
-                      onChange={e => setForm({ ...form, naf: e.target.value })}
-                    />
-                  ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.naf || '---'}</p>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+              {/* Field: Email */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5" /> Courriel Officiel
+                </label>
+                {isEditing ? (
+                  <input
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-sm font-extrabold outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all placeholder:text-slate-200"
+                    value={form.email || ''}
+                    onChange={e => setForm({ ...form, email: e.target.value })}
+                    placeholder="contact@societe.pro"
+                  />
+                ) : (
+                  <p className="px-6 py-4 bg-slate-50/30 rounded-2xl text-slate-900 font-extrabold text-sm border border-transparent select-all">
+                    {company.email || 'Non spécifié'}
+                  </p>
+                )}
+              </div>
 
-                <div className="col-span-2 space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> N° TVA Intracommunautaire
+              {/* Field: Phone */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5" /> Ligne Directe
+                </label>
+                {isEditing ? (
+                  <input
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-sm font-extrabold outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all placeholder:text-slate-200"
+                    value={form.phone || ''}
+                    onChange={e => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+212 522 00 00 00"
+                  />
+                ) : (
+                  <p className="px-6 py-4 bg-slate-50/30 rounded-2xl text-slate-900 font-extrabold text-sm border border-transparent">
+                    {company.phone || 'Non spécifié'}
+                  </p>
+                )}
+              </div>
+
+              {/* Field: Website */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Globe className="w-3.5 h-3.5" /> Plateforme Web
+                </label>
+                {isEditing ? (
+                  <input
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-sm font-extrabold outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all placeholder:text-slate-200"
+                    value={form.website || ''}
+                    onChange={e => setForm({ ...form, website: e.target.value })}
+                    placeholder="https://www.entreprise.pro"
+                  />
+                ) : (
+                  <p className="px-6 py-4 bg-slate-50/30 rounded-2xl text-blue-600 font-extrabold text-sm border border-transparent underline decoration-blue-200 cursor-pointer">
+                    {company.website || 'Non spécifié'}
+                  </p>
+                )}
+              </div>
+
+              {/* Field: Address */}
+              <div className="md:col-span-2 space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5" /> Siège Social
+                </label>
+                {isEditing ? (
+                  <textarea
+                    rows={3}
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-sm font-extrabold outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all placeholder:text-slate-200 resize-none"
+                    value={form.address || ''}
+                    onChange={e => setForm({ ...form, address: e.target.value })}
+                    placeholder="Adresse complète du siège..."
+                  />
+                ) : (
+                  <div className="px-6 py-5 bg-slate-50/30 rounded-3xl text-slate-900 font-bold text-sm border border-transparent flex gap-4 leading-relaxed">
+                    <MapIcon className="w-5 h-5 text-slate-300 shrink-0 mt-0.5" />
+                    {company.address || 'Aucune adresse renseignée'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Legal & Identification */}
+          <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl space-y-10 relative overflow-hidden">
+            {/* Dark background style */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-xl border border-white/10 rounded-[1.25rem] flex items-center justify-center text-white">
+                  <Fingerprint className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white tracking-tight">Registres Légaux</h3>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Vérification de la conformité juridique</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 relative z-10">
+
+              {/* Legal Identifiers Map */}
+              {[
+                { label: 'I.C.E', field: 'ice', icon: <Landmark className="w-4 h-4" /> },
+                { label: 'I.F', field: 'ifNum', icon: <Landmark className="w-4 h-4" /> },
+                { label: 'R.C (Maroc)', field: 'rc', icon: <Landmark className="w-4 h-4" /> },
+                { label: 'R.C.S (France)', field: 'rcs', icon: <Landmark className="w-4 h-4" /> },
+                { label: 'Patente / Taxe Pro', field: 'taxePro', icon: <CreditCard className="w-4 h-4" /> },
+                { label: 'Siren / Siret', field: 'siren', icon: <Fingerprint className="w-4 h-4" /> },
+                { label: 'Code NAF', field: 'naf', icon: <Fingerprint className="w-4 h-4" /> },
+              ].map((id) => (
+                <div key={id.field} className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                    {id.icon} {id.label}
                   </label>
                   {isEditing ? (
                     <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-blue-500"
-                      value={form.tvaIntra || ''}
-                      onChange={e => setForm({ ...form, tvaIntra: e.target.value })}
+                      className="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-4 text-sm font-mono font-black text-white outline-none focus:bg-white/10 focus:border-blue-500 transition-all placeholder:text-white/20"
+                      value={(form as any)[id.field] || ''}
+                      onChange={e => setForm({ ...form, [id.field]: e.target.value })}
+                      placeholder="..."
                     />
                   ) : (
-                    <p className="font-bold text-gray-700 font-mono">{company.tvaIntra || '---'}</p>
+                    <p className="px-6 py-4 bg-white/5 rounded-2xl text-white font-mono font-black text-sm border border-white/10">
+                      {(company as any)[id.field] || '---------------'}
+                    </p>
                   )}
                 </div>
+              ))}
+
+              <div className="md:col-span-2 space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Hash className="w-3.5 h-3.5" /> TVA Intracommunautaire
+                </label>
+                {isEditing ? (
+                  <input
+                    className="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-6 py-4 text-sm font-mono font-black text-white outline-none focus:bg-white/10 focus:border-blue-500 transition-all placeholder:text-white/20"
+                    value={form.tvaIntra || ''}
+                    onChange={e => setForm({ ...form, tvaIntra: e.target.value })}
+                    placeholder="FR 00 000000000"
+                  />
+                ) : (
+                  <p className="px-6 py-4 bg-white/5 rounded-2xl text-white font-mono font-black text-sm border border-white/10">
+                    {company.tvaIntra || '---------------'}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -312,3 +362,4 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
 };
 
 export default Coordonnees;
+

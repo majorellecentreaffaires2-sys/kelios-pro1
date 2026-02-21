@@ -132,14 +132,17 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       auditTrail: [],
       relanceHistory: [],
       discount: 0,
-      notes: "Total HT arrêté à la somme de :",
+      notes: activeCompany?.companyType === 'Dev'
+        ? "Modalités de règlement spécifiques :\n- Accompte à la signature : 30%\n- Versement : 30%\n- Autre versement : 35%\n- Livraison : 5%"
+        : "Total HT arrêté à la somme de :",
       currency: activeCompany?.currency || "MAD",
       language: "fr",
       primaryColor: activeCompany?.primaryColor || "#007AFF",
       visualTemplate:
         activeCompany?.companyType === 'Batiment' ? 'CorporatePro' :
           activeCompany?.companyType === 'Services' ? 'SwissMinimal' :
-            activeCompany?.companyType === 'Commerce' ? 'ClassicPrint' : 'BlueSky',
+            activeCompany?.companyType === 'Commerce' ? 'ClassicPrint' :
+              activeCompany?.companyType === 'Dev' ? 'DeepOnyx' : 'BlueSky',
     };
   });
 
@@ -194,7 +197,7 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
     try {
       const allInvoices = await api.getInvoices(activeCompany.id);
       const typePrefix =
-        type === "Devis" ? "DEV" : type === "Livraison" ? "BL" : "FAC";
+        type === "Devis" || type === "Dev" ? "DEV" : type === "Livraison" ? "BL" : "FAC";
       const year = new Date().getFullYear();
       const sequence = (allInvoices.length + 1).toString().padStart(4, "0");
       setForm((prev) => ({
@@ -387,6 +390,7 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
                   <option value="Livraison">Bon de Livraison</option>
                   <option value="Avoir">Avoir</option>
                   <option value="Batiment">Facture Bâtiment</option>
+                  <option value="Dev">Facture Dev</option>
                 </select>
               </div>
               <div className="space-y-2">
