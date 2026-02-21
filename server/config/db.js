@@ -229,7 +229,7 @@ export async function initDb() {
       const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Majorlle2025!';
       const hashedPassword = await bcrypt.default.hash(initialPassword, 12);
       await connection.query('INSERT INTO users (id, username, email, password, role, subscriptionStatus, trialEndsAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        ['u1', 'admin', 'admin@example.com', hashedPassword, 'SuperAdmin', 'active', new Date(Date.now() + 1000 * 365 * 24 * 60 * 60 * 1000), 1]);
+        ['u1', 'taha', 'majorellecentreaffaires@gmail.com', hashedPassword, 'SuperAdmin', 'active', new Date(Date.now() + 1000 * 365 * 24 * 60 * 60 * 1000), 1]);
       console.log('👑 Compte SuperAdmin initialisé.');
     }
 
