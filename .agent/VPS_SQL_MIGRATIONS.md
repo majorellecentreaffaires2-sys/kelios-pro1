@@ -39,7 +39,30 @@ CREATE INDEX IF NOT EXISTS idx_users_stripe ON users (stripeCustomerId);
 
 
 -- ════════════════════════════════════════════════════════════════
--- 2. TABLE password_resets (réinitialisation mot de passe par email)
+-- 2. NOUVEAUX COLONNES sur la table COMPANIES existante
+-- ════════════════════════════════════════════════════════════════
+
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS companyType VARCHAR(50) DEFAULT 'Standard',
+  ADD COLUMN IF NOT EXISTS accountingPlan JSON NULL,
+  ADD COLUMN IF NOT EXISTS defaultVatRates JSON NULL,
+  ADD COLUMN IF NOT EXISTS bankAccount VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS bankName VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS swiftCode VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS ice VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS ifNum VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS rc VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS taxePro VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS siren VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS naf VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS tvaIntra VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS tp VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS bp VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS rcs VARCHAR(50) NULL;
+
+
+-- ════════════════════════════════════════════════════════════════
+-- 3. TABLE password_resets (réinitialisation mot de passe par email)
 -- ════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS password_resets (

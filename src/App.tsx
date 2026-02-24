@@ -573,6 +573,8 @@ const App: React.FC = () => {
         await api.updateUser(user.id, { password: adminUpdate.password });
       }
       const newCompany = await api.createCompany(company);
+      if (!newCompany || !newCompany.id) throw new Error("Échec création société");
+
       await api.createClient({ ...client, companyId: newCompany.id });
 
       // Add default subjects / templates
