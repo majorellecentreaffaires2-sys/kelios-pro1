@@ -1,41 +1,71 @@
-
-export type InvoiceType = 'Standard' | 'Devis' | 'Proforma' | 'Acompte' | 'Finale' | 'Avoir' | 'Recurrente' | 'Livraison';
+export type InvoiceType =
+  | "Standard"
+  | "Devis"
+  | "Proforma"
+  | "Acompte"
+  | "Finale"
+  | "Avoir"
+  | "Recurrente"
+  | "Livraison"
+  | "Batiment"
+  | "Dev";
 
 export type InvoiceStatus =
-  | 'Brouillon'
-  | 'En cours'
-  | 'Payée'
-  | 'Non payée'
-  | 'Annulée'
-  | 'Envoye' | 'Accepte' | 'Refuse' | 'Expire'
-  | 'Valide' | 'PartiellementPaye' | 'EnRetard';
+  | "Brouillon"
+  | "En cours"
+  | "Payée"
+  | "Non payée"
+  | "Annulée"
+  | "Envoye"
+  | "Accepte"
+  | "Refuse"
+  | "Expire"
+  | "Valide"
+  | "PartiellementPaye"
+  | "EnRetard";
 
-export type PaymentMethod = 'Virement' | 'Carte' | 'Especes' | 'Cheque' | 'Prelevement' | 'LCR';
+export type PaymentMethod =
+  | "Virement"
+  | "Carte"
+  | "Especes"
+  | "Cheque"
+  | "Prelevement"
+  | "LCR";
 
-export type VisualTemplate = 'BlueSky' | 'DeepOnyx' | 'SwissMinimal' | 'RoyalGold' | 'CorporatePro' | 'ClassicPrint' | 'ExecutiveModern';
+export type VisualTemplate =
+  | "BlueSky"
+  | "DeepOnyx"
+  | "SwissMinimal"
+  | "RoyalGold"
+  | "CorporatePro"
+  | "ClassicPrint"
+  | "ExecutiveModern";
 
 export interface AccountingAccount {
   id: string;
   code: string;
   label: string;
-  type: 'Treasury' | 'Vat' | 'Revenue' | 'Expense';
+  type: "Treasury" | "Vat" | "Revenue" | "Expense";
 }
 
 export interface RelanceEntry {
   id: string;
   date: string;
-  method: 'Email' | 'Telephone' | 'Courrier';
+  method: "Email" | "Telephone" | "Courrier";
   notes?: string;
 }
 
+export type CompanyType = "Standard" | "Batiment" | "Services" | "Commerce" | "Transport" | "Dev";
+
 export interface Company {
   id: string;
+  userId?: string;
   name: string;
   address: string;
   email: string;
   phone: string;
   website?: string;
-  country?: 'maroc' | 'france';
+  country?: "maroc" | "france";
   ice?: string;
   ifNum?: string;
   rc?: string;
@@ -54,9 +84,10 @@ export interface Company {
   primaryColor: string;
   accountingPlan: AccountingAccount[];
   active?: boolean;
+  companyType?: CompanyType;
 }
 
-export type ArticleType = 'product' | 'service';
+export type ArticleType = "product" | "service";
 
 export interface Article {
   id: string;
@@ -78,7 +109,7 @@ export interface RecurringSchedule {
   companyId: string;
   invoiceTemplateId: string;
   clientId: string;
-  frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  frequency: "weekly" | "monthly" | "quarterly" | "yearly";
   startDate: string;
   nextRunDate: string;
   endDate?: string;
@@ -105,13 +136,13 @@ export interface ScheduledEmail {
   id: string;
   companyId: string;
   invoiceId?: string;
-  type: 'reminder' | 'due_date' | 'monthly_report';
+  type: "reminder" | "due_date" | "monthly_report";
   recipientEmail: string;
   subject: string;
   body: string;
   scheduledDate: string;
   sentAt?: string;
-  status: 'pending' | 'sent' | 'failed';
+  status: "pending" | "sent" | "failed";
   errorMessage?: string;
 }
 
@@ -143,7 +174,7 @@ export interface InvoiceItem {
   subItems: InvoiceSubItem[];
 }
 
-export type ClientCountry = 'maroc' | 'france';
+export type ClientCountry = "maroc" | "france";
 
 export interface ContactInfo {
   id?: string;
@@ -202,16 +233,16 @@ export interface Invoice {
   discount: number;
   notes: string;
   currency: string;
-  language: 'fr' | 'en';
+  language: "fr" | "en";
   primaryColor: string;
-  fontFamily?: 'Inter' | 'Roboto' | 'Outfit' | 'Serif' | 'Mono';
+  fontFamily?: "Inter" | "Roboto" | "Outfit" | "Serif" | "Mono";
   visualOptions?: {
     showWatermark?: boolean;
     showSeal?: boolean;
     compactMode?: boolean;
-    borderRadius?: 'none' | 'small' | 'massive';
-    tableStyle?: 'minimal' | 'striped' | 'bordered';
-    logoSize?: 'small' | 'medium' | 'large';
+    borderRadius?: "none" | "small" | "massive";
+    tableStyle?: "minimal" | "striped" | "bordered";
+    logoSize?: "small" | "medium" | "large";
   };
   visualTemplate: VisualTemplate;
   subject?: string;
@@ -223,7 +254,7 @@ export interface Invoice {
   autoSendEmail?: boolean;
   emailSubject?: string;
   emailBody?: string;
-  customFile?: { name: string, base64: string } | null;
+  customFile?: { name: string; base64: string } | null;
 }
 
 export interface InvoiceTemplate {
@@ -253,5 +284,5 @@ export interface AuditEntry {
   action: string;
   entity: string;
   details: string;
-  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  severity: "INFO" | "WARNING" | "CRITICAL";
 }

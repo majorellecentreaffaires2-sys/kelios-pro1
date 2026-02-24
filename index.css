@@ -1,7 +1,21 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  /* EBP / Office Style Palette */
+  /* Premium Pro Light Palette */
+  --pro-primary: #2563eb;
+  --pro-primary-hover: #1d4ed8;
+  --pro-bg: #f8fafc;
+  --pro-card-bg: rgba(255, 255, 255, 0.8);
+  --pro-card-border: rgba(226, 232, 240, 0.6);
+  --pro-text-main: #0f172a;
+  --pro-text-muted: #64748b;
+  --pro-accent: #8b5cf6;
+
+  /* Legacy EBP / Office Style Palette (kept for compatibility if needed) */
   --ribbon-bg: #f3f4f6;
   --ribbon-border: #e5e7eb;
   --ribbon-tab-active: #ffffff;
@@ -9,16 +23,19 @@
   --ribbon-tab-active-text: #2563eb;
 
   --grid-header-bg: #e2e8f0;
-  /* Darker gray for headers like Excel/EBP */
   --grid-header-text: #1e293b;
   --grid-border: #cbd5e1;
-  /* Distinct borders */
   --grid-row-hover: #eff6ff;
   --grid-row-alt: #f8fafc;
   --grid-selected: #bfdbfe;
 
-  --app-bg: #cbd5e1;
-  /* Desktop app background feel */
+  --app-bg: #f1f5f9;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  background-color: var(--app-bg);
+  color: var(--pro-text-main);
 }
 
 /* EBP Grid Style Utility */
@@ -73,79 +90,64 @@
    Combines absolute positioning reliability with clean margins
    ============================================================ */
 @media print {
-
-  /* 1. Page Configuration */
   @page {
     size: A4;
     margin: 0;
-    /* Control margins manually in the print area */
+    padding: 0;
   }
 
-  /* 2. Global Reset - Hide EVERYTHING by default */
-  html,
-  body {
+  /* Reset page */
+  html, body {
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
-    height: 100% !important;
     width: 100% !important;
-    overflow: visible !important;
+    height: 100% !important;
+    overflow: auto !important;
   }
 
-  body * {
+  /* Hide UI elements but preserve layout structure */
+  .no-print,
+  button,
+  [class*="toolbar"],
+  [class*="controls"],
+  nav, aside, header, footer,
+  [role="navigation"],
+  .preview-controls {
+    display: none !important;
     visibility: hidden !important;
-    /* Build a wall, hide it all */
   }
 
-  /* 3. The Resurrection - Bring back ONLY the invoice */
-  .print-area,
+  /* Show the invoice ref container and flex wrapper */
+  div[class*="flex"][class*="justify-center"] {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  /* Ensure print area is fully visible and sized correctly */
+  .print-area {
+    visibility: visible !important;
+    display: block !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: auto !important;
+    position: relative !important;
+  }
+
+  /* Ensure all children are visible */
   .print-area * {
     visibility: visible !important;
-    opacity: 1 !important;
   }
 
-  /* 4. Absolute Positioning Strategy
-     This breaks the invoice out of any "overflow: hidden" or "fixed"
-     modal containers that cause the blank page issue.
-  */
-  .print-area {
-    display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-
-    /* Dimensions */
-    width: 210mm !important;
-    /* Strict A4 width */
-    min-height: 297mm !important;
-
-    /* Layout & Spacing */
-    margin: 0 !important;
-    padding: 10mm 15mm !important;
-    /* Standard printable margins INSIDE the absolute box */
-
-    /* Appearance */
-    background: white !important;
-    /* Cover anything behind it */
-    z-index: 9999999 !important;
-    /* Float above everything */
-    border: none !important;
-    box-shadow: none !important;
-
-    /* Reset text/colors */
-    font-size: 12pt !important;
+  /* Preserve colors and styling */
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-  }
-
-  /* 5. Cleanup */
-  .no-print,
-  nav,
-  aside,
-  button,
-  footer,
-  .preview-controls,
-  [role="dialog"]>*:not(.print-area) {
-    display: none !important;
   }
 }

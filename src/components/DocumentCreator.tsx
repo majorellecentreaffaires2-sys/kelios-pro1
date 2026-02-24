@@ -48,7 +48,9 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       { id: '1', description: '', quantity: 1, price: 0, unit: 'U', taxRate: 20, discount: 0 }
     ]
   );
-  const [notes, setNotes] = useState(initialInvoice?.notes || '');
+  const [notes, setNotes] = useState(initialInvoice?.notes || (activeCompany.companyType === 'Dev'
+    ? "Modalités de règlement spécifiques :\n- Accompte à la signature : 30%\n- Versement : 30%\n- Autre versement : 35%\n- Livraison : 5%"
+    : ''));
   const [subject, setSubject] = useState(initialInvoice?.subject || '');
   const [currency, setCurrency] = useState(initialInvoice?.currency || activeCompany.currency || 'MAD');
   const [showPreview, setShowPreview] = useState(false);
@@ -70,7 +72,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
     if (initialInvoice && initialInvoice.type === currentType) return initialInvoice.invoiceNumber;
     const count = invoices.filter(i => i.type === currentType).length + 1;
     const prefix =
-      currentType === 'Devis' ? 'DEV' :
+      currentType === 'Devis' || currentType === 'Dev' ? 'DEV' :
         currentType === 'Proforma' ? 'PRO' :
           currentType === 'Avoir' ? 'AVO' : 'FAC';
     return `${prefix}-${new Date().getFullYear()}-${count.toString().padStart(4, '0')}`;
@@ -178,7 +180,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
               {isEditing ? `Modifier` : `Nouveau`}
             </h1>
             <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
-              {(['Standard', 'Devis', 'Proforma', 'Avoir'] as InvoiceType[]).map((t) => (
+              {(['Standard', 'Devis', 'Proforma', 'Avoir', 'Batiment', 'Dev'] as InvoiceType[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setCurrentType(t)}
@@ -204,8 +206,8 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                     key={c}
                     onClick={() => setCurrency(c)}
                     className={`px-2 py-0.5 rounded text-[9px] font-black transition-all ${currency === c
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-400 hover:bg-gray-100'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:bg-gray-100'
                       }`}
                   >
                     {c}

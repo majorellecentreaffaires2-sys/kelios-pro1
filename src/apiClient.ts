@@ -55,7 +55,9 @@ export const externalApi = {
 export const api = {
   login: (credentials: any) => request<any>(`${API_BASE}/login`, 'POST', credentials),
   verifySession: () => request<any>(`${API_BASE}/me`, 'GET'),
+  getUsers: () => request<any[]>(`${API_BASE}/users`, 'GET'),
   updateUser: (id: string, updates: any) => request<any>(`${API_BASE}/users/${id}`, 'PUT', updates),
+  deleteUser: (id: string) => request<void>(`${API_BASE}/users/${id}`, 'DELETE'),
 
   getLogs: (companyId?: string) => request<AuditEntry[]>(`${API_BASE}/logs${companyId ? `?companyId=${companyId}` : ''}`, 'GET'),
 
@@ -73,6 +75,7 @@ export const api = {
   updateVatRate: (id: string, updates: any) => request<any>(`${API_BASE}/vat-rates/${id}`, 'PUT', updates),
   deleteVatRate: (id: string) => request<void>(`${API_BASE}/vat-rates/${id}`, 'DELETE'),
 
+  getAllClients: () => request<ContactInfo[]>(`${API_BASE}/clients/all`, 'GET'),
   getClients: (companyId: string) => request<ContactInfo[]>(`${API_BASE}/clients?companyId=${companyId}`, 'GET'),
   createClient: (client: ContactInfo) => request<ContactInfo>(`${API_BASE}/clients`, 'POST', client),
   updateClient: (id: string, updates: Partial<ContactInfo>) => request<ContactInfo>(`${API_BASE}/clients/${id}`, 'PUT', updates),
@@ -99,9 +102,35 @@ export const api = {
 
   getInvoices: (companyId: string) => request<Invoice[]>(`${API_BASE}/invoices?companyId=${companyId}`, 'GET'),
   createInvoice: (invoice: Invoice) => request<Invoice>(`${API_BASE}/invoices`, 'POST', invoice),
-  updateInvoice: (invoice: Invoice) => request<Invoice>(`${API_BASE}/invoices`, 'PUT', invoice),
+  updateInvoice: (invoice: Invoice) => request<Invoice>(`${API_BASE}/invoices/${invoice.id}`, 'PUT', invoice),
   deleteInvoice: (id: string) => request<void>(`${API_BASE}/invoices/${id}`, 'DELETE'),
-  sendInvoiceByEmail: (id: string, emailData: any) => request<any>(`${API_BASE}/invoices/${id}/send`, 'POST', emailData)
+  sendInvoiceByEmail: (id: string, emailData: any) => request<any>(`${API_BASE}/invoices/${id}/send`, 'POST', emailData),
+  register: (userData: any) => request<any>(`${API_BASE}/register`, 'POST', userData),
+  verifyEmail: (verificationData: { email: string; code: string }) => request<any>(`${API_BASE}/verify-email`, 'POST', verificationData),
+  forgotPassword: (email: string) => request<any>(`${API_BASE}/forgot-password`, 'POST', { email }),
+  resetPassword: (token: string, password: string) => request<any>(`${API_BASE}/reset-password`, 'POST', { token, password }),
+  getSubscriptionStatus: () => request<any>(`${API_BASE}/subscription/status`, 'GET'),
+  paySubscription: () => request<any>(`${API_BASE}/subscription/pay`, 'POST'),
+  generatePublicLink: (invoiceId: string, expiryDays: number = 30) =>
+    request<{ url: string; token: string }>(`${API_BASE}/invoices/${invoiceId}/public-link`, 'POST', { expiryDays }),
+
+  uploadFile: async (file: File, companyId?: string): Promise<{ url: string }> => {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    if (companyId) formData.append('companyId', companyId);
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Upload échoué');
+    }
+    return res.json();
+  },
 };
 
 // Generic API client for new endpoints

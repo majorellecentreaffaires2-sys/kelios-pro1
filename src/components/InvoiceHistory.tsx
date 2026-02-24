@@ -125,6 +125,7 @@ const InvoiceHistory: React.FC<InvoiceHistoryProps> = ({ invoices, onDelete, onE
               <option value="all">Tous les types</option>
               <option value="Standard">Factures</option>
               <option value="Devis">Devis</option>
+              <option value="Dev">Dev</option>
               <option value="Livraison">Livraisons</option>
               <option value="Avoir">Avoirs</option>
             </select>
@@ -193,7 +194,8 @@ const InvoiceHistory: React.FC<InvoiceHistoryProps> = ({ invoices, onDelete, onE
                     {/* Type */}
                     <td className="px-4 py-4">
                       <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${inv.type === 'Standard' ? 'bg-blue-100 text-blue-700' :
-                          inv.type === 'Devis' ? 'bg-emerald-100 text-emerald-700' :
+                        inv.type === 'Devis' ? 'bg-emerald-100 text-emerald-700' :
+                          inv.type === 'Dev' ? 'bg-cyan-100 text-cyan-700' :
                             inv.type === 'Proforma' ? 'bg-purple-100 text-purple-700' :
                               inv.type === 'Avoir' ? 'bg-red-100 text-red-700' :
                                 inv.type === 'Acompte' ? 'bg-orange-100 text-orange-700' :
@@ -244,11 +246,11 @@ const InvoiceHistory: React.FC<InvoiceHistoryProps> = ({ invoices, onDelete, onE
                     {/* Statut */}
                     <td className="px-4 py-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase flex items-center justify-center gap-1 ${isLocked ? 'bg-emerald-100 text-emerald-700' :
-                          inv.status === 'Payée' ? 'bg-blue-100 text-blue-700' :
-                            inv.status === 'En cours' ? 'bg-amber-100 text-amber-700' :
-                              inv.status === 'Annulée' ? 'bg-red-100 text-red-700' :
-                                inv.status === 'Non payée' ? 'bg-rose-100 text-rose-700' :
-                                  'bg-gray-100 text-gray-500'
+                        inv.status === 'Payée' ? 'bg-blue-100 text-blue-700' :
+                          inv.status === 'En cours' ? 'bg-amber-100 text-amber-700' :
+                            inv.status === 'Annulée' ? 'bg-red-100 text-red-700' :
+                              inv.status === 'Non payée' ? 'bg-rose-100 text-rose-700' :
+                                'bg-gray-100 text-gray-500'
                         }`}>
                         {isLocked ? <><ShieldCheck className="w-3 h-3" /> Certifié</> :
                           <><Clock className="w-3 h-3" /> {inv.status}</>}
