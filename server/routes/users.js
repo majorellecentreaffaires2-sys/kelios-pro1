@@ -5,8 +5,17 @@ import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
-router.get('/me', authenticateToken, (req, res) => {
-    res.json({ success: true, user: req.user });
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            'SELECT id, username, email, role, subscriptionStatus, trialEndsAt, plan, planInterval, lastPaymentDate, avatarUrl, createdAt FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        if (rows.length === 0) return res.status(404).json({ success: false, error: 'Utilisateur introuvable' });
+        res.json({ success: true, user: rows[0] });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
 router.get('/subscription/status', authenticateToken, async (req, res) => {

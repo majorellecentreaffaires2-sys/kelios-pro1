@@ -35,6 +35,8 @@ import Register from './components/Register';
 import LockScreen from './components/LockScreen';
 import OnboardingSteps from './components/OnboardingSteps';
 import Checkout from './components/Checkout';
+import PublicInvoiceView from './components/PublicInvoiceView';
+import ForgotPassword from './components/ForgotPassword';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -52,7 +54,9 @@ const App: React.FC = () => {
   const [isProgramMode, setIsProgramMode] = useState(false);
   const [portfolioTab, setPortfolioTab] = useState<'companies' | 'users' | 'clients'>('companies');
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [view, setView] = useState<'login' | 'register' | 'onboarding_steps' | 'app' | 'checkout'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'onboarding_steps' | 'app' | 'checkout' | 'public_view' | 'password_reset'>('login');
+  const [publicViewToken, setPublicViewToken] = useState<string | null>(null);
+  const [passwordResetToken, setPasswordResetToken] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
@@ -63,6 +67,24 @@ const App: React.FC = () => {
   const bgPdfContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // ── Intercept special URL params FIRST (before auth check) ──
+    const params = new URLSearchParams(window.location.search);
+    const viewToken = params.get('view');
+    const resetToken = params.get('reset');
+
+    if (viewToken) {
+      setPublicViewToken(viewToken);
+      setView('public_view');
+      setIsLoading(false);
+      return; // Don't check session for public invoice view
+    }
+    if (resetToken) {
+      setPasswordResetToken(resetToken);
+      setView('password_reset');
+      setIsLoading(false);
+      return;
+    }
+
     const checkSession = async () => {
       const token = localStorage.getItem('mj_token');
       if (token) {
@@ -697,7 +719,35 @@ const App: React.FC = () => {
     }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center bg-[#020817]"><div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div></div>;
+  if (isLoading) return <div className="h-screen flex items-center justify-center bg-[#020817]"><div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" /></div>;
+
+  // ── Public invoice view (no login required) ──
+  if (view === 'public_view' && publicViewToken) {
+    return <PublicInvoiceView token={publicViewToken} />;
+  }
+
+  // ── Password reset via email link (no login required) ──
+  if (view === 'password_reset' && passwordResetToken) {
+    return (
+      <div className="min-h-screen w-full flex bg-slate-50 relative overflow-hidden font-sans text-slate-900">
+        <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[45%] bg-blue-100/40 blur-[130px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[45%] bg-indigo-100/30 blur-[130px] rounded-full" />
+        <div className="flex-1 flex flex-col justify-center items-center p-8 lg:p-20 relative z-10">
+          <div className="w-full max-w-[460px] bg-white rounded-[3.5rem] p-10 md:p-14 border border-slate-200 shadow-2xl shadow-slate-200/50">
+            <ForgotPassword
+              onBack={() => {
+                // Clear reset param from URL cleanly
+                window.history.replaceState({}, document.title, window.location.pathname);
+                setView('login');
+                setPasswordResetToken(null);
+              }}
+              resetToken={passwordResetToken}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     if (view === 'register') return <Register onRegister={handleRegister} onNavigateToLogin={() => setView('login')} />;
@@ -746,6 +796,7 @@ const App: React.FC = () => {
         onAction={(id) => id === 'exit' ? handleLogout() : executeShortcut(id)}
         trialDaysLeft={trialDaysLeft}
         onUpgrade={() => setView('checkout')}
+        user={user}
       />
 
       <div className="flex flex-1 overflow-hidden">

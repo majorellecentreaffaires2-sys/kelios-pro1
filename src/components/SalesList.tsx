@@ -3,7 +3,7 @@ import { Invoice, InvoiceType, InvoiceStatus, Company, ContactInfo } from '../ty
 import {
   Search, Filter, MoreHorizontal, FileText, CheckCircle,
   AlertCircle, Clock, X, Eye, Edit, Trash2, Copy,
-  Printer, ArrowUpRight, DollarSign, Calendar, Mail, Plus
+  Printer, ArrowUpRight, DollarSign, Calendar, Mail, Plus, Share2
 } from 'lucide-react';
 import InvoicePreview from './InvoicePreview';
 import { api } from '../apiClient';
@@ -140,6 +140,19 @@ const SalesList: React.FC<SalesListProps> = ({
       } catch (error) {
         alert('Erreur lors de l\'envoi de l\'email');
       }
+    }
+  };
+
+  const handleShareLink = async (invoice: Invoice) => {
+    try {
+      const res = await api.generatePublicLink(invoice.id);
+      if (res.url) {
+        // Copy to clipboard
+        await navigator.clipboard.writeText(res.url);
+        alert(`Lien public généré et copié dans le presse-papier !\n\n${res.url}`);
+      }
+    } catch (e) {
+      alert('Erreur lors de la génération du lien.');
     }
   };
 
@@ -378,6 +391,13 @@ const SalesList: React.FC<SalesListProps> = ({
                           title="Envoyer Email"
                         >
                           <Mail className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleShareLink(invoice); }}
+                          className="p-1.5 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                          title="Partager le lien public"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onDelete(invoice.id); }}

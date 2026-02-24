@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.562.0",
+    "multer": "^2.0.2",
     "mysql2": "^3.6.5",
     "nodemailer": "^7.0.13",
     "nodemon": "^3.1.11",

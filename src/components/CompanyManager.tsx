@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Company, AccountingAccount } from '../types';
 import { Plus, Building2, Globe, Mail, Phone, Palette, Hash, X, CheckCircle, Power, ShieldAlert, Database, Settings, ToggleLeft, ToggleRight, ImageIcon, Upload, Trash2, Shield, ChevronRight, User } from 'lucide-react';
+import { api } from '../apiClient';
 
 interface CompanyManagerProps {
   companies: Company[];
@@ -23,6 +24,7 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, users, onCre
   const [showForm, setShowForm] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState<Partial<Company>>({
     id: Math.random().toString(36).substr(2, 9),
@@ -79,14 +81,18 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, users, onCre
     onUpdate(c.id, { active: nextStatus });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm(prev => ({ ...prev, logoUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { url } = await api.uploadFile(file);
+      setForm(prev => ({ ...prev, logoUrl: url }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur upload');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -277,7 +283,13 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, users, onCre
                           </div>
                         </div>
                       ) : (
-                        <Upload className="w-12 h-12 text-slate-200" />
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          {uploading ? (
+                            <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                          ) : (
+                            <Upload className="w-12 h-12 text-slate-200" />
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -285,9 +297,10 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, users, onCre
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-all shadow-sm"
+                        disabled={uploading}
+                        className={`w-full py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-all shadow-sm ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        Téléverser Logo
+                        {uploading ? 'Envoi en cours...' : 'Téléverser Logo'}
                       </button>
                       <input
                         type="file"

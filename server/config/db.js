@@ -48,9 +48,16 @@ export async function initDb() {
       subscriptionStatus VARCHAR(20) DEFAULT 'trial',
       trialEndsAt DATETIME,
       plan VARCHAR(50) DEFAULT 'monthly_200',
+      planInterval ENUM('monthly','yearly') DEFAULT 'monthly',
       lastPaymentDate DATETIME,
+      stripeCustomerId VARCHAR(255) NULL,
+      stripeSubscriptionId VARCHAR(255) NULL,
       isVerified TINYINT(1) DEFAULT 0,
-      verificationCode VARCHAR(10)
+      verificationCode VARCHAR(10),
+      avatarUrl TEXT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (email),
+      INDEX (stripeCustomerId)
     )`);
 
     await connection.query(`CREATE TABLE IF NOT EXISTS companies (
@@ -219,8 +226,67 @@ export async function initDb() {
       PRIMARY KEY (companyId, userId)
     )`);
 
+    // --- NEW TABLES: Security & Features ---
+    await connection.query(`CREATE TABLE IF NOT EXISTS password_resets (
+      id VARCHAR(36) PRIMARY KEY,
+      userId VARCHAR(255) NOT NULL,
+      token VARCHAR(255) NOT NULL UNIQUE,
+      expiresAt DATETIME NOT NULL,
+      usedAt DATETIME NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (token),
+      INDEX (userId)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS invoice_tokens (
+      id VARCHAR(36) PRIMARY KEY,
+      invoiceId VARCHAR(255) NOT NULL,
+      token VARCHAR(255) NOT NULL UNIQUE,
+      expiresAt DATETIME NULL,
+      viewedAt DATETIME NULL,
+      respondedAt DATETIME NULL,
+      response ENUM('accepted','declined') NULL,
+      clientIp VARCHAR(45) NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (token),
+      INDEX (invoiceId)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS uploads (
+      id VARCHAR(36) PRIMARY KEY,
+      userId VARCHAR(255) NOT NULL,
+      companyId VARCHAR(255) NULL,
+      filename VARCHAR(255) NOT NULL,
+      originalName VARCHAR(255) NOT NULL,
+      mimeType VARCHAR(100),
+      size INT,
+      path VARCHAR(500) NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (userId)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS reminder_settings (
+      id VARCHAR(255) PRIMARY KEY DEFAULT (UUID()),
+      companyId VARCHAR(255) NOT NULL UNIQUE,
+      enableAutoReminder TINYINT(1) DEFAULT 0,
+      reminderDays JSON DEFAULT '[7,14,30]',
+      reminderEmailSubject VARCHAR(255),
+      reminderEmailBody TEXT,
+      enableDueDateNotification TINYINT(1) DEFAULT 0,
+      dueDateDaysBefore INT DEFAULT 3,
+      enableMonthlyReport TINYINT(1) DEFAULT 0,
+      monthlyReportDay INT DEFAULT 1,
+      monthlyReportEmail VARCHAR(255),
+      INDEX (companyId)
+    )`);
+
     // --- MIGRATIONS ---
     await addColumn('invoices', 'subject', 'TEXT');
+    await addColumn('users', 'stripeCustomerId', 'VARCHAR(255) NULL');
+    await addColumn('users', 'stripeSubscriptionId', 'VARCHAR(255) NULL');
+    await addColumn('users', 'planInterval', "ENUM('monthly','yearly') DEFAULT 'monthly'");
+    await addColumn('users', 'avatarUrl', 'TEXT NULL');
+    await addColumn('users', 'createdAt', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
 
     // SuperAdmin par défaut
     const [rows] = await connection.query('SELECT * FROM users WHERE username = ? OR email = ?', ['admin', 'admin@example.com']);

@@ -3,8 +3,9 @@ import { Company } from '../types';
 import {
   Building2, Mail, Phone, Globe, MapPin, Hash, Save, Edit3, X,
   CheckCircle, ShieldCheck, Sparkles, Image as ImageIcon, Palette,
-  Globe2, Landmark, Fingerprint, Map as MapIcon, CreditCard
+  Globe2, Landmark, Fingerprint, Map as MapIcon, CreditCard, Upload, Trash2
 } from 'lucide-react';
+import { api } from '../apiClient';
 
 interface CoordonneesProps {
   company: Company;
@@ -15,6 +16,7 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Company>>({ ...company });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     setForm({ ...company });
@@ -37,6 +39,22 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
   const handleCancel = () => {
     setForm({ ...company });
     setIsEditing(false);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { url } = await api.uploadFile(file, company.id);
+      setForm(prev => ({ ...prev, logoUrl: url }));
+      // Also update parent state immediately if not saving the whole form
+      onUpdateCompany(company.id, { logoUrl: url });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur upload');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const accentColor = company.primaryColor || '#2563eb';
@@ -157,15 +175,41 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase">Logo (URL)</label>
-                  <div className="relative">
-                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                    <input
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-xs font-bold outline-none focus:border-blue-500 focus:bg-white transition-all"
-                      value={form.logoUrl || ''}
-                      onChange={e => setForm({ ...form, logoUrl: e.target.value })}
-                      placeholder="https://..."
-                    />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logo d'Entreprise</label>
+                  <div className="flex flex-col gap-4">
+                    {form.logoUrl && (
+                      <div className="relative w-full aspect-video bg-slate-50 rounded-2xl border-2 border-slate-100 overflow-hidden group/logo">
+                        <img src={form.logoUrl} className="w-full h-full object-contain p-4" alt="Logo preview" />
+                        <button
+                          onClick={() => { setForm({ ...form, logoUrl: '' }); onUpdateCompany(company.id, { logoUrl: '' }); }}
+                          className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur shadow-lg rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover/logo:opacity-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    <label className={`
+                        flex flex-col items-center justify-center gap-3 px-6 py-8 
+                        bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] 
+                        hover:bg-blue-50/50 hover:border-blue-200 transition-all cursor-pointer group/upload
+                        ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}>
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover/upload:scale-110 transition-transform duration-500">
+                        {uploading ? (
+                          <div className="w-5 h-5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                        ) : (
+                          <Upload className="w-6 h-6 text-blue-600" />
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs font-black text-slate-700 uppercase tracking-widest">
+                          {uploading ? 'Chargement...' : 'Téléverser Logo'}
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">PNG, JPG ou SVG (Max 5MB)</p>
+                      </div>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
+                    </label>
                   </div>
                 </div>
 

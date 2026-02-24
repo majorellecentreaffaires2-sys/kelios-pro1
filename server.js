@@ -20,6 +20,8 @@ import articleRoutes from './server/routes/articles.js';
 import reportRoutes from './server/routes/reports.js';
 import settingsRoutes from './server/routes/settings.js';
 import automationRoutes from './server/routes/automation.js';
+import publicRoutes from './server/routes/public.js';
+import uploadRoutes from './server/routes/upload.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -75,6 +77,11 @@ app.use('/api/articles', articleRoutes);
 app.use('/api', reportRoutes); // Mounted at /api to support /api/logs and /api/reports/monthly
 app.use('/api', settingsRoutes);
 app.use('/api/automation', automationRoutes);
+app.use('/api', publicRoutes);  // /api/view/:token and /api/invoices/:id/public-link
+app.use('/api/upload', uploadRoutes);
+
+// Serve uploaded files (logos etc.)
+app.use('/uploads', express.static('uploads'));
 
 // Fallback for SPA
 app.get('*', (req, res) => {

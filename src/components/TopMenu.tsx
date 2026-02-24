@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import {
   FileText, Plus, Save, Printer, Copy, Trash2, Users,
   Settings, BarChart3, Calculator, Home, ShoppingCart,
-  Star, FileEdit, FolderOpen, RefreshCw, Download, Eye, Pencil, Building2
+  Star, FileEdit, FolderOpen, RefreshCw, Download, Eye, Pencil, Building2, LogOut
 } from 'lucide-react';
 
 interface TopMenuProps {
   onAction: (id: string) => void;
   trialDaysLeft?: number | null;
   onUpgrade?: () => void;
+  user?: any;
 }
 
 interface RibbonButton {
@@ -18,8 +19,9 @@ interface RibbonButton {
   size?: 'large' | 'small';
 }
 
-const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade }) => {
+const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, user }) => {
   const [activeTab, setActiveTab] = useState('accueil');
+  const [showProfile, setShowProfile] = useState(false);
 
   // Favorites - Quick access actions
   const favorites: RibbonButton[] = [
@@ -145,12 +147,46 @@ const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade })
           </div>
         )}
 
-        <button
-          onClick={() => onAction('exit')}
-          className={`${trialDaysLeft ? "" : "ml-auto"} px-4 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50 rounded-t-md transition-colors`}
-        >
-          Quitter
-        </button>
+        {/* User Profile Section */}
+        <div className={`relative ${!trialDaysLeft ? "ml-auto" : ""} mr-2`}>
+          <button
+            onClick={() => setShowProfile(!showProfile)}
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-white rounded-t-md transition-all border-t border-x border-transparent hover:border-[var(--ribbon-border)]"
+          >
+            <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">
+              {user?.username?.substring(0, 2) || 'UP'}
+            </div>
+            <div className="text-left hidden md:block">
+              <p className="text-[10px] font-black text-slate-700 leading-none">{user?.username}</p>
+              <p className="text-[9px] text-slate-400 font-medium">{user?.email}</p>
+            </div>
+          </button>
+
+          {showProfile && (
+            <>
+              <div className="fixed inset-0 z-[110]" onClick={() => setShowProfile(false)} />
+              <div className="absolute right-0 top-full mt-0 w-56 bg-white border border-[var(--ribbon-border)] rounded-b-xl rounded-tl-xl shadow-xl z-[120] py-2 animate-in slide-in-from-top-1 duration-200">
+                <div className="px-4 py-2 border-b border-slate-100 mb-2">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Compte</p>
+                  <p className="text-xs font-bold text-slate-900 truncate">{user?.email}</p>
+                </div>
+                <button
+                  onClick={() => { onAction('account'); setShowProfile(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                >
+                  <Settings className="w-4 h-4" /> Paramètres Profil
+                </button>
+                <div className="h-px bg-slate-100 my-2" />
+                <button
+                  onClick={() => { onAction('exit'); setShowProfile(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Déconnexion
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Ribbon Toolbar */}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Lock, User, ArrowRight, Eye, EyeOff, Sparkles, LogIn, ChevronRight, KeyRound, Mail, ShieldAlert } from 'lucide-react';
 import { api } from '../apiClient';
+import ForgotPassword from './ForgotPassword';
 
 interface LoginProps {
   onLogin: (user: any, token: string) => void;
@@ -14,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'login' | 'verify'>('login');
+  const [step, setStep] = useState<'login' | 'verify' | 'forgot'>('login');
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -57,6 +58,21 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
       setLoading(false);
     }
   };
+
+  // Render ForgotPassword as a full panel replacement
+  if (step === 'forgot') {
+    return (
+      <div className="min-h-screen w-full flex bg-slate-50 relative overflow-hidden font-sans text-slate-900">
+        <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[45%] bg-blue-100/40 blur-[130px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[45%] bg-indigo-100/30 blur-[130px] rounded-full" />
+        <div className="flex-1 flex flex-col justify-center items-center p-8 lg:p-20 relative z-10">
+          <div className="w-full max-w-[460px] bg-white rounded-[3.5rem] p-10 md:p-14 border border-slate-200 shadow-2xl shadow-slate-200/50">
+            <ForgotPassword onBack={() => setStep('login')} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex bg-slate-50 relative overflow-hidden font-sans text-slate-900">
@@ -187,11 +203,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative w-6 h-6 border-2 border-slate-200 rounded-lg bg-slate-50 group-hover:border-blue-600 transition-all">
                       <input type="checkbox" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                      <div className="absolute inset-1 bg-blue-600 rounded scale-0 transition-transform origin-center"></div>
+                      <div className="absolute inset-1 bg-blue-600 rounded scale-0 transition-transform origin-center" />
                     </div>
                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Session Persistante</span>
                   </label>
-                  <button type="button" className="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setStep('forgot')}
+                    className="text-[10px] font-black text-blue-600 hover:text-blue-800 uppercase tracking-widest transition-colors"
+                  >
                     Pass Oublié ?
                   </button>
                 </div>
