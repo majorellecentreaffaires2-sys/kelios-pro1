@@ -306,6 +306,35 @@ export async function initDb() {
     await addColumn('companies', 'bp', 'VARCHAR(50)');
     await addColumn('companies', 'rcs', 'VARCHAR(50)');
 
+    // Mises à jour Table Clients (pour VPS existants)
+    await addColumn('clients', 'taxePro', 'VARCHAR(50)');
+    await addColumn('clients', 'cnss', 'VARCHAR(50)');
+    await addColumn('clients', 'siret', 'VARCHAR(50)');
+    await addColumn('clients', 'tp', 'VARCHAR(50)');
+    await addColumn('clients', 'bp', 'VARCHAR(50)');
+    await addColumn('clients', 'rcs', 'VARCHAR(50)');
+    await addColumn('clients', 'bankAccount', 'VARCHAR(255)');
+    await addColumn('clients', 'bankName', 'VARCHAR(255)');
+    await addColumn('clients', 'swiftCode', 'VARCHAR(50)');
+
+    // Mises à jour Table Companies (pour VPS existants)
+    await addColumn('companies', 'companyType', "VARCHAR(50) DEFAULT 'Standard'");
+    await addColumn('companies', 'accountingPlan', 'JSON');
+    await addColumn('companies', 'defaultVatRates', 'JSON');
+    await addColumn('companies', 'bankAccount', 'VARCHAR(255)');
+    await addColumn('companies', 'bankName', 'VARCHAR(255)');
+    await addColumn('companies', 'swiftCode', 'VARCHAR(50)');
+    await addColumn('companies', 'ice', 'VARCHAR(255)');
+    await addColumn('companies', 'ifNum', 'VARCHAR(255)');
+    await addColumn('companies', 'rc', 'VARCHAR(255)');
+    await addColumn('companies', 'taxePro', 'VARCHAR(255)');
+    await addColumn('companies', 'siren', 'VARCHAR(50)');
+    await addColumn('companies', 'naf', 'VARCHAR(50)');
+    await addColumn('companies', 'tvaIntra', 'VARCHAR(50)');
+    await addColumn('companies', 'tp', 'VARCHAR(50)');
+    await addColumn('companies', 'bp', 'VARCHAR(50)');
+    await addColumn('companies', 'rcs', 'VARCHAR(50)');
+
     // SuperAdmin par défaut
     const [rows] = await connection.query('SELECT * FROM users WHERE username = ? OR email = ?', ['admin', 'admin@example.com']);
     if (rows.length === 0) {
