@@ -79,11 +79,11 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
     const year = new Date().getFullYear();
     const sequence = count.toString().padStart(4, '0');
 
-    // User requested format: 900-devis or 900-facture (prefix-year-count)
+    // Format: DEVIS-YEAR-SEQUENCE or FACT-YEAR-SEQUENCE
     if (documentNature === 'Devis') {
-      return `900-DEVIS-${year}-${sequence}`;
+      return `DEVIS-${year}-${sequence}`;
     }
-    return `900-FACT-${year}-${sequence}`;
+    return `FACT-${year}-${sequence}`;
   }, [invoices, currentType, documentNature, initialInvoice]);
 
   const totals = useMemo(() => {
