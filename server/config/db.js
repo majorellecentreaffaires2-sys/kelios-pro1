@@ -281,6 +281,7 @@ export async function initDb() {
     )`);
 
     // --- MIGRATIONS ---
+    await addColumn('invoices', 'documentNature', "VARCHAR(50) DEFAULT 'Facture'");
     await addColumn('invoices', 'subject', 'TEXT');
     await addColumn('users', 'stripeCustomerId', 'VARCHAR(255) NULL');
     await addColumn('users', 'stripeSubscriptionId', 'VARCHAR(255) NULL');
