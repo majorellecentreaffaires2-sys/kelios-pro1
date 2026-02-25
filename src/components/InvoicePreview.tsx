@@ -121,19 +121,35 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
   const isValidated = !!displayInvoice.validatedAt;
 
   const getDocTitle = () => {
+    // Prioritize explicit document nature if set
+    if (displayInvoice.documentNature === 'Devis') return l.quote;
+    if (displayInvoice.documentNature === 'Facture') return l.invoice;
+
     switch (displayInvoice.type) {
       case 'Devis': return l.quote;
       case 'Proforma': return l.proforma;
       case 'Avoir': return l.creditNote;
-      case 'Batiment': return (l as any).batiment || 'Facture ';
-      case 'Dev': return (l as any).dev || 'Facture Dev';
+      case 'Batiment': return (l as any).batiment || l.invoice;
+      case 'Dev': return (l as any).dev || l.invoice;
       default: return l.invoice;
     }
   };
 
+  const billToLabel = (displayInvoice.documentNature === 'Devis' || displayInvoice.type === 'Devis')
+    ? (lang === 'fr' ? 'DEVIS À' : 'QUOTE TO')
+    : l.billTo;
+
+  const docNatureName = (displayInvoice.documentNature === 'Devis' || displayInvoice.type === 'Devis')
+    ? (lang === 'fr' ? 'devis' : 'quote')
+    : (lang === 'fr' ? 'facture' : 'invoice');
+
   // Validate if invoice is complete enough to print
   const isInvoiceValid = displayInvoice.invoiceNumber && displayInvoice.client?.name && displayInvoice.sender?.name && displayInvoice.items?.length > 0;
-  const printButtonTitle = !isInvoiceValid ? 'La facture doit avoir un numéro, un client, un fournisseur et au moins un article' : 'Imprimer ou exporter en PDF';
+  const printButtonTitle = !isInvoiceValid
+    ? (lang === 'fr'
+      ? `Le document (${docNatureName}) doit avoir un numéro, un client, un fournisseur et au moins un article`
+      : `The document (${docNatureName}) must have a number, a client, a supplier and at least one item`)
+    : 'Imprimer ou exporter en PDF';
 
   useEffect(() => {
     if (autoOpenEmail) {
@@ -394,7 +410,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
     return (
       <div className="mt-2 text-[10px] text-gray-800 page-break-inside-avoid border-t-2 border-gray-100 pt-2">
         <div className="mb-3 font-medium">
-          Arrêtée la présente facture à la somme de : <span className="font-bold italic">{formatCurrency(totalTtc)} {displayInvoice.currency}</span>
+          Arrêtée la présente {docNatureName} à la somme de : <span className="font-bold italic">{formatCurrency(totalTtc)} {displayInvoice.currency}</span>
         </div>
 
         <div className="flex justify-between items-start gap-8">
@@ -545,7 +561,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       <div className="px-12 py-8 grid grid-cols-2 gap-12">
         {/* Bill To */}
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">{l.billTo}</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">{billToLabel}</p>
           <h3 className="text-lg font-bold text-gray-900">{displayInvoice.client.name}</h3>
           <p className="text-sm text-gray-600 mt-2 whitespace-pre-line">{displayInvoice.client.address}</p>
           <div className="mt-3 text-sm text-gray-500 space-y-0.5">
@@ -786,7 +802,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           )}
         </div>
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 border-b border-gray-200 pb-2">{l.billTo}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 border-b border-gray-200 pb-2">{billToLabel}</p>
           <div className="text-sm space-y-1 text-gray-700">
             <p className="font-bold text-gray-900 text-lg">{displayInvoice.client.name}</p>
             <p className="whitespace-pre-line">{displayInvoice.client.address}</p>
@@ -970,7 +986,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       {/* Info Row */}
       <div className="px-16 py-8 grid grid-cols-3 gap-8">
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{l.billTo}</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{billToLabel}</p>
           <p className="font-semibold text-gray-900">{displayInvoice.client.name}</p>
           <p className="text-sm text-gray-600 mt-1 whitespace-pre-line">{displayInvoice.client.address}</p>
           {displayInvoice.client.ice && <p className="text-sm text-gray-500 mt-2">{l.ice}: {displayInvoice.client.ice}</p>}
@@ -1198,7 +1214,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           </div>
         </div>
         <div className="border border-gray-200 rounded p-4">
-          <p className="text-xs font-bold text-gray-400 uppercase mb-2">{l.billTo}</p>
+          <p className="text-xs font-bold text-gray-400 uppercase mb-2">{billToLabel}</p>
           <p className="font-bold">{displayInvoice.client.name}</p>
           <p className="text-xs text-gray-600 mt-1 whitespace-pre-line">{displayInvoice.client.address}</p>
           <div className="mt-3 text-xs text-gray-500">

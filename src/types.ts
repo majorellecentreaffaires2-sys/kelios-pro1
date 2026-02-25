@@ -221,6 +221,7 @@ export interface Invoice {
   companyId: string;
   invoiceNumber: string;
   type: InvoiceType;
+  documentNature?: 'Facture' | 'Devis';
   status: InvoiceStatus;
   date: string;
   dueDate: string;

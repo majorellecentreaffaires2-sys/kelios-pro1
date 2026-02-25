@@ -39,6 +39,9 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
 
   // State
   const [currentType, setCurrentType] = useState<InvoiceType>(initialInvoice?.type || type);
+  const [documentNature, setDocumentNature] = useState<'Facture' | 'Devis'>(
+    initialInvoice?.documentNature || (type === 'Devis' || type === 'Dev' ? 'Devis' : 'Facture')
+  );
   const [client, setClient] = useState<ContactInfo | null>(initialInvoice?.client || null);
   const [date, setDate] = useState(initialInvoice?.date || new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(initialInvoice?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
@@ -69,14 +72,19 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
 
   // Computed Values
   const invoiceNumber = useMemo(() => {
-    if (initialInvoice && initialInvoice.type === currentType) return initialInvoice.invoiceNumber;
-    const count = invoices.filter(i => i.type === currentType).length + 1;
-    const prefix =
-      currentType === 'Devis' || currentType === 'Dev' ? 'DEV' :
-        currentType === 'Proforma' ? 'PRO' :
-          currentType === 'Avoir' ? 'AVO' : 'FAC';
-    return `${prefix}-${new Date().getFullYear()}-${count.toString().padStart(4, '0')}`;
-  }, [invoices, currentType, initialInvoice]);
+    if (initialInvoice && initialInvoice.type === currentType && initialInvoice.documentNature === documentNature)
+      return initialInvoice.invoiceNumber;
+
+    const count = invoices.filter(i => i.type === currentType && i.documentNature === documentNature).length + 1;
+    const year = new Date().getFullYear();
+    const sequence = count.toString().padStart(4, '0');
+
+    // User requested format: 900-devis or 900-facture (prefix-year-count)
+    if (documentNature === 'Devis') {
+      return `900-DEVIS-${year}-${sequence}`;
+    }
+    return `900-FACT-${year}-${sequence}`;
+  }, [invoices, currentType, documentNature, initialInvoice]);
 
   const totals = useMemo(() => {
     let ht = 0, tva = 0;
@@ -123,6 +131,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       companyId: activeCompany.id,
       invoiceNumber,
       type: currentType,
+      documentNature,
       status,
       date,
       dueDate,
@@ -153,6 +162,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
     companyId: activeCompany.id,
     invoiceNumber,
     type: currentType,
+    documentNature,
     status,
     date,
     dueDate,
@@ -183,7 +193,11 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
               {(['Standard', 'Devis', 'Proforma', 'Avoir', 'Batiment', 'Dev'] as InvoiceType[]).map((t) => (
                 <button
                   key={t}
-                  onClick={() => setCurrentType(t)}
+                  onClick={() => {
+                    setCurrentType(t);
+                    if (t === 'Devis') setDocumentNature('Devis');
+                    else if (t === 'Standard') setDocumentNature('Facture');
+                  }}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${currentType === t
                     ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200/50'
                     : 'text-gray-400 hover:text-gray-600'
@@ -194,7 +208,21 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-1">
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex bg-blue-50 p-1 rounded-xl border border-blue-100 shadow-inner">
+              {(['Facture', 'Devis'] as const).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setDocumentNature(n)}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${documentNature === n
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-blue-400 hover:text-blue-600'
+                    }`}
+                >
+                  {n === 'Facture' ? 'Facture' : 'Devis'}
+                </button>
+              ))}
+            </div>
             <p className="text-blue-600 font-bold tracking-widest uppercase text-xs">
               N° {invoiceNumber}
             </p>
@@ -698,47 +726,49 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       </div>
 
       {/* Preview Modal */}
-      {showPreview && previewInvoice && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="font-black text-lg text-gray-800 flex items-center gap-2">
-                <Eye className="w-5 h-5 text-blue-600" /> Aperçu
-              </h3>
-              <div className="flex gap-2">
+      {
+        showPreview && previewInvoice && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="font-black text-lg text-gray-800 flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-blue-600" /> Aperçu
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const oldTitle = document.title;
+                      document.title = `${previewInvoice.invoiceNumber} - ${previewInvoice.client.name}`;
+                      setTimeout(() => {
+                        window.print();
+                        setTimeout(() => { document.title = oldTitle; }, 1000);
+                      }, 500);
+                    }}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-colors flex items-center gap-2"
+                  >
+                    <Printer className="w-4 h-4" /> Imprimer
+                  </button>
+                  <button onClick={() => { setShowPreview(false); setAutoOpenEmail(false); }} className="p-2 hover:bg-gray-200 rounded-lg">
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto p-8 bg-gray-100">
+                <InvoicePreview invoice={previewInvoice} autoOpenEmail={autoOpenEmail} />
+              </div>
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button
-                  onClick={() => {
-                    const oldTitle = document.title;
-                    document.title = `${previewInvoice.invoiceNumber} - ${previewInvoice.client.name}`;
-                    setTimeout(() => {
-                      window.print();
-                      setTimeout(() => { document.title = oldTitle; }, 1000);
-                    }, 500);
-                  }}
-                  className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-colors flex items-center gap-2"
+                  onClick={() => { setShowPreview(false); setAutoOpenEmail(false); }}
+                  className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-colors"
                 >
-                  <Printer className="w-4 h-4" /> Imprimer
-                </button>
-                <button onClick={() => { setShowPreview(false); setAutoOpenEmail(false); }} className="p-2 hover:bg-gray-200 rounded-lg">
-                  <X className="w-5 h-5 text-gray-500" />
+                  Fermer
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-8 bg-gray-100">
-              <InvoicePreview invoice={previewInvoice} autoOpenEmail={autoOpenEmail} />
-            </div>
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => { setShowPreview(false); setAutoOpenEmail(false); }}
-                className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-colors"
-              >
-                Fermer
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
