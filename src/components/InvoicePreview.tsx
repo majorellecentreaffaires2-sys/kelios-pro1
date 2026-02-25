@@ -663,7 +663,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 py-8 flex justify-end">
+      <div className="px-12 py-8 mb-15 flex justify-end">
         <div className="w-80">
           {displayInvoice.type?.toLowerCase() === 'batiment' && (
             <div className="space-y-4 text-xs">
@@ -918,7 +918,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 flex justify-end">
+      <div className="px-12 flex justify-end mb-12">
         <table className="w-72 border border-gray-300">
           <tbody>
             <tr className="border-b border-gray-200">
@@ -1119,7 +1119,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-16 py-10 flex justify-end">
+      <div className="px-16 py-10 flex justify-end mb-12">
         <div className="w-72 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">{l.subtotal}</span>
@@ -1348,7 +1348,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
                     const isEven = sIdx % 2 === 0;
 
                     return (
-                      <tr key={sub.id} className={`border-b border-gray-200 ${isEven ? 'bg-gray-50' : ''}`}>
+                      <tr key={sub.id} className={`border-b border-gray-200 ${isEven ? 'bg-gray-50 ' : ''}`}>
                         <td className="py-2 px-2 border-r border-gray-200 text-gray-500 truncate">{sub.code || '-'}</td>
                         <td className="py-2 px-2 border-r border-gray-200 whitespace-pre-line break-words">{sub.description}</td>
                         <td className="text-center py-2 px-2 border-r border-gray-200">{qty}</td>
@@ -1369,7 +1369,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Summary */}
-      <div className="px-10 py-6 flex justify-between">
+      <div className="px-10 py-6 flex justify-between mb-12">
         {/* VAT Breakdown */}
         {displayInvoice.type?.toLowerCase() === 'batiment' && (
           <div className="text-xs">
