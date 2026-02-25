@@ -166,6 +166,7 @@ export interface InvoiceSubItem {
   taxRate: number;
   ecoContributionCode?: string;
   ecoContributionUnitTtc?: number;
+  isSpacer?: boolean;
 }
 
 export interface InvoiceItem {

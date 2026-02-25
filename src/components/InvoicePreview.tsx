@@ -202,6 +202,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
     displayInvoice.items.forEach(item => {
       item.subItems.forEach(sub => {
+        if (sub.isSpacer) return;
         const price = safeNumber(sub.price);
         const quantity = safeNumber(sub.quantity);
         const taxRate = safeNumber(sub.taxRate);
@@ -591,51 +592,74 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Items Table */}
-      <div>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr style={{ backgroundColor: primaryColor }}>
-              <th className="text-left text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">{l.ref || 'Code'}</th>
-              <th className="text-left text-white text-[10px] font-bold uppercase py-2 px-2 w-[25%]">{l.description}</th>
-              <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[7%]">{l.qty}</th>
-              <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[5%]">{l.unit}</th>
-              <th className="text-right text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">PV HT</th>
-              <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[6%]">{l.discount}</th>
-              <th className="text-right text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">Net HT</th>
-              <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[5%]">{l.vat}</th>
-              <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">Code Eco</th>
-              <th className="text-right text-white text-[10px] font-bold uppercase py-2 px-2 w-[12%]">Mt Eco</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayInvoice.items.map((item, itemIdx) => (
-              item.subItems.map((sub, subIdx) => {
-                const qty = safeNumber(sub.quantity);
-                const price = safeNumber(sub.price);
-                const disc = safeNumber(sub.discount);
-                const tax = safeNumber(sub.taxRate);
-                const netHt = (price * qty) * (1 - disc / 100);
-                const isEven = (itemIdx + subIdx) % 2 === 0;
+      <div className="px-0">
+        {(() => {
+          const blocks: { type: 'items' | 'spacer', data?: any[], id?: string }[] = [];
+          let currentBatch: any[] = [];
 
-                return (
-                  <tr key={sub.id} className={isEven ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="text-left py-3 px-2 border-b border-gray-200 text-[10px] font-medium text-gray-600">{sub.code || '-'}</td>
-                    <td className="text-left py-3 px-2 border-b border-gray-200 text-[10px] font-medium text-gray-900">{sub.description}</td>
-                    <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px]">{qty}</td>
-                    <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{sub.unit}</td>
-                    <td className="text-right py-3 px-2 border-b border-gray-200 text-[10px]">{formatCurrency(price)}</td>
-                    <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{disc > 0 ? `${disc}%` : '-'}</td>
-                    <td className="text-right py-3 px-2 border-b border-gray-200 text-[10px] font-semibold">{formatCurrency(netHt)}</td>
-                    <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{tax}%</td>
-                    <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-500">{sub.ecoContributionCode || '-'}</td>
-                    <td className="text-right py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{sub.ecoContributionUnitTtc ? formatCurrency(sub.ecoContributionUnitTtc) : '-'}</td>
+          displayInvoice.items.forEach(item => {
+            item.subItems.forEach(sub => {
+              if (sub.isSpacer) {
+                if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+                blocks.push({ type: 'spacer', id: sub.id });
+                currentBatch = [];
+              } else {
+                currentBatch.push(sub);
+              }
+            });
+          });
+          if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+
+          return blocks.map((block, bIdx) => {
+            if (block.type === 'spacer') {
+              return <div key={block.id} className="h-8 bg-transparent"></div>;
+            }
+
+            return (
+              <table key={bIdx} className="w-full border-collapse mb-1 table-fixed">
+                <thead>
+                  <tr style={{ backgroundColor: primaryColor }}>
+                    <th className="text-left text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">{l.ref || 'Code'}</th>
+                    <th className="text-left text-white text-[10px] font-bold uppercase py-2 px-2 w-[25%]">{l.description}</th>
+                    <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[7%]">{l.qty}</th>
+                    <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[5%]">{l.unit}</th>
+                    <th className="text-right text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">PV HT</th>
+                    <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[6%]">{l.discount}</th>
+                    <th className="text-right text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">Net HT</th>
+                    <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[5%]">{l.vat}</th>
+                    <th className="text-center text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">Code Eco</th>
+                    <th className="text-right text-white text-[10px] font-bold uppercase py-2 px-2 w-[12%]">Mt Eco</th>
                   </tr>
-                );
-              })
-            ))}
-          </tbody>
-        </table>
+                </thead>
+                <tbody>
+                  {block.data?.map((sub: any, sIdx: number) => {
+                    const qty = safeNumber(sub.quantity);
+                    const price = safeNumber(sub.price);
+                    const disc = safeNumber(sub.discount);
+                    const tax = safeNumber(sub.taxRate);
+                    const netHt = (price * qty) * (1 - disc / 100);
+                    const isEven = sIdx % 2 === 0;
 
+                    return (
+                      <tr key={sub.id} className={isEven ? 'bg-gray-50' : 'bg-white'}>
+                        <td className="text-left py-3 px-2 border-b border-gray-200 text-[10px] font-medium text-gray-600 truncate">{sub.code || '-'}</td>
+                        <td className="text-left py-3 px-2 border-b border-gray-200 text-[10px] font-medium text-gray-900 whitespace-pre-line break-words">{sub.description}</td>
+                        <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px]">{qty}</td>
+                        <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{sub.unit}</td>
+                        <td className="text-right py-3 px-2 border-b border-gray-200 text-[10px]">{formatCurrency(price)}</td>
+                        <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{disc > 0 ? `${disc}%` : '-'}</td>
+                        <td className="text-right py-3 px-2 border-b border-gray-200 text-[10px] font-semibold">{formatCurrency(netHt)}</td>
+                        <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{tax}%</td>
+                        <td className="text-center py-3 px-2 border-b border-gray-200 text-[10px] text-gray-500">{sub.ecoContributionCode || '-'}</td>
+                        <td className="text-right py-3 px-2 border-b border-gray-200 text-[10px] text-gray-600">{sub.ecoContributionUnitTtc ? formatCurrency(sub.ecoContributionUnitTtc) : '-'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            );
+          });
+        })()}
       </div>
 
       {/* Totals */}
@@ -832,41 +856,65 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
       {/* Table */}
       <div className="px-12 py-8">
-        <table className="w-full border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="text-left text-xs font-bold uppercase py-3 px-4 border-b border-gray-300">{l.description}</th>
-              <th className="text-center text-xs font-bold uppercase py-3 px-3 border-b border-gray-300 w-20">{l.qty}</th>
-              <th className="text-right text-xs font-bold uppercase py-3 px-3 border-b border-gray-300 w-28">{l.unitPrice}</th>
-              <th className="text-center text-xs font-bold uppercase py-3 px-3 border-b border-gray-300 w-20">{l.vat}</th>
-              <th className="text-right text-xs font-bold uppercase py-3 px-4 border-b border-gray-300 w-32">{l.total}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayInvoice.items.map((item) => (
-              item.subItems.map((sub) => {
-                const qty = safeNumber(sub.quantity);
-                const price = safeNumber(sub.price);
-                const disc = safeNumber(sub.discount);
-                const tax = safeNumber(sub.taxRate);
-                const netHt = (price * qty) * (1 - disc / 100);
+        {(() => {
+          const blocks: { type: 'items' | 'spacer', data?: any[], id?: string }[] = [];
+          let currentBatch: any[] = [];
 
-                return (
-                  <tr key={sub.id} className="border-b border-gray-200">
-                    <td className="py-4 px-4">
-                      <p className="text-sm">{sub.description}</p>
-                      {sub.code && <p className="text-xs text-gray-500 italic">{sub.code}</p>}
-                    </td>
-                    <td className="text-center py-4 px-3 text-sm">{qty}</td>
-                    <td className="text-right py-4 px-3 text-sm">{formatCurrency(price)}</td>
-                    <td className="text-center py-4 px-3 text-sm">{tax}%</td>
-                    <td className="text-right py-4 px-4 text-sm font-semibold">{formatCurrency(netHt)}</td>
+          displayInvoice.items.forEach(item => {
+            item.subItems.forEach(sub => {
+              if (sub.isSpacer) {
+                if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+                blocks.push({ type: 'spacer', id: sub.id });
+                currentBatch = [];
+              } else {
+                currentBatch.push(sub);
+              }
+            });
+          });
+          if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+
+          return blocks.map((block, bIdx) => {
+            if (block.type === 'spacer') {
+              return <div key={block.id} className="h-8"></div>;
+            }
+
+            return (
+              <table key={bIdx} className="w-full border border-gray-300 mb-6 table-fixed">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-left text-xs font-bold uppercase py-3 px-4 border-b border-gray-300 w-[45%]">{l.description}</th>
+                    <th className="text-center text-xs font-bold uppercase py-3 px-3 border-b border-gray-300 w-[10%]">{l.qty}</th>
+                    <th className="text-right text-xs font-bold uppercase py-3 px-3 border-b border-gray-300 w-[15%]">{l.unitPrice}</th>
+                    <th className="text-center text-xs font-bold uppercase py-3 px-3 border-b border-gray-300 w-[10%]">{l.vat}</th>
+                    <th className="text-right text-xs font-bold uppercase py-3 px-4 border-b border-gray-300 w-[20%]">{l.total}</th>
                   </tr>
-                );
-              })
-            ))}
-          </tbody>
-        </table>
+                </thead>
+                <tbody>
+                  {block.data?.map((sub: any) => {
+                    const qty = safeNumber(sub.quantity);
+                    const price = safeNumber(sub.price);
+                    const disc = safeNumber(sub.discount);
+                    const tax = safeNumber(sub.taxRate);
+                    const netHt = (price * qty) * (1 - disc / 100);
+
+                    return (
+                      <tr key={sub.id} className="border-b border-gray-200">
+                        <td className="py-4 px-4 whitespace-pre-line break-words text-sm">
+                          <p className="font-semibold">{sub.description}</p>
+                          {sub.code && <p className="text-xs text-gray-400 italic mt-1">{sub.code}</p>}
+                        </td>
+                        <td className="text-center py-4 px-3 text-sm">{qty}</td>
+                        <td className="text-right py-4 px-3 text-sm">{formatCurrency(price)}</td>
+                        <td className="text-center py-4 px-3 text-sm">{tax}%</td>
+                        <td className="text-right py-4 px-4 text-sm font-semibold">{formatCurrency(netHt)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            );
+          });
+        })()}
       </div>
 
       {/* Totals */}
@@ -1011,39 +1059,63 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
       {/* Table */}
       <div className="px-16">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b-2 border-gray-900">
-              <th className="text-left text-xs font-semibold uppercase tracking-wider py-4 text-gray-500">{l.description}</th>
-              <th className="text-center text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-20">{l.qty}</th>
-              <th className="text-right text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-28">{l.unitPrice}</th>
-              <th className="text-right text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-28">{l.total}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayInvoice.items.map((item) => (
-              item.subItems.map((sub) => {
-                const qty = safeNumber(sub.quantity);
-                const price = safeNumber(sub.price);
-                const disc = safeNumber(sub.discount);
-                const netHt = (price * qty) * (1 - disc / 100);
+        {(() => {
+          const blocks: { type: 'items' | 'spacer', data?: any[], id?: string }[] = [];
+          let currentBatch: any[] = [];
 
-                return (
-                  <tr key={sub.id} className="border-b border-gray-100">
-                    <td className="py-5">
-                      <p className="font-medium">{sub.description}</p>
-                      {sub.code && <p className="text-xs text-gray-400 mt-1">{sub.code}</p>}
-                      {disc > 0 && <p className="text-xs text-green-600 mt-1">-{disc}% remise</p>}
-                    </td>
-                    <td className="text-center py-5 text-gray-600">{qty} {sub.unit}</td>
-                    <td className="text-right py-5 text-gray-600">{formatCurrency(price)}</td>
-                    <td className="text-right py-5 font-semibold">{formatCurrency(netHt)}</td>
+          displayInvoice.items.forEach(item => {
+            item.subItems.forEach(sub => {
+              if (sub.isSpacer) {
+                if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+                blocks.push({ type: 'spacer', id: sub.id });
+                currentBatch = [];
+              } else {
+                currentBatch.push(sub);
+              }
+            });
+          });
+          if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+
+          return blocks.map((block, bIdx) => {
+            if (block.type === 'spacer') {
+              return <div key={block.id} className="h-8"></div>;
+            }
+
+            return (
+              <table key={bIdx} className="w-full mb-8 table-fixed">
+                <thead>
+                  <tr className="border-b-2 border-gray-900">
+                    <th className="text-left text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-[55%]">{l.description}</th>
+                    <th className="text-center text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-[10%]">{l.qty}</th>
+                    <th className="text-right text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-[15%]">{l.unitPrice}</th>
+                    <th className="text-right text-xs font-semibold uppercase tracking-wider py-4 text-gray-500 w-[20%]">{l.total}</th>
                   </tr>
-                );
-              })
-            ))}
-          </tbody>
-        </table>
+                </thead>
+                <tbody>
+                  {block.data?.map((sub: any) => {
+                    const qty = safeNumber(sub.quantity);
+                    const price = safeNumber(sub.price);
+                    const disc = safeNumber(sub.discount);
+                    const netHt = (price * qty) * (1 - disc / 100);
+
+                    return (
+                      <tr key={sub.id} className="border-b border-gray-100">
+                        <td className="py-5 break-words">
+                          <p className="font-medium whitespace-pre-line">{sub.description}</p>
+                          {sub.code && <p className="text-xs text-gray-400 mt-1">{sub.code}</p>}
+                          {disc > 0 && <p className="text-xs text-green-600 mt-1">-{disc}% remise</p>}
+                        </td>
+                        <td className="text-center py-5 text-gray-600 truncate">{qty} {sub.unit}</td>
+                        <td className="text-right py-5 text-gray-600 truncate">{formatCurrency(price)}</td>
+                        <td className="text-right py-5 font-semibold truncate">{formatCurrency(netHt)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            );
+          });
+        })()}
       </div>
 
       {/* Totals */}
@@ -1228,48 +1300,72 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
       {/* Table with all details */}
       <div className="px-10">
-        <table className="w-full text-xs border border-gray-300">
-          <thead>
-            <tr style={{ backgroundColor: primaryColor }} className="text-white">
-              <th className="text-left py-2 px-2 font-semibold border-r border-white/20">Réf</th>
-              <th className="text-left py-2 px-2 font-semibold border-r border-white/20 w-[35%]">{l.description}</th>
-              <th className="text-center py-2 px-2 font-semibold border-r border-white/20">{l.qty}</th>
-              <th className="text-center py-2 px-2 font-semibold border-r border-white/20">{l.unit}</th>
-              <th className="text-right py-2 px-2 font-semibold border-r border-white/20">P.U. HT</th>
-              <th className="text-center py-2 px-2 font-semibold border-r border-white/20">{l.discount}</th>
-              <th className="text-right py-2 px-2 font-semibold border-r border-white/20">Montant HT</th>
-              <th className="text-center py-2 px-2 font-semibold border-r border-white/20">{l.vat}</th>
-              <th className="text-right py-2 px-2 font-semibold">Montant TTC</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayInvoice.items.map((item, itemIdx) => (
-              item.subItems.map((sub, subIdx) => {
-                const qty = safeNumber(sub.quantity);
-                const price = safeNumber(sub.price);
-                const disc = safeNumber(sub.discount);
-                const tax = safeNumber(sub.taxRate);
-                const netHt = (price * qty) * (1 - disc / 100);
-                const ttc = netHt * (1 + tax / 100);
-                const isEven = (itemIdx + subIdx) % 2 === 0;
+        {(() => {
+          const blocks: { type: 'items' | 'spacer', data?: any[], id?: string }[] = [];
+          let currentBatch: any[] = [];
 
-                return (
-                  <tr key={sub.id} className={`border-b border-gray-200 ${isEven ? 'bg-gray-50' : ''}`}>
-                    <td className="py-2 px-2 border-r border-gray-200 text-gray-500">{sub.code || '-'}</td>
-                    <td className="py-2 px-2 border-r border-gray-200">{sub.description}</td>
-                    <td className="text-center py-2 px-2 border-r border-gray-200">{qty}</td>
-                    <td className="text-center py-2 px-2 border-r border-gray-200 text-gray-500">{sub.unit}</td>
-                    <td className="text-right py-2 px-2 border-r border-gray-200">{formatCurrency(price)}</td>
-                    <td className="text-center py-2 px-2 border-r border-gray-200">{disc > 0 ? `${disc}%` : '-'}</td>
-                    <td className="text-right py-2 px-2 border-r border-gray-200 font-medium">{formatCurrency(netHt)}</td>
-                    <td className="text-center py-2 px-2 border-r border-gray-200">{tax}%</td>
-                    <td className="text-right py-2 px-2 font-semibold">{formatCurrency(ttc)}</td>
+          displayInvoice.items.forEach(item => {
+            item.subItems.forEach(sub => {
+              if (sub.isSpacer) {
+                if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+                blocks.push({ type: 'spacer', id: sub.id });
+                currentBatch = [];
+              } else {
+                currentBatch.push(sub);
+              }
+            });
+          });
+          if (currentBatch.length > 0) blocks.push({ type: 'items', data: currentBatch });
+
+          return blocks.map((block, bIdx) => {
+            if (block.type === 'spacer') {
+              return <div key={block.id} className="h-8"></div>;
+            }
+
+            return (
+              <table key={bIdx} className="w-full text-xs border border-gray-300 mb-6 table-fixed">
+                <thead>
+                  <tr style={{ backgroundColor: primaryColor }} className="text-white">
+                    <th className="text-left py-2 px-2 font-semibold border-r border-white/20 w-[8%]">Réf</th>
+                    <th className="text-left py-2 px-2 font-semibold border-r border-white/20 w-[35%]">{l.description}</th>
+                    <th className="text-center py-2 px-2 font-semibold border-r border-white/20 w-[7%]">{l.qty}</th>
+                    <th className="text-center py-2 px-2 font-semibold border-r border-white/20 w-[7%]">{l.unit}</th>
+                    <th className="text-right py-2 px-2 font-semibold border-r border-white/20 w-[8%]">P.U. HT</th>
+                    <th className="text-center py-2 px-2 font-semibold border-r border-white/20 w-[7%]">{l.discount}</th>
+                    <th className="text-right py-2 px-2 font-semibold border-r border-white/20 w-[10%]">Mt HT</th>
+                    <th className="text-center py-2 px-2 font-semibold border-r border-white/20 w-[8%]">{l.vat}</th>
+                    <th className="text-right py-2 px-2 font-semibold w-[12%]">Mt TTC</th>
                   </tr>
-                );
-              })
-            ))}
-          </tbody>
-        </table>
+                </thead>
+                <tbody>
+                  {block.data?.map((sub: any, sIdx: number) => {
+                    const qty = safeNumber(sub.quantity);
+                    const price = safeNumber(sub.price);
+                    const disc = safeNumber(sub.discount);
+                    const tax = safeNumber(sub.taxRate);
+                    const netHt = (price * qty) * (1 - disc / 100);
+                    const ttc = netHt * (1 + tax / 100);
+                    const isEven = sIdx % 2 === 0;
+
+                    return (
+                      <tr key={sub.id} className={`border-b border-gray-200 ${isEven ? 'bg-gray-50' : ''}`}>
+                        <td className="py-2 px-2 border-r border-gray-200 text-gray-500 truncate">{sub.code || '-'}</td>
+                        <td className="py-2 px-2 border-r border-gray-200 whitespace-pre-line break-words">{sub.description}</td>
+                        <td className="text-center py-2 px-2 border-r border-gray-200">{qty}</td>
+                        <td className="text-center py-2 px-2 border-r border-gray-200 text-gray-500 truncate">{sub.unit}</td>
+                        <td className="text-right py-2 px-2 border-r border-gray-200">{formatCurrency(price)}</td>
+                        <td className="text-center py-2 px-2 border-r border-gray-200">{disc > 0 ? `${disc}%` : '-'}</td>
+                        <td className="text-right py-2 px-2 border-r border-gray-200 font-medium">{formatCurrency(netHt)}</td>
+                        <td className="text-center py-2 px-2 border-r border-gray-200">{tax}%</td>
+                        <td className="text-right py-2 px-2 font-semibold">{formatCurrency(ttc)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            );
+          });
+        })()}
       </div>
 
       {/* Summary */}

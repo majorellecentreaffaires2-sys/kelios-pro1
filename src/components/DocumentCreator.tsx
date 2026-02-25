@@ -89,6 +89,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
   const totals = useMemo(() => {
     let ht = 0, tva = 0;
     items.forEach(item => {
+      if (item.isSpacer) return;
       const lineHt = item.price * item.quantity * (1 - (item.discount || 0) / 100);
       const lineTva = lineHt * (item.taxRate / 100);
       ht += lineHt;
@@ -107,6 +108,19 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       unit: 'U',
       taxRate: 20,
       discount: 0
+    }]);
+  };
+
+  const handleAddSpacer = () => {
+    setItems([...items, {
+      id: Math.random().toString(36).substr(2, 9),
+      description: '--- ESPACE VIDE ---',
+      quantity: 0,
+      price: 0,
+      unit: '-',
+      taxRate: 0,
+      discount: 0,
+      isSpacer: true
     }]);
   };
 
@@ -452,42 +466,57 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {items.map((item) => {
-                const netHt = item.price * item.quantity * (1 - (item.discount || 0) / 100);
+                const netHt = item.isSpacer ? 0 : item.price * item.quantity * (1 - (item.discount || 0) / 100);
                 return (
-                  <tr key={item.id} className="group hover:bg-blue-50/50">
+                  <tr key={item.id} className={`group ${item.isSpacer ? 'bg-gray-50/30' : 'hover:bg-blue-50/50'}`}>
                     {/* Code */}
                     <td className="px-3 py-2">
                       <input
                         type="text"
-                        className="w-full bg-transparent outline-none font-medium text-gray-600 px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
-                        placeholder="ART-001"
-                        value={item.code || ''}
+                        disabled={item.isSpacer}
+                        className={`w-full bg-transparent outline-none font-medium px-2 py-1 rounded transition-all ${item.isSpacer ? 'text-gray-300 italic' : 'text-gray-600 hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200'}`}
+                        placeholder={item.isSpacer ? '-' : "ART-001"}
+                        value={item.isSpacer ? '' : (item.code || '')}
                         onChange={e => updateItem(item.id, 'code', e.target.value)}
                       />
                     </td>
                     {/* Description */}
                     <td className="px-3 py-2">
-                      <input
-                        type="text"
-                        className="w-full bg-transparent outline-none font-medium text-gray-900 px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
+                      <textarea
+                        rows={1}
+                        className={`w-full bg-transparent outline-none font-medium px-2 py-1 rounded transition-all resize-none overflow-hidden ${item.isSpacer
+                            ? 'text-gray-400 font-bold text-center italic border-none'
+                            : 'text-gray-900 hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 border-b border-dashed border-gray-300'
+                          }`}
                         placeholder="Désignation..."
                         value={item.description}
-                        onChange={e => updateItem(item.id, 'description', e.target.value)}
+                        onChange={e => {
+                          updateItem(item.id, 'description', e.target.value);
+                          // Auto-resize
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
+                        onFocus={e => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
                       />
                     </td>
                     {/* Quantity */}
                     <td className="px-3 py-2">
                       <input
                         type="number"
-                        className="w-full bg-transparent outline-none font-medium text-center px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
-                        value={item.quantity}
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none font-medium text-center px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all disabled:opacity-0"
+                        value={item.isSpacer ? 0 : item.quantity}
                         onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                       />
                     </td>
                     {/* Unit */}
                     <td className="px-3 py-2">
                       <select
-                        className="w-full bg-transparent outline-none font-medium text-center uppercase text-xs cursor-pointer hover:bg-gray-50 rounded px-2 py-1"
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none font-medium text-center uppercase text-xs cursor-pointer hover:bg-gray-50 rounded px-2 py-1 disabled:opacity-0"
                         value={item.unit || 'U'}
                         onChange={e => updateItem(item.id, 'unit', e.target.value)}
                       >
@@ -499,14 +528,16 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                         <option value="h">h</option>
                         <option value="Jours">Jours</option>
                         <option value="Forfait">Forfait</option>
+                        <option value="-">-</option>
                       </select>
                     </td>
                     {/* Price */}
                     <td className="px-3 py-2">
                       <input
                         type="number"
-                        className="w-full bg-transparent outline-none font-medium text-right px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
-                        value={item.price}
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none font-medium text-right px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all disabled:opacity-0"
+                        value={item.isSpacer ? 0 : item.price}
                         onChange={e => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
                       />
                     </td>
@@ -514,34 +545,38 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                     <td className="px-3 py-2">
                       <input
                         type="number"
-                        className="w-full bg-transparent outline-none font-medium text-center text-orange-600 px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-orange-200 transition-all"
-                        value={item.discount || 0}
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none font-medium text-center text-orange-600 px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-orange-200 transition-all disabled:opacity-0"
+                        value={item.isSpacer ? 0 : (item.discount || 0)}
                         onChange={e => updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)}
                       />
                     </td>
                     {/* Net HT (Calculated) */}
                     <td className="px-3 py-2 text-right font-bold text-gray-700 bg-gray-50/50">
-                      {netHt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {item.isSpacer ? '' : netHt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     {/* TVA */}
                     <td className="px-3 py-2">
                       <select
-                        className="w-full bg-transparent outline-none text-center text-xs cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-all"
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none text-center text-xs cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-all disabled:opacity-0"
                         value={item.taxRate}
                         onChange={e => updateItem(item.id, 'taxRate', parseFloat(e.target.value))}
                       >
                         {activeCompany.defaultVatRates.map(r => (
                           <option key={r} value={r}>{r}%</option>
                         ))}
+                        <option value="0">0%</option>
                       </select>
                     </td>
                     {/* Eco Code */}
                     <td className="px-3 py-2">
                       <input
                         type="text"
-                        className="w-full bg-transparent outline-none text-center text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none text-center text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all disabled:opacity-0"
                         placeholder="-"
-                        value={item.ecoContributionCode || ''}
+                        value={item.isSpacer ? '' : (item.ecoContributionCode || '')}
                         onChange={e => updateItem(item.id, 'ecoContributionCode', e.target.value)}
                       />
                     </td>
@@ -549,8 +584,9 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                     <td className="px-3 py-2">
                       <input
                         type="number"
-                        className="w-full bg-transparent outline-none text-right text-xs px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
-                        value={item.ecoContributionUnitTtc || 0}
+                        disabled={item.isSpacer}
+                        className="w-full bg-transparent outline-none text-right text-xs px-2 py-1 rounded hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all disabled:opacity-0"
+                        value={item.isSpacer ? 0 : (item.ecoContributionUnitTtc || 0)}
                         onChange={e => updateItem(item.id, 'ecoContributionUnitTtc', parseFloat(e.target.value) || 0)}
                       />
                     </td>
@@ -570,12 +606,18 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
           </table>
         </div>
 
-        <div className="p-4 bg-gray-50 border-t border-gray-100">
+        <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-4">
           <button
             onClick={handleAddItem}
             className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wide hover:text-blue-700"
           >
             <Plus className="w-4 h-4" /> Ajouter une ligne
+          </button>
+          <button
+            onClick={handleAddSpacer}
+            className="flex items-center gap-2 text-gray-500 font-bold text-xs uppercase tracking-wide hover:text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200"
+          >
+            <Plus className="w-4 h-4" /> Ajouter un espace
           </button>
         </div>
       </div>
