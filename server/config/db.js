@@ -269,7 +269,7 @@ export async function initDb() {
       id VARCHAR(255) PRIMARY KEY DEFAULT (UUID()),
       companyId VARCHAR(255) NOT NULL UNIQUE,
       enableAutoReminder TINYINT(1) DEFAULT 0,
-      reminderDays JSON DEFAULT '[7,14,30]',
+      reminderDays JSON,
       reminderEmailSubject VARCHAR(255),
       reminderEmailBody TEXT,
       enableDueDateNotification TINYINT(1) DEFAULT 0,
