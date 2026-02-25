@@ -31,7 +31,16 @@ const upload = multer({
     }
 });
 
-router.post('/', authenticateToken, upload.single('file'), async (req, res) => {
+router.post('/', authenticateToken, (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ error: `Erreur Multer: ${err.message}` });
+        } else if (err) {
+            return res.status(400).json({ error: err.message });
+        }
+        next();
+    });
+}, async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
     try {
         const url = `/uploads/${req.file.filename}`;

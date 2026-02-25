@@ -89,6 +89,14 @@ app.get('*', (req, res) => {
   res.sendFile('index.html', { root: 'dist' });
 });
 
+// --- GLOBAL ERROR HANDLER ---
+app.use((err, req, res, next) => {
+  console.error('💥 Error:', err.message);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error'
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`
   🚀 Server Majorlle Pro is running
