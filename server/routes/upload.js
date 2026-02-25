@@ -9,7 +9,7 @@ import 'dotenv/config';
 
 const router = express.Router();
 
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -37,13 +37,14 @@ router.post('/', authenticateToken, upload.single('file'), async (req, res) => {
         const url = `/uploads/${req.file.filename}`;
 
         // Log upload to DB
-        const id = crypto.randomUUID();
+        const id = crypto.randomBytes(16).toString('hex');
         await pool.query(
             'INSERT INTO uploads (id, userId, companyId, filename, originalName, mimeType, size, path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [id, req.user.id, req.body.companyId || null, req.file.filename, req.file.originalname, req.file.mimetype, req.file.size, url]
         ).catch(err => console.error('[Upload] DB Log failed:', err.message));
 
-        res.json({ success: true, url });
+        const fullUrl = process.env.APP_URL ? `${process.env.APP_URL}${url}` : url;
+        res.json({ success: true, url: fullUrl });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

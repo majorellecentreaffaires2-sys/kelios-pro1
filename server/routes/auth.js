@@ -131,7 +131,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
         // Store hashed token in DB — never store raw tokens
         const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-        const id = crypto.randomUUID();
+        const id = crypto.randomBytes(16).toString('hex'); // Fallback for randomUUID
 
         await pool.query('DELETE FROM password_resets WHERE userId = ?', [user.id]);
         await pool.query(
