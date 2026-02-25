@@ -427,6 +427,8 @@ const App: React.FC = () => {
     } catch (e) {
       console.error(e);
     }
+    // Refresh portfolio so showOnboarding is correctly set
+    refreshPortfolio();
   };
 
   const handleRegister = (newUser: any, token: string) => {
@@ -570,7 +572,12 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
       if (adminUpdate && adminUpdate.password) {
-        await api.updateUser(user.id, { password: adminUpdate.password });
+        try {
+          await api.updateUser(user.id, { password: adminUpdate.password });
+        } catch (pwErr) {
+          console.warn('[Onboarding] Password update skipped:', pwErr);
+          // Non-blocking — continue onboarding even if password update fails
+        }
       }
       const newCompany = await api.createCompany(company);
       if (!newCompany || !newCompany.id) throw new Error("Échec création société");
@@ -591,8 +598,9 @@ const App: React.FC = () => {
         setActiveTab('dashboard');
       }
     } catch (e) {
-      console.error(e);
-      alert("Erreur lors de la configuration initiale.");
+      console.error('[Onboarding Error]', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`Erreur lors de la configuration initiale :\n\n${msg}\n\nVérifiez la console pour plus de détails.`);
     } finally {
       setIsLoading(false);
     }
@@ -757,7 +765,10 @@ const App: React.FC = () => {
   }
 
   if (view === 'onboarding_steps') {
-    return <OnboardingSteps user={user} onFinish={() => setView('app')} />;
+    return <OnboardingSteps user={user} onFinish={async () => {
+      await refreshPortfolio(); // This sets showOnboarding=true if no company exists
+      setView('app');
+    }} />;
   }
 
   if (view === 'checkout') {
