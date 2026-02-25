@@ -53,7 +53,7 @@ router.post('/invoices/:id/public-link', authenticateToken, async (req, res) => 
             [id, req.params.id, rawToken, expiresAt]
         );
 
-        const publicUrl = `${process.env.APP_URL || 'http://localhost:5173'}?view=${rawToken}`;
+        const publicUrl = `${process.env.APP_URL || 'https://gfd-logiciel.com'}?view=${rawToken}`;
         res.json({ success: true, url: publicUrl, token: rawToken });
     } catch (e) {
         console.error('[Public] Generate link error:', e);

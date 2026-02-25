@@ -139,10 +139,10 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
             [id, user.id, hashedToken, expiresAt]
         );
 
-        const resetUrl = `${process.env.APP_URL || 'http://localhost:5173'}?reset=${rawToken}`;
+        const resetUrl = `${process.env.APP_URL || 'https://gfd-logiciel.com'}?reset=${rawToken}`;
 
         transporter.sendMail({
-            from: process.env.SMTP_FROM || '"Majorlle Pro" <noreply@majorlle.pro>',
+            from: process.env.SMTP_FROM || '" GFD" <noreply@majorlle.pro>',
             to: email,
             subject: '🔐 Réinitialisation de votre mot de passe — Majorlle Pro',
             html: `

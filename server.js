@@ -101,6 +101,7 @@ app.listen(PORT, () => {
   console.log(`
   🚀 Server Majorlle Pro is running
   🔹 Port: ${PORT}
+  🔹 URL: ${process.env.APP_URL || 'Not Set (using fallback)'}
   🔹 Environment: ${process.env.NODE_ENV || 'development'}
   `);
 });
