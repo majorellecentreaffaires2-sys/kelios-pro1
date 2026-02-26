@@ -663,7 +663,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 py-8 mb-15 flex justify-end">
+      <div className="px-12 py-10 mb-30 flex justify-end">
         <div className="w-80">
           {displayInvoice.type?.toLowerCase() === 'batiment' && (
             <div className="space-y-4 text-xs">

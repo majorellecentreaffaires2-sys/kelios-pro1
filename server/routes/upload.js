@@ -53,7 +53,8 @@ router.post('/', authenticateToken, (req, res, next) => {
         ).catch(err => console.error('[Upload] DB Log failed:', err.message));
 
         const fullUrl = process.env.APP_URL ? `${process.env.APP_URL}${url}` : url;
-        res.json({ success: true, url: fullUrl });
+        // Return both relative and full URL, favoring relative for 'url' to fix previews
+        res.json({ success: true, url: url, absoluteUrl: fullUrl });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

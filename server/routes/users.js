@@ -43,32 +43,59 @@ router.post('/subscription/pay', authenticateToken, async (req, res) => {
 });
 
 router.put('/users/:id', authenticateToken, async (req, res) => {
-    const { username, email, password, role, subscriptionStatus } = req.body;
+    const { username, email, password, role, subscriptionStatus, avatarUrl } = req.body;
     const isSelf = req.user.id === req.params.id;
     const isSuperAdmin = req.user.role === 'SuperAdmin';
 
     if (!isSelf && !isSuperAdmin) return res.sendStatus(403);
 
     try {
-        let updateData = {};
+        const updates = [];
+        const values = [];
+
+        // Allow users to update their own avatar
+        if (avatarUrl !== undefined) {
+            updates.push('avatarUrl = ?');
+            values.push(avatarUrl);
+        }
+
         if (password) {
-            updateData.password = await bcrypt.hash(password, 12);
+            updates.push('password = ?');
+            values.push(await bcrypt.hash(password, 12));
         }
 
         if (isSuperAdmin) {
-            if (username) updateData.username = username;
-            if (email) updateData.email = email;
-            if (role) updateData.role = role;
-            if (subscriptionStatus) updateData.subscriptionStatus = subscriptionStatus;
+            if (username !== undefined) {
+                updates.push('username = ?');
+                values.push(username);
+            }
+            if (email !== undefined) {
+                updates.push('email = ?');
+                values.push(email);
+            }
+            if (role !== undefined) {
+                updates.push('role = ?');
+                values.push(role);
+            }
+            if (subscriptionStatus !== undefined) {
+                updates.push('subscriptionStatus = ?');
+                values.push(subscriptionStatus);
+            }
         } else if (isSelf) {
-            // Users can only update their own username/email if permitted, 
-            // but for now let's keep it simple
-            if (username) updateData.username = username;
-            if (email) updateData.email = email;
+            // Regular users can update their own username/email
+            if (username !== undefined) {
+                updates.push('username = ?');
+                values.push(username);
+            }
+            if (email !== undefined) {
+                updates.push('email = ?');
+                values.push(email);
+            }
         }
 
-        if (Object.keys(updateData).length > 0) {
-            await pool.query('UPDATE users SET ? WHERE id = ?', [updateData, req.params.id]);
+        if (updates.length > 0) {
+            values.push(req.params.id);
+            await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
         }
 
         res.json({ success: true });

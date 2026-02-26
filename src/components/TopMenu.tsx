@@ -10,6 +10,8 @@ interface TopMenuProps {
   trialDaysLeft?: number | null;
   onUpgrade?: () => void;
   user?: any;
+  appActiveTab?: string;
+  isProgramMode?: boolean;
 }
 
 interface RibbonButton {
@@ -19,7 +21,7 @@ interface RibbonButton {
   size?: 'large' | 'small';
 }
 
-const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, user }) => {
+const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, user, appActiveTab, isProgramMode }) => {
   const [activeTab, setActiveTab] = useState('accueil');
   const [showProfile, setShowProfile] = useState(false);
 
@@ -171,10 +173,11 @@ const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, u
                   <p className="text-xs font-bold text-slate-900 truncate">{user?.email}</p>
                 </div>
                 <button
-                  onClick={() => { onAction('account'); setShowProfile(false); }}
+                  onClick={() => { onAction(appActiveTab === 'account' ? 'dashboard' : 'account'); setShowProfile(false); }}
                   className="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
                 >
-                  <Settings className="w-4 h-4" /> Paramètres Profil
+                  {appActiveTab === 'account' ? <Home className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
+                  {appActiveTab === 'account' ? (isProgramMode ? 'Retour Tableau' : 'Retour Portfolio') : 'Paramètres Profil'}
                 </button>
                 <div className="h-px bg-slate-100 my-2" />
                 <button

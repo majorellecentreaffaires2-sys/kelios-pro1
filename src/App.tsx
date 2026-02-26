@@ -37,6 +37,7 @@ import OnboardingSteps from './components/OnboardingSteps';
 import Checkout from './components/Checkout';
 import PublicInvoiceView from './components/PublicInvoiceView';
 import ForgotPassword from './components/ForgotPassword';
+import AccountSettings from './components/AccountSettings';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -65,6 +66,7 @@ const App: React.FC = () => {
   const [backgroundEmailQueue, setBackgroundEmailQueue] = useState<Invoice[]>([]);
   const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const bgPdfContainerRef = useRef<HTMLDivElement>(null);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   useEffect(() => {
     // ── Intercept special URL params FIRST (before auth check) ──
@@ -251,7 +253,7 @@ const App: React.FC = () => {
 
   // Command Palette & Configurable Shortcuts Registry
   const executeShortcut = useCallback(async (actionId: string) => {
-    if (!activeCompany && actionId !== 'exit') return;
+    if (!activeCompany && !['exit', 'account', 'dashboard'].includes(actionId)) return;
 
     switch (actionId) {
       case 'create':
@@ -387,6 +389,9 @@ const App: React.FC = () => {
       case 'new-client':
         setActiveTab('clients');
         break;
+      case 'account':
+        setActiveTab('account');
+        break;
       default:
         console.log(`Shortcut action ${actionId} triggered`);
     }
@@ -446,6 +451,17 @@ const App: React.FC = () => {
     setIsProgramMode(false);
     setActiveCompany(null);
     setView('login');
+  };
+
+  const handleRefreshUser = async () => {
+    try {
+      const res = await api.verifySession();
+      if (res.success) {
+        setUser(res.user);
+      }
+    } catch (e) {
+      console.error('Failed to refresh user data', e);
+    }
   };
 
   useEffect(() => {
@@ -725,6 +741,7 @@ const App: React.FC = () => {
         onCreateClient={(c) => api.createClient({ ...c, companyId: activeCompany!.id }).then(() => loadCompanyData())}
         onUpdateClient={(id, updates) => api.updateClient(id, updates).then(() => loadCompanyData())}
       />;
+      case 'account': return <AccountSettings user={user} onUpdateUser={handleRefreshUser} onLogout={handleLogout} />;
       default: return <Dashboard invoices={invoices} shortcuts={shortcuts.filter(s => s.enabled)} onShortcut={executeShortcut} />;
     }
   };
@@ -810,12 +827,14 @@ const App: React.FC = () => {
         trialDaysLeft={trialDaysLeft}
         onUpgrade={() => setView('checkout')}
         user={user}
+        appActiveTab={activeTab}
+        isProgramMode={isProgramMode}
       />
 
       <div className="flex flex-1 overflow-hidden">
         {isProgramMode && <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} companies={companies} activeCompany={activeCompany} onSelectCompany={handleEnterCompany} onExit={() => setIsProgramMode(false)} />}
         <main className="flex-1 p-4 overflow-y-auto bg-[var(--app-bg)]">
-          {!isProgramMode ? (
+          {!isProgramMode && activeTab !== 'account' ? (
             <div className="max-w-7xl mx-auto space-y-12 py-10">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div className="animate-in slide-in-from-left-5 duration-700">

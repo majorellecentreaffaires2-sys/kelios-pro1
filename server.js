@@ -6,6 +6,12 @@ import xss from 'xss-clean';
 import hpp from 'hpp';
 import rateLimit from 'express-rate-limit';
 import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configurations & Database
 import { initDb } from './server/config/db.js';
@@ -35,7 +41,9 @@ initDb().catch(err => {
 // --- MIDDLEWARE ---
 app.set('trust proxy', 1);
 app.use(helmet({
-  contentSecurityPolicy: false, // Allow external assets if needed, or configure strictly
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false
 }));
 app.use(cors());
 app.use(xss());
@@ -53,7 +61,15 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 // --- STATIC FILES & SECURITY ---
-app.use(express.static('dist'));
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Middleware to log requests to static files for debugging
+app.use((req, res, next) => {
+  if (req.path.startsWith('/uploads/')) {
+    console.log(`📂 Request for upload: ${req.path}`);
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   const sensitiveFiles = ['.env', '.git', 'server.js', 'package.json', 'node_modules'];
@@ -80,8 +96,19 @@ app.use('/api/automation', automationRoutes);
 app.use('/api', publicRoutes);  // /api/view/:token and /api/invoices/:id/public-link
 app.use('/api/upload', uploadRoutes);
 
-// Serve uploaded files (logos etc.)
-app.use('/uploads', express.static('uploads'));
+// Diagnostic route
+app.get('/api/check-uploads', (req, res) => {
+  const dir = path.join(__dirname, 'uploads');
+  try {
+    const files = fs.readdirSync(dir);
+    res.json({ exists: true, path: dir, files });
+  } catch (e) {
+    res.json({ exists: false, error: e.message, path: dir });
+  }
+});
+
+// Serve uploaded files (logos etc.) with absolute path
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Fallback for SPA
 app.get('*', (req, res) => {
