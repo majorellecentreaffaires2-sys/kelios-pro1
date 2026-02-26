@@ -2,8 +2,8 @@
 
 > **Project**: Majorlle Pro — Full-Stack Invoice & ERP SaaS Platform  
 > **Stack**: React 19 + TypeScript (Vite) · Node.js/Express · MySQL · Gemini AI · Nodemailer  
-> **Last updated**: 2026-02-24  
-> **Progress**: `█████████░░░░░░░░░░░` 6 / 15 features complete
+> **Last updated**: 2026-02-26  
+> **Progress**: `████████████░░░░░░░` 8 / 15 features complete
 
 ---
 
@@ -16,7 +16,8 @@
 | ✅ 3 | **Public Invoice / Quote Links** | `server/routes/public.js` · `src/components/PublicInvoiceView.tsx` | 80-char crypto token, rate-limited, IP audit log, ownership check, double-response prevention |
 | ✅ 4 | **New DB Tables (auto-created)** | `server/config/db.js` | `password_resets`, `invoice_tokens`, `uploads`, `reminder_settings` |
 | ✅ 5 | **Users table upgraded** | `server/config/db.js` | Added: `stripeCustomerId`, `stripeSubscriptionId`, `planInterval`, `avatarUrl`, `createdAt` |
-| ✅ 6 | **Logo / File Upload** | `server/routes/upload.js` · `src/components/Coordonnees.tsx` | Multer, 5MB limit, type validation, local storage with public URL |
+| ✅ 6 | **Logo / File Upload** | `server/routes/upload.js` · `src/components/Coordonnees.tsx` | Multer, 5MB limit, production-ready relative paths, CORS/Helmet compatible |
+| ✅ 7 | **User Profile / Account Settings** | `src/components/AccountSettings.tsx` | Accessible from Portfolio & Dashboard via TopMenu, profile/password updates |
 
 > 🗄️ **VPS SQL**: See `.agent/VPS_SQL_MIGRATIONS.md` — restart server to auto-apply, or paste SQL manually.
 
@@ -79,14 +80,6 @@ npm install node-cron
 
 ---
 
-#### 5. User Profile / Account Settings Page
-**Status**: Users cannot update their own profile (name, email, password, avatar). No access point in UI.
-
-- `src/components/AccountSettings.tsx` (new)
-- Accessible from the TopMenu avatar/username button
-- Fields: username, email, change password (with current password confirmation), avatar upload
-- Reuse `api.updateUser()` already exists in `apiClient.ts`
-- Wire avatar upload to the `/api/upload` endpoint (after file upload is done)
 
 ---
 
@@ -136,9 +129,9 @@ npm install node-cron
 | ✅ Done | — | Users Table Upgraded | — | — |
 | ❌ Next | 🔴 P0 | Real Payment Gateway (Stripe) | 3–5 days | **Launch blocker** |
 | ❌ Next | 🔴 P0 | Production Email (Resend) | 4 hours | **Deliverability** |
-| ❌ Next | 🟡 P1 | Logo/File Upload | 1 day | High UX value |
+| ✅ Done | — | Logo/File Upload | — | — |
+| ✅ Done | — | User Profile / Account Settings | — | — |
 | ❌ Next | 🟡 P1 | Cron Jobs (recurring, reminders, trial) | 2 days | Core automation |
-| ❌ Next | 🟡 P1 | User Profile / Account Settings | 1 day | Essential |
 | ❌ Next | 🟡 P1 | Plan Limits Enforcement | 2 days | Business model |
 | ❌ Next | 🟢 P2 | Notification Bell | 1 day | Good UX |
 | ❌ Next | 🟢 P2 | Admin Revenue Dashboard | 1 day | Business insight |
@@ -162,7 +155,6 @@ server/
 
 src/
   components/
-    AccountSettings.tsx    # 🟡 User profile page
     UpgradePrompt.tsx      # 🟡 Plan limit upgrade modal
     NotificationBell.tsx   # 🟢 In-app notifications
     LandingPage.tsx        # 🟢 Marketing landing page
