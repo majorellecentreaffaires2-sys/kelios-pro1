@@ -3,7 +3,7 @@
 > **Project**: Majorlle Pro — Full-Stack Invoice & ERP SaaS Platform  
 > **Stack**: React 19 + TypeScript (Vite) · Node.js/Express · MySQL · Gemini AI · Nodemailer  
 > **Last updated**: 2026-02-26  
-> **Progress**: `████████████░░░░░░░` 8 / 15 features complete
+> **Progress**: `███████████░░░░░░░░░` 8 / 16 features complete
 
 ---
 
@@ -116,6 +116,12 @@ npm install node-cron
 - Full account export as ZIP (all invoices as PDF + clients CSV + company data)
 - Account deletion with cascade (removes all companies, invoices, clients)
 
+#### 11. Responsive PWA (Mobile App Experience)
+- Integrate `vite-plugin-pwa` for offline support and "Install" prompt
+- Create `manifest.json` (icons, theme color, splash screen)
+- Mobile UI audit: Responsive tables, touch-friendly buttons, mobile sidebar
+- Service Worker caching for fast load times
+
 ---
 
 ## 📋 Updated Priority Action Plan
@@ -137,6 +143,7 @@ npm install node-cron
 | ❌ Next | 🟢 P2 | Admin Revenue Dashboard | 1 day | Business insight |
 | ❌ Next | 🟢 P3 | Landing Page | 2–3 days | Marketing |
 | ❌ Next | 🟢 P3 | GDPR Export / Account Deletion | 1 day | Legal |
+| ❌ Next | 🟢 P2 | Responsive PWA | 2 days | Mobile users |
 
 ---
 
@@ -189,6 +196,9 @@ RESEND_API_KEY=re_...
 ## 📦 NPM Packages Still to Install
 
 ```bash
+# PWA (Mobile App)
+npm install vite-plugin-pwa -D
+
 # Payment (when doing Stripe)
 npm install stripe
 
