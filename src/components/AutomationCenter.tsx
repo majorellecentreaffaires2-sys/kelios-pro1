@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Company, Invoice, ContactInfo, ReminderSettings, RecurringSchedule, InvoiceTemplate } from '../types';
+import { Company, Invoice, ContactInfo, ReminderSettings, RecurringSchedule, InvoiceTemplate, AuditEntry } from '../types';
 import {
   Bell, Mail, Calendar, Clock, RefreshCw, Send, Settings, AlertTriangle,
   CheckCircle, XCircle, Plus, Trash2, Edit2, X, Save, Play, Pause,
-  FileText, Users, TrendingUp, BarChart3, ChevronRight, Zap
+  FileText, Users, TrendingUp, BarChart3, ChevronRight, Zap, History, ShieldCheck
 } from 'lucide-react';
 import { apiClient } from '../apiClient';
 
@@ -15,7 +15,7 @@ interface AutomationCenterProps {
   onRefresh: () => void;
 }
 
-type TabType = 'overview' | 'reminders' | 'recurring' | 'reports';
+type TabType = 'overview' | 'reminders' | 'recurring' | 'reports' | 'history';
 
 const AutomationCenter: React.FC<AutomationCenterProps> = ({
   company,
@@ -31,6 +31,7 @@ const AutomationCenter: React.FC<AutomationCenterProps> = ({
   const [editingSchedule, setEditingSchedule] = useState<RecurringSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState<AuditEntry[]>([]);
 
   // Load data
   useEffect(() => {
@@ -40,12 +41,17 @@ const AutomationCenter: React.FC<AutomationCenterProps> = ({
   const loadData = async () => {
     setLoading(true);
     try {
-      const [settingsRes, schedulesRes] = await Promise.all([
+      const [settingsRes, schedulesRes, logsRes] = await Promise.all([
         apiClient.get(`/api/reminder-settings?companyId=${company.id}`),
-        apiClient.get(`/api/recurring-schedules?companyId=${company.id}`)
+        apiClient.get(`/api/recurring-schedules?companyId=${company.id}`),
+        apiClient.get(`/api/logs?companyId=${company.id}`)
       ]);
       setReminderSettings(settingsRes);
       setRecurringSchedules(schedulesRes);
+      // Filter for automation-related logs
+      setHistoryLogs(((logsRes as any) || []).filter((l: AuditEntry) =>
+        l.action === 'AUTOMATION_EXECUTED' || l.action === 'TRIAL_WARNING'
+      ));
     } catch (error) {
       console.error('Error loading automation data:', error);
     }
@@ -245,7 +251,8 @@ const AutomationCenter: React.FC<AutomationCenterProps> = ({
           { id: 'overview', label: 'Vue d\'ensemble', icon: Zap },
           { id: 'reminders', label: 'Rappels Auto', icon: Bell },
           { id: 'recurring', label: 'Factures Récurrentes', icon: RefreshCw },
-          { id: 'reports', label: 'Rapports Mensuels', icon: BarChart3 }
+          { id: 'reports', label: 'Rapports Mensuels', icon: BarChart3 },
+          { id: 'history', label: 'Historique', icon: History }
         ].map(tab => (
           <button
             key={tab.id}
@@ -660,6 +667,71 @@ const AutomationCenter: React.FC<AutomationCenterProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* History Tab */}
+        {activeTab === 'history' && (
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-black uppercase tracking-tighter">Historique des Automatisations</h2>
+              <button
+                onClick={loadData}
+                className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all flex items-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" /> Actualiser
+              </button>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-blue-50 bg-white">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-blue-50/50 text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                    <th className="px-6 py-4">Action</th>
+                    <th className="px-6 py-4">Détails de l'événement</th>
+                    <th className="px-6 py-4">Exécuté le</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-blue-50/30">
+                  {historyLogs.length === 0 ? (
+                    <tr><td colSpan={3} className="py-20 text-center text-gray-300 italic">Aucune activité enregistrée récemment.</td></tr>
+                  ) : (
+                    historyLogs.map(log => (
+                      <tr key={log.id} className="hover:bg-blue-50/10 transition-all group">
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase text-blue-600 tracking-wider">
+                              {log.entity === 'INVOICE' ? 'Génération Facture' :
+                                log.entity === 'REMINDER' ? 'Envoi Rappel' :
+                                  log.entity === 'REPORT' ? 'Envoi Rapport' : log.action}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-xs font-bold text-gray-800">{log.details}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-[11px] font-medium">{new Date(log.timestamp).toLocaleString('fr-FR')}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-blue-900">Moteur d'automatisation actif</p>
+                <p className="text-[10px] text-blue-600 uppercase font-black">Tous les systèmes sont opérationnels</p>
+              </div>
             </div>
           </div>
         )}

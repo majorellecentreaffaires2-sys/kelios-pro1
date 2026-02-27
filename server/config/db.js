@@ -281,8 +281,12 @@ export async function initDb() {
     )`);
 
     // --- MIGRATIONS ---
+    await addColumn('clients', 'swiftCode', 'VARCHAR(50)');
+    await addColumn('clients', 'createdAt', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
+
     await addColumn('invoices', 'documentNature', "VARCHAR(50) DEFAULT 'Facture'");
     await addColumn('invoices', 'subject', 'TEXT');
+    await addColumn('invoices', 'createdAt', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
     await addColumn('users', 'stripeCustomerId', 'VARCHAR(255) NULL');
     await addColumn('users', 'stripeSubscriptionId', 'VARCHAR(255) NULL');
     await addColumn('users', 'planInterval', "ENUM('monthly','yearly') DEFAULT 'monthly'");

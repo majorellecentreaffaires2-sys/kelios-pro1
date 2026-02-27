@@ -8,9 +8,10 @@ interface DashboardProps {
   invoices: Invoice[];
   shortcuts?: Shortcut[];
   onShortcut?: (actionId: string) => void;
+  user: any;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ invoices, shortcuts = [], onShortcut }) => {
+const Dashboard: React.FC<DashboardProps> = ({ invoices, shortcuts = [], onShortcut, user }) => {
   const calculateTotalTTC = (inv: Invoice) => {
     let totalHt = 0;
     let totalTva = 0;
@@ -104,12 +105,26 @@ const Dashboard: React.FC<DashboardProps> = ({ invoices, shortcuts = [], onShort
           <h1 className="text-5xl font-black tracking-tighter uppercase italic text-gray-900 leading-none">Sales Monitoring</h1>
           <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-2">Pilotage financier & conversion</p>
         </div>
-        <div className="text-right glass px-6 py-3 rounded-2xl border-blue-100 flex gap-4 items-center">
-          <div className="text-right">
-            <p className="text-[9px] font-black text-blue-500 uppercase">Tenant Connecté</p>
-            <p className="text-sm font-black text-gray-800">Système Majorlle</p>
+        <div className="flex gap-4 no-print">
+          {(user?.role === 'Admin' || user?.role === 'SuperAdmin') && (
+            <div
+              onClick={() => onShortcut?.('automation')}
+              className="text-right glass px-6 py-3 rounded-2xl border-blue-100 flex gap-4 items-center cursor-pointer hover:bg-blue-50/50 transition-all"
+            >
+              <div className="text-right">
+                <p className="text-[9px] font-black text-blue-500 uppercase">Automatisation</p>
+                <p className="text-sm font-black text-gray-800">Actif & Sécurisé</p>
+              </div>
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+            </div>
+          )}
+          <div className="text-right glass px-6 py-3 rounded-2xl border-blue-100 flex gap-4 items-center">
+            <div className="text-right">
+              <p className="text-[9px] font-black text-blue-500 uppercase">Tenant Connecté</p>
+              <p className="text-sm font-black text-gray-800">Système Majorlle</p>
+            </div>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           </div>
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
         </div>
       </header>
 

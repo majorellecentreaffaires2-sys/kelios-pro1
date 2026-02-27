@@ -1,0 +1,29 @@
+﻿
+=== ALL USERS & LIMIT RESOLUTION ===
+
+  User    : simoibaali2004@gmail.com (0fcsjuh9n)
+  DB Plan : monthly_200
+  DB Status: trial
+  ÔåÆ planKey: trial
+  ÔåÆ maxCompanies: 1
+  ÔåÆ companies in DB: 6
+  ÔåÆ WOULD BE BLOCKED: true
+  
+
+  User    : marouanfolane@gmail.com (9q07j37dh)
+  DB Plan : monthly_200
+  DB Status: trial
+  ÔåÆ planKey: trial
+  ÔåÆ maxCompanies: 1
+  ÔåÆ companies in DB: 3
+  ÔåÆ WOULD BE BLOCKED: true
+  
+
+  User    : niz.benlahser@gmail.com (c64zujbov)
+  DB Plan : monthly_200
+  DB Status: active
+  ÔåÆ planKey: monthly_200
+  ÔåÆ maxCompanies: 5
+  ÔåÆ companies in DB: 1
+  ÔåÆ WOULD BE BLOCKED: false
+  

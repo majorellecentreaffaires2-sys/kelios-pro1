@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../config/db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { checkPlanLimits } from '../middleware/checkPlanLimits.js';
 
 const router = express.Router();
 
@@ -23,19 +24,48 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, checkPlanLimits('company'), async (req, res) => {
     const c = req.body;
     try {
-        await pool.query('INSERT INTO companies SET ?', {
-            ...c,
+        // Explicit mapping to avoid null userId or extra fields
+        const companyData = {
+            id: c.id || Math.random().toString(36).substr(2, 9),
             userId: req.user.id,
+            name: c.name,
+            address: c.address,
+            email: c.email,
+            phone: c.phone,
+            website: c.website,
+            ice: c.ice,
+            ifNum: c.ifNum,
+            rc: c.rc,
+            taxePro: c.taxePro,
+            tp: c.tp,
+            bp: c.bp,
+            rcs: c.rcs,
+            siren: c.siren,
+            naf: c.naf,
+            tvaIntra: c.tvaIntra,
+            logoUrl: c.logoUrl,
+            currency: c.currency || 'MAD',
             defaultVatRates: JSON.stringify(c.defaultVatRates || [20, 14, 10, 7, 0]),
-            accountingPlan: JSON.stringify(c.accountingPlan || []),
+            numberingFormat: c.numberingFormat || 'FAC-{YYYY}-{000}',
+            primaryColor: c.primaryColor || '#007AFF',
             active: 1,
+            accountingPlan: JSON.stringify(c.accountingPlan || []),
+            country: c.country || 'maroc',
+            bankAccount: c.bankAccount,
+            bankName: c.bankName,
+            swiftCode: c.swiftCode,
             companyType: c.companyType || 'Standard'
-        });
-        res.json(c);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        };
+
+        await pool.query('INSERT INTO companies SET ?', companyData);
+        res.json(companyData);
+    } catch (e) {
+        console.error('Create company error:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 router.put('/:id', authenticateToken, async (req, res) => {

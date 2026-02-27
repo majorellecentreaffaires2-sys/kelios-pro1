@@ -28,9 +28,9 @@ const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onFinish, user }) => 
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
     const plans = [
-        { id: '1_month', name: 'Pack Mensuel', price: '200 DH', saved: '', desc: 'Flexibilité totale.' },
-        { id: '3_months', name: 'Pack Trimestriel', price: '500 DH', saved: 'Économisez 100 DH', desc: 'Le choix populaire.' },
-        { id: '1_year', name: 'Pack Annuel', price: '2000 DH', saved: 'Économisez 400 DH', desc: 'Meilleure valeur.' },
+        { id: 'trial', name: 'Free Trial (Essai)', price: '0 DH', saved: '', desc: 'Pour débuter.', limits: '1 Société, 5 Factures/mois' },
+        { id: '1_month', name: 'Pack Mensuel', price: '200 DH', saved: '', desc: 'Flexibilité totale.', limits: '5 Sociétés, Illimité' },
+        { id: '1_year', name: 'Pack Annuel', price: '2000 DH', saved: 'Économisez 400 DH', desc: 'Meilleure valeur.', limits: '15 Sociétés, Illimité' },
     ];
 
     return (
@@ -77,10 +77,10 @@ const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onFinish, user }) => 
                                 </div>
 
                                 <ul className="text-left text-sm text-slate-500 space-y-3 mb-8 w-full border-t border-slate-100 pt-6">
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> Multi-sociétés (Max 5)</li>
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> Facturation illimitée</li>
+                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> {plan.limits.split(',')[0]}</li>
+                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> {plan.limits.split(',')[1]}</li>
                                     <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> Intelligence Artificielle</li>
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> Support VIP 24/7</li>
+                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> {plan.id === 'trial' ? 'Support Classique' : 'Support VIP 24/7'}</li>
                                 </ul>
 
                                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlan === plan.id ? 'border-blue-600 bg-blue-600 shadow-lg shadow-blue-200' : 'border-slate-300 group-hover:border-slate-400'}`}>

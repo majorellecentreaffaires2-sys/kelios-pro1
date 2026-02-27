@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Settings,
   LayoutDashboard,
+  CalendarClock,
 } from "lucide-react";
 import { Company } from "../types";
 
@@ -23,6 +24,7 @@ interface SidebarProps {
   activeCompany: Company | null;
   onSelectCompany: (company: Company) => void;
   onExit: () => void;
+  user: any;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -32,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeCompany,
   onSelectCompany,
   onExit,
+  user,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -50,6 +53,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <ShoppingCart className="w-5 h-5" />,
     },
     { id: "shortcuts", label: "Raccourcis IA", icon: <Zap className="w-5 h-5" /> },
+    ...(user?.role === 'Admin' || user?.role === 'SuperAdmin' ? [
+      { id: "automation", label: "Automatisation", icon: <CalendarClock className="w-5 h-5" /> }
+    ] : []),
   ];
 
   return (

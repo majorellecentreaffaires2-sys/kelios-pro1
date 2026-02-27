@@ -63,20 +63,13 @@ RESEND_API_KEY=re_xxxxx
 ### 🟡 P1 — Important (Core Product Quality)
 
 #### 3. Cron Jobs / Automation Engine
-**Status**: `recurring_schedules` and `reminder_settings` tables exist and UI lets users configure them — but **nothing processes them**. No invoices are auto-created. No reminders are sent.
-
+**Status**: ✅ **Implemented**.
 - `server/jobs/cronJobs.js` — 4 jobs:
   - Daily 07:00 → Process recurring invoice schedules → auto-create invoices
   - Daily 08:00 → Trial expiry warnings (D-3 and D-1 emails)
   - Daily 09:00 → Overdue invoice reminders (based on `reminder_settings`)
   - Weekly Sun 02:00 → Cleanup expired/used password reset tokens
-- Wire into `server.js` with `initCronJobs()`
-
-```bash
-npm install node-cron
-```
-
-> 📖 Full instructions: `.agent/skills/cron-jobs/SKILL.md`
+- Wired into `server.js` with `initCronJobs()`
 
 ---
 
@@ -137,7 +130,7 @@ npm install node-cron
 | ❌ Next | 🔴 P0 | Production Email (Resend) | 4 hours | **Deliverability** |
 | ✅ Done | — | Logo/File Upload | — | — |
 | ✅ Done | — | User Profile / Account Settings | — | — |
-| ❌ Next | 🟡 P1 | Cron Jobs (recurring, reminders, trial) | 2 days | Core automation |
+| ✅ Done | — | Cron Jobs (recurring, reminders, trial) | — | — |
 | ❌ Next | 🟡 P1 | Plan Limits Enforcement | 2 days | Business model |
 | ❌ Next | 🟢 P2 | Notification Bell | 1 day | Good UX |
 | ❌ Next | 🟢 P2 | Admin Revenue Dashboard | 1 day | Business insight |

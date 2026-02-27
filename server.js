@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // Configurations & Database
 import { initDb } from './server/config/db.js';
+import { initCronJobs } from './server/jobs/cronJobs.js';
 
 // Routes
 import authRoutes from './server/routes/auth.js';
@@ -33,7 +34,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // --- INITIALIZATION ---
-initDb().catch(err => {
+initDb().then(() => {
+  initCronJobs();
+}).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
 });
@@ -104,6 +107,33 @@ app.get('/api/check-uploads', (req, res) => {
     res.json({ exists: true, path: dir, files });
   } catch (e) {
     res.json({ exists: false, error: e.message, path: dir });
+  }
+});
+
+// Debug route for Cron Jobs (REMOVE BEFORE PRODUCTION)
+app.get('/api/debug/run-cron', async (req, res) => {
+  const { processRecurringSchedules, processReminders, processTrialWarnings, cleanupOldTokens } = await import('./server/jobs/cronJobs.js');
+
+  const results = {
+    recurring: 'running...',
+    reminders: 'running...',
+    trial: 'running...',
+    cleanup: 'running...'
+  };
+
+  try {
+    await processRecurringSchedules();
+    results.recurring = 'done';
+    await processReminders();
+    results.reminders = 'done';
+    await processTrialWarnings();
+    results.trial = 'done';
+    await cleanupOldTokens();
+    results.cleanup = 'done';
+
+    res.json({ success: true, results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

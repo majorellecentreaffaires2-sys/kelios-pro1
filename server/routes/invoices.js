@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../config/db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { checkPlanLimits } from '../middleware/checkPlanLimits.js';
 import transporter from '../config/email.js';
 
 const router = express.Router();
@@ -24,7 +25,7 @@ router.get('/', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, checkPlanLimits('invoice'), async (req, res) => {
     const i = req.body;
     try {
         const invoiceData = {

@@ -26,7 +26,7 @@ import Coordonnees from './components/Coordonnees';
 import Login from './components/Login';
 import UserManager from './components/UserManager';
 import GlobalClientManager from './components/GlobalClientManager';
-import { api, apiClient } from './apiClient';
+import { api, apiClient, LimitReachedError } from './apiClient';
 import { LogOut, Shield, Loader2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { sendInvoiceEmailWithPdf } from './utils/emailService';
 import InvoicePreview from './components/InvoicePreview';
@@ -38,6 +38,7 @@ import Checkout from './components/Checkout';
 import PublicInvoiceView from './components/PublicInvoiceView';
 import ForgotPassword from './components/ForgotPassword';
 import AccountSettings from './components/AccountSettings';
+import UpgradePrompt from './components/UpgradePrompt';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -67,6 +68,13 @@ const App: React.FC = () => {
   const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const bgPdfContainerRef = useRef<HTMLDivElement>(null);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+
+  // Subscription limit state
+  const [limitPrompt, setLimitPrompt] = useState<{ isOpen: boolean; message: string; resource: 'company' | 'invoice' | 'client' }>({
+    isOpen: false,
+    message: '',
+    resource: 'invoice'
+  });
 
   useEffect(() => {
     // ── Intercept special URL params FIRST (before auth check) ──
@@ -120,7 +128,8 @@ const App: React.FC = () => {
     checkSession();
   }, []);
 
-  const refreshPortfolio = async () => {
+  const refreshPortfolio = async (currentUser?: any) => {
+    const activeUser = currentUser || user;
     try {
       const companyData = await api.getCompanies();
       setCompanies(companyData || []);
@@ -141,13 +150,16 @@ const App: React.FC = () => {
       setAllInvoicesMap(invMap);
 
       // Load users if SuperAdmin
-      if (user?.role === 'SuperAdmin') {
+      if (activeUser?.role === 'SuperAdmin') {
         const [userData, clientData] = await Promise.all([
           api.getUsers(),
           api.getAllClients()
         ]);
         setAvailableUsers(userData || []);
         setAllGlobalClients(clientData || []);
+      } else {
+        setAvailableUsers([]);
+        setAllGlobalClients([]);
       }
     } catch (e) {
       console.error("Failed to refresh portfolio", e);
@@ -432,8 +444,8 @@ const App: React.FC = () => {
     } catch (e) {
       console.error(e);
     }
-    // Refresh portfolio so showOnboarding is correctly set
-    refreshPortfolio();
+    // Refresh portfolio with the fresh user data
+    refreshPortfolio(loggedUser);
   };
 
   const handleRegister = (newUser: any, token: string) => {
@@ -450,6 +462,8 @@ const App: React.FC = () => {
     setUser(null);
     setIsProgramMode(false);
     setActiveCompany(null);
+    setPortfolioTab('companies');
+    setActiveTab('dashboard');
     setView('login');
   };
 
@@ -526,8 +540,12 @@ const App: React.FC = () => {
       await loadCompanyData();
       refreshPortfolio();
       setActiveTab('ventes');
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Erreur lors de l'enregistrement.");
+    } catch (e: any) {
+      if (e instanceof LimitReachedError) {
+        setLimitPrompt({ isOpen: true, message: e.message, resource: 'invoice' });
+      } else {
+        alert(e instanceof Error ? e.message : "Erreur lors de l'enregistrement.");
+      }
     }
   };
 
@@ -613,12 +631,42 @@ const App: React.FC = () => {
       } else {
         setActiveTab('dashboard');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('[Onboarding Error]', e);
-      const msg = e instanceof Error ? e.message : String(e);
-      alert(`Erreur lors de la configuration initiale :\n\n${msg}\n\nVérifiez la console pour plus de détails.`);
+      if (e instanceof LimitReachedError) {
+        setLimitPrompt({ isOpen: true, message: e.message, resource: 'company' });
+      } else {
+        const msg = e instanceof Error ? e.message : String(e);
+        alert(`Erreur lors de la configuration initiale :\n\n${msg}\n\nVérifiez la console pour plus de détails.`);
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateClient = async (c: ContactInfo) => {
+    try {
+      await api.createClient({ ...c, companyId: activeCompany!.id });
+      await loadCompanyData();
+    } catch (e: any) {
+      if (e instanceof LimitReachedError) {
+        setLimitPrompt({ isOpen: true, message: e.message, resource: 'client' });
+      } else {
+        alert(e.message || "Erreur lors de la création du client.");
+      }
+    }
+  };
+
+  const handleCreateCompany = async (c: Company) => {
+    try {
+      await api.createCompany(c);
+      await refreshPortfolio();
+    } catch (e: any) {
+      if (e instanceof LimitReachedError) {
+        setLimitPrompt({ isOpen: true, message: e.message, resource: 'company' });
+      } else {
+        alert(e.message || "Erreur lors de la création de la société.");
+      }
     }
   };
 
@@ -628,7 +676,7 @@ const App: React.FC = () => {
     }
 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard invoices={invoices} shortcuts={shortcuts.filter(s => s.enabled)} onShortcut={executeShortcut} />;
+      case 'dashboard': return <Dashboard user={user} invoices={invoices} shortcuts={shortcuts.filter(s => s.enabled)} onShortcut={executeShortcut} />;
       case 'create': return <DocumentCreator
         key={activeTab}
         type={editingInvoice?.type || 'Standard'}
@@ -640,7 +688,7 @@ const App: React.FC = () => {
         templates={templates}
         initialInvoice={editingInvoice || undefined}
         onCancel={() => { setEditingInvoice(null); setActiveTab('ventes'); }}
-        onCreateClient={(c) => api.createClient({ ...c, companyId: activeCompany!.id }).then(() => loadCompanyData())}
+        onCreateClient={handleCreateClient}
         onUpdateClient={(id, updates) => api.updateClient(id, updates).then(() => loadCompanyData())}
       />;
       case 'history': return <InvoiceHistory invoices={invoices} onDelete={handleDeleteInvoice} onEdit={(i) => { setEditingInvoice(i); setActiveTab('create'); }} onSave={handleSaveInvoice} onSendEmail={handleSendEmail} />;
@@ -663,11 +711,23 @@ const App: React.FC = () => {
             validatedAt: undefined,
             payments: []
           };
-          api.createInvoice(duplicated).then(() => {
-            loadCompanyData();
-            setEditingInvoice(duplicated);
-            setActiveTab('create');
-          });
+          api.createInvoice(duplicated)
+            .then(() => {
+              loadCompanyData();
+              setEditingInvoice(duplicated);
+              setActiveTab('create');
+            })
+            .catch((e: any) => {
+              if (e.message === 'LIMIT_REACHED' || e.error === 'LIMIT_REACHED') {
+                setLimitPrompt({
+                  isOpen: true,
+                  message: e.message || 'Limite de factures atteinte.',
+                  resource: 'invoice'
+                });
+              } else {
+                alert(e.message || "Erreur lors de la duplication.");
+              }
+            });
         }}
         onRefresh={loadCompanyData}
         onUpdateStatus={(id, status) => {
@@ -681,7 +741,7 @@ const App: React.FC = () => {
       case 'clients': return <ClientManager
         clients={clients}
         invoices={invoices}
-        onCreate={(c) => api.createClient({ ...c, companyId: activeCompany!.id }).then(() => loadCompanyData())}
+        onCreate={handleCreateClient}
         onUpdate={(id, updates) => api.updateClient(id, updates).then(() => loadCompanyData())}
         onDelete={(id) => api.deleteClient(id).then(() => loadCompanyData())}
       />;
@@ -708,7 +768,7 @@ const App: React.FC = () => {
       case 'coordonnees': return <Coordonnees company={activeCompany!} onUpdateCompany={handleUpdateCompany} />;
       case 'reporting': return <Reporting invoices={invoices} company={activeCompany!} clients={clients} />;
       case 'payments': return <PaymentsManager invoices={invoices} company={activeCompany!} onUpdateInvoice={(inv) => { api.updateInvoice(inv).then(() => { loadCompanyData(); refreshPortfolio(); }); }} />;
-      case 'companies': return <CompanyManager companies={companies} onCreate={(c) => api.createCompany(c).then(() => refreshPortfolio())} onSelect={handleEnterCompany} onUpdate={handleUpdateCompany} activeId={activeCompany?.id} />;
+      case 'companies': return <CompanyManager companies={companies} onCreate={handleCreateCompany} onSelect={handleEnterCompany} onUpdate={handleUpdateCompany} activeId={activeCompany?.id} />;
       case 'audit': return <AuditLogViewer companyId={activeCompany?.id} />;
       case 'shortcuts': return <ShortcutManager shortcuts={shortcuts} onSave={(s) => api.saveShortcuts(activeCompany!.id, user.id, s).then(() => loadCompanyData())} />;
       case 'tools': return <Calculator />;
@@ -725,7 +785,7 @@ const App: React.FC = () => {
         invoices={invoices}
         templates={templates}
         onCancel={() => setActiveTab('ventes')}
-        onCreateClient={(c) => api.createClient({ ...c, companyId: activeCompany!.id }).then(() => loadCompanyData())}
+        onCreateClient={handleCreateClient}
         onUpdateClient={(id, updates) => api.updateClient(id, updates).then(() => loadCompanyData())}
       />;
       case 'facture': return <DocumentCreator
@@ -738,7 +798,7 @@ const App: React.FC = () => {
         invoices={invoices}
         templates={templates}
         onCancel={() => setActiveTab('ventes')}
-        onCreateClient={(c) => api.createClient({ ...c, companyId: activeCompany!.id }).then(() => loadCompanyData())}
+        onCreateClient={handleCreateClient}
         onUpdateClient={(id, updates) => api.updateClient(id, updates).then(() => loadCompanyData())}
       />;
       case 'account': return <AccountSettings user={user} onUpdateUser={handleRefreshUser} onLogout={handleLogout} />;
@@ -832,7 +892,7 @@ const App: React.FC = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {isProgramMode && <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} companies={companies} activeCompany={activeCompany} onSelectCompany={handleEnterCompany} onExit={() => setIsProgramMode(false)} />}
+        {isProgramMode && <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} companies={companies} activeCompany={activeCompany} onSelectCompany={handleEnterCompany} onExit={() => setIsProgramMode(false)} />}
         <main className="flex-1 p-4 overflow-y-auto bg-[var(--app-bg)]">
           {!isProgramMode && activeTab !== 'account' ? (
             <div className="max-w-7xl mx-auto space-y-12 py-10">
@@ -889,11 +949,11 @@ const App: React.FC = () => {
                 {/* Visual Accent */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-100/30 blur-[100px] rounded-full pointer-events-none"></div>
 
-                {portfolioTab === 'companies' ? (
+                {portfolioTab === 'companies' || user?.role !== 'SuperAdmin' ? (
                   <CompanyManager
                     companies={companies}
                     users={user?.role === 'SuperAdmin' ? availableUsers : undefined}
-                    onCreate={(c) => api.createCompany(c).then(() => refreshPortfolio())}
+                    onCreate={handleCreateCompany}
                     onSelect={handleEnterCompany}
                     onUpdate={handleUpdateCompany}
                     activeId={activeCompany?.id}
@@ -945,6 +1005,17 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      <UpgradePrompt
+        isOpen={limitPrompt.isOpen}
+        onClose={() => setLimitPrompt({ ...limitPrompt, isOpen: false })}
+        onUpgrade={() => {
+          setView('checkout');
+          setLimitPrompt({ ...limitPrompt, isOpen: false });
+        }}
+        message={limitPrompt.message}
+        resource={limitPrompt.resource}
+      />
     </div>
   );
 };

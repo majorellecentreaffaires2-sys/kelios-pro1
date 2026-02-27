@@ -4,6 +4,22 @@ const API_BASE = '/api';
 
 const getAuthToken = () => localStorage.getItem('mj_token');
 
+/** Custom error for subscription plan limit violations. Use instanceof to detect. */
+export class LimitReachedError extends Error {
+  readonly error = 'LIMIT_REACHED';
+  readonly resource: string;
+  readonly limit: number;
+  readonly plan: string;
+
+  constructor(message: string, resource = '', limit = 0, plan = 'trial') {
+    super(message);
+    this.name = 'LimitReachedError';
+    this.resource = resource;
+    this.limit = limit;
+    this.plan = plan;
+  }
+}
+
 const request = async <T>(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
@@ -33,6 +49,14 @@ const request = async <T>(
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
+    if (error.error === 'LIMIT_REACHED') {
+      throw new LimitReachedError(
+        error.message || 'Limite du plan atteinte.',
+        error.resource || '',
+        error.limit || 0,
+        error.plan || 'trial'
+      );
+    }
     const errorMessage = error.message || error.error || `Erreur serveur : ${res.status}`;
     throw new Error(errorMessage);
   }
