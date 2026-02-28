@@ -85,16 +85,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
         {/* Left Side: Branding & Value Proposition */}
         <div className="hidden lg:flex w-1/2 flex-col justify-between p-20 relative overflow-hidden">
           <div className="relative z-20">
-            <div className="flex items-center gap-4 mb-16 animate-in slide-in-from-left-5 duration-500">
-              <div className="w-14 h-14 bg-blue-600 rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-blue-200 border border-blue-400/20">
-                <ShieldCheck className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-extrabold text-slate-900 tracking-tighter uppercase leading-none">
-                  Majorlle<span className="text-blue-600">.pro</span>
-                </h2>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-1">Infrastructure Cloud</p>
-              </div>
+            <div className="w-56 h-46 bg-white/10 backdrop-blur-md flex items-center justify-center  border border-white/20 overflow-hidden shrink-0">
+              <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
             </div>
 
             <div className="max-w-xl space-y-10 mt-12">
@@ -136,13 +128,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
           <div className="w-full max-w-[460px] bg-white rounded-[3.5rem] p-10 md:p-14 border border-slate-200 shadow-2xl shadow-slate-200/50 animate-in zoom-in-95 duration-700">
 
             <div className="text-center space-y-4 mb-12">
-              <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200">
-                  <ShieldCheck className="w-7 h-7 text-white" />
+              <div className="lg:hidden flex items-center justify-center mb-10">
+                <div className="w-20 h-20 bg-white flex items-center justify-center shadow-xl shadow-blue-100 border border-slate-100 overflow-hidden">
+                  <img src="/logo.jpeg" className="w-full h-full object-cover" alt="Logo" />
                 </div>
-                <h2 className="text-2xl font-extrabold text-slate-900 tracking-tighter uppercase italic">
-                  Majorlle<span className="text-blue-600">.pro</span>
-                </h2>
               </div>
               <h1 className="text-4xl font-extrabold text-slate-900 tracking-tighter">
                 {step === 'login' ? 'Accès Système' : 'Vérification'}

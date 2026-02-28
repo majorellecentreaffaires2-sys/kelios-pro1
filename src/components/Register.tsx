@@ -70,13 +70,10 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogin }) =>
                 {/* Left Side: Features & Value */}
                 <div className="hidden lg:flex w-5/12 flex-col justify-between p-20 bg-white/40 backdrop-blur-md border-r border-slate-200 relative overflow-hidden">
                     <div className="relative z-20">
-                        <div className="flex items-center gap-4 mb-20 animate-in slide-in-from-left-5 duration-500">
-                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200 border border-blue-400/20">
-                                <ShieldCheck className="w-7 h-7 text-white" />
+                        <div className="mb-20 animate-in slide-in-from-left-5 duration-500">
+                            <div className="w-44 h-20 bg-white flex items-center justify-center  overflow-hidden shrink-0">
+                                <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
                             </div>
-                            <h2 className="text-xl font-extrabold text-slate-900 tracking-tighter uppercase italic">
-                                Majorlle<span className="text-blue-600">.pro</span>
-                            </h2>
                         </div>
 
                         <div className="space-y-16">

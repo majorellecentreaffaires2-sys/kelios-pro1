@@ -62,19 +62,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-20 lg:w-80 h-screen bg-white/80 backdrop-blur-xl border-r border-slate-200 flex flex-col z-[50] sticky top-0 transition-all duration-300 shadow-sm">
       <div className="flex flex-col h-full">
 
-        {/* Branding Header */}
         <div className="p-8 pb-4">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 bg-blue-600 rounded-[1rem] flex items-center justify-center shadow-xl shadow-blue-200 border border-blue-400/20 shrink-0">
-              <ShieldCheck className="w-7 h-7 text-white" />
-            </div>
-            <div className="hidden lg:block animate-in slide-in-from-left-2 duration-500">
-              <h1 className="font-extrabold text-xl text-slate-900 leading-none tracking-tighter">
-                Majorlle<span className="text-blue-600">.pro</span>
-              </h1>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1.5 leading-none">
-                Infrastructure Cloud
-              </p>
+          <div className="flex items-center justify-center lg:justify-start">
+            <div className="w-36 h-26 bg-white flex items-center justify-center overflow-hidden shrink-0">
+              <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
             </div>
           </div>
         </div>
