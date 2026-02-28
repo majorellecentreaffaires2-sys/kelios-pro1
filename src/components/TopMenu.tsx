@@ -4,6 +4,7 @@ import {
   Settings, BarChart3, Calculator, Home, ShoppingCart,
   Star, FileEdit, FolderOpen, RefreshCw, Download, Eye, Pencil, Building2, LogOut
 } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 interface TopMenuProps {
   onAction: (id: string) => void;
@@ -149,8 +150,13 @@ const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, u
           </div>
         )}
 
+        {/* Notification Bell */}
+        <div className="ml-auto">
+          <NotificationBell />
+        </div>
+
         {/* User Profile Section */}
-        <div className={`relative ${!trialDaysLeft ? "ml-auto" : ""} mr-2`}>
+        <div className={`relative mr-2`}>
           <button
             onClick={() => setShowProfile(!showProfile)}
             className="flex items-center gap-2 px-3 py-1.5 hover:bg-white rounded-t-md transition-all border-t border-x border-transparent hover:border-[var(--ribbon-border)]"

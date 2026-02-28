@@ -36,6 +36,8 @@ router.post('/', authenticateToken, checkPlanLimits('company'), async (req, res)
             email: c.email,
             phone: c.phone,
             website: c.website,
+            postalCode: c.postalCode,
+            city: c.city,
             ice: c.ice,
             ifNum: c.ifNum,
             rc: c.rc,
@@ -76,7 +78,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     const allowed = [
-        'name', 'address', 'email', 'phone', 'website', 'ice', 'ifNum', 'rc', 'taxePro',
+        'name', 'address', 'email', 'phone', 'website', 'postalCode', 'city', 'ice', 'ifNum', 'rc', 'taxePro',
         'logoUrl', 'currency', 'defaultVatRates', 'numberingFormat', 'primaryColor',
         'active', 'accountingPlan', 'country', 'bankAccount', 'bankName', 'swiftCode',
         'tp', 'bp', 'rcs', 'companyType'

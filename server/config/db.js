@@ -68,6 +68,8 @@ export async function initDb() {
       email VARCHAR(255),
       phone VARCHAR(50),
       website VARCHAR(255),
+      postalCode VARCHAR(50),
+      city VARCHAR(100),
       ice VARCHAR(255),
       ifNum VARCHAR(255),
       rc VARCHAR(255),
@@ -120,6 +122,8 @@ export async function initDb() {
       fax VARCHAR(50),
       website VARCHAR(255),
       address TEXT,
+      postalCode VARCHAR(50),
+      city VARCHAR(100),
       ice VARCHAR(255),
       ifNum VARCHAR(255),
       siren VARCHAR(50),
@@ -280,6 +284,19 @@ export async function initDb() {
       INDEX (companyId)
     )`);
 
+    await connection.query(`CREATE TABLE IF NOT EXISTS notifications (
+      id VARCHAR(36) PRIMARY KEY,
+      userId VARCHAR(255) NOT NULL,
+      type VARCHAR(50),
+      title VARCHAR(255),
+      message TEXT,
+      link VARCHAR(255),
+      isRead TINYINT(1) DEFAULT 0,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (userId),
+      INDEX (isRead)
+    )`);
+
     // --- MIGRATIONS ---
     await addColumn('clients', 'swiftCode', 'VARCHAR(50)');
     await addColumn('clients', 'createdAt', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
@@ -310,6 +327,8 @@ export async function initDb() {
     await addColumn('companies', 'tp', 'VARCHAR(50)');
     await addColumn('companies', 'bp', 'VARCHAR(50)');
     await addColumn('companies', 'rcs', 'VARCHAR(50)');
+    await addColumn('companies', 'postalCode', 'VARCHAR(50)');
+    await addColumn('companies', 'city', 'VARCHAR(100)');
 
     // Mises à jour Table Clients (pour VPS existants)
     await addColumn('clients', 'taxePro', 'VARCHAR(50)');
@@ -321,6 +340,8 @@ export async function initDb() {
     await addColumn('clients', 'bankAccount', 'VARCHAR(255)');
     await addColumn('clients', 'bankName', 'VARCHAR(255)');
     await addColumn('clients', 'swiftCode', 'VARCHAR(50)');
+    await addColumn('clients', 'postalCode', 'VARCHAR(50)');
+    await addColumn('clients', 'city', 'VARCHAR(100)');
 
     // Mises à jour Table Companies (pour VPS existants)
     await addColumn('companies', 'companyType', "VARCHAR(50) DEFAULT 'Standard'");

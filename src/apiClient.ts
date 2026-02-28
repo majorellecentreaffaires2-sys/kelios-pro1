@@ -155,6 +155,11 @@ export const api = {
     }
     return res.json();
   },
+
+  // Notifications
+  getNotifications: () => request<any[]>('/api/notifications'),
+  markNotificationRead: (id: string) => request<{ success: boolean }>(`/api/notifications/${id}/read`, 'PUT'),
+  markAllNotificationsRead: () => request<{ success: boolean }>('/api/notifications/read-all', 'PUT'),
 };
 
 // Generic API client for new endpoints

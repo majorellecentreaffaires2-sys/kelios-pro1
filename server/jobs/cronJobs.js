@@ -3,6 +3,7 @@ import pool from '../config/db.js';
 import transporter from '../config/email.js';
 import crypto from 'crypto';
 import 'dotenv/config';
+import { createNotification } from '../routes/notifications.js';
 
 // ─── Helper: Log to audit_logs ───────────────────────────────────────
 const logToAudit = async ({ companyId = null, userId = 'system', action, entity, details, severity = 'INFO' }) => {
@@ -165,8 +166,19 @@ export const processReminders = async () => {
                                 companyId: setting.companyId,
                                 action: 'AUTOMATION_EXECUTED',
                                 entity: 'REMINDER',
-                                details: `Rappel envoyé pour ${invoice.invoiceNumber} (${days}j)`
                             });
+
+                            // Add in-app notification for the user
+                            const [companyOwner] = await pool.query('SELECT userId FROM companies WHERE id = ?', [invoice.companyId]);
+                            if (companyOwner.length > 0) {
+                                await createNotification(
+                                    companyOwner[0].userId,
+                                    'invoice_overdue',
+                                    'Facture en retard',
+                                    `Un rappel automatique a été envoyé pour la facture ${invoice.invoiceNumber} (${days}j).`,
+                                    `/ventes?id=${invoice.id}`
+                                );
+                            }
                         }
                     } catch (err) {
                         console.error(`❌ [CRON] Failed to send reminder to ${clientEmail}:`, err.message);
@@ -219,8 +231,16 @@ export const processTrialWarnings = async () => {
                         userId: user.id,
                         action: 'TRIAL_WARNING',
                         entity: 'USER',
-                        details: `Avertissement d'expiration d'essai envoyé (${days}j)`
                     });
+
+                    // Add in-app notification
+                    await createNotification(
+                        user.id,
+                        'trial_expiry',
+                        'Essai bientôt terminé',
+                        `Votre période d'essai Majorlle Pro expire dans ${days} jour${days > 1 ? 's' : ''}. Pensez à activer votre abonnement !`,
+                        '/checkout'
+                    );
                 }
             }
         }

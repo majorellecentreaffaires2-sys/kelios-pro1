@@ -79,6 +79,8 @@ export interface Company {
   swiftCode?: string;
   logoUrl?: string;
   currency: string;
+  postalCode?: string;
+  city?: string;
   defaultVatRates: number[];
   numberingFormat: string;
   primaryColor: string;
@@ -184,6 +186,8 @@ export interface ContactInfo {
   name: string;
   email: string;
   address: string;
+  postalCode?: string;
+  city?: string;
   phone: string;
   mobile?: string;
   fax?: string;

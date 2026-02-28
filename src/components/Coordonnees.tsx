@@ -329,6 +329,34 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
                   </div>
                 )}
               </div>
+
+              {/* Field: Postal Code & City */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Code Postal</label>
+                {isEditing ? (
+                  <input
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-sm font-extrabold outline-none focus:bg-white focus:border-blue-600 transition-all"
+                    value={form.postalCode || ''}
+                    onChange={e => setForm({ ...form, postalCode: e.target.value })}
+                    placeholder="75000"
+                  />
+                ) : (
+                  <p className="px-6 py-4 bg-slate-50/30 rounded-2xl text-slate-900 font-extrabold text-sm">{company.postalCode || '---'}</p>
+                )}
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ville</label>
+                {isEditing ? (
+                  <input
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-sm font-extrabold outline-none focus:bg-white focus:border-blue-600 transition-all"
+                    value={form.city || ''}
+                    onChange={e => setForm({ ...form, city: e.target.value })}
+                    placeholder="Casablanca"
+                  />
+                ) : (
+                  <p className="px-6 py-4 bg-slate-50/30 rounded-2xl text-slate-900 font-extrabold text-sm">{company.city || '---'}</p>
+                )}
+              </div>
             </div>
           </div>
 
