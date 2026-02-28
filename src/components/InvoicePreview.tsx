@@ -518,17 +518,17 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       <div className="relative z-10 px-12 pt-12 pb-10" style={{ borderBottom: `4px solid ${primaryColor}` }}>
         <div className="flex justify-between items-end">
           {/* Company Info: Logo (Left) + Company Title (Right of Logo) */}
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-12">
             {displayInvoice.sender.logoUrl ? (
-              <img src={displayInvoice.sender.logoUrl} className="h-64 w-auto object-contain" alt="Logo" />
+              <img src={displayInvoice.sender.logoUrl} className="h-96 w-auto object-contain" alt="Logo" />
             ) : (
-              <div className="w-48 h-48 flex items-center justify-center text-white font-bold text-5xl rounded-[3.5rem] shadow-xl" style={{ backgroundColor: primaryColor }}>
+              <div className="w-64 h-64 flex items-center justify-center text-white font-bold text-6xl rounded-[4rem] shadow-2xl" style={{ backgroundColor: primaryColor }}>
                 {displayInvoice.sender.name.charAt(0)}
               </div>
             )}
             <div className="max-w-xl">
-              <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-[0.9] uppercase">{displayInvoice.sender.name}</h1>
-              <div className="h-2 w-24 mt-4" style={{ backgroundColor: primaryColor }}></div>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tighter leading-tight uppercase opacity-80">{displayInvoice.sender.name}</h1>
+              <div className="h-1.5 w-16 mt-3" style={{ backgroundColor: primaryColor }}></div>
             </div>
           </div>
 
@@ -1015,13 +1015,13 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
       {/* Header */}
       <div className="relative z-10 px-16 pt-12 pb-8 flex justify-between items-end">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-10">
           {displayInvoice.sender.logoUrl ? (
-            <img src={displayInvoice.sender.logoUrl} className="h-32 w-auto object-contain" alt="Logo" />
+            <img src={displayInvoice.sender.logoUrl} className="h-56 w-auto object-contain" alt="Logo" />
           ) : (
-            <div className="text-4xl font-black" style={{ color: primaryColor }}>{displayInvoice.sender.name.charAt(0)}</div>
+            <div className="text-5xl font-black" style={{ color: primaryColor }}>{displayInvoice.sender.name.charAt(0)}</div>
           )}
-          <h1 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">{displayInvoice.sender.name}</h1>
+          <h1 className="text-xl font-black text-gray-900 tracking-tighter uppercase opacity-70">{displayInvoice.sender.name}</h1>
         </div>
         <div className="text-right">
           <p className="text-7xl font-black text-gray-100 uppercase tracking-tighter leading-none">{getDocTitle()}</p>
@@ -1229,15 +1229,15 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       <div className="relative z-10 h-2" style={{ backgroundColor: primaryColor }}></div>
 
       <div className="px-10 pt-6 pb-4 flex justify-between items-start border-b border-gray-200">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-10">
           {displayInvoice.sender.logoUrl ? (
-            <img src={displayInvoice.sender.logoUrl} className="h-24 w-auto object-contain" alt="Logo" />
+            <img src={displayInvoice.sender.logoUrl} className="h-40 w-auto object-contain" alt="Logo" />
           ) : (
-            <div className="w-20 h-20 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: primaryColor }}>
+            <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: primaryColor }}>
               {displayInvoice.sender.name.charAt(0)}
             </div>
           )}
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">{displayInvoice.sender.name}</h1>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase opacity-70">{displayInvoice.sender.name}</h1>
         </div>
         <div className="text-right">
           <h2 className="text-5xl font-black uppercase tracking-tighter" style={{ color: primaryColor }}>{getDocTitle()}</h2>
