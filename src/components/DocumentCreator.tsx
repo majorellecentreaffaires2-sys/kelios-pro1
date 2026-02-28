@@ -59,6 +59,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [showClientSelect, setShowClientSelect] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [primaryColor, setPrimaryColor] = useState(initialInvoice?.primaryColor || activeCompany.primaryColor || '#111827');
 
   // Auto-Email State
   const [autoSendEmail, setAutoSendEmail] = useState(false);
@@ -159,7 +160,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       subject,
       currency,
       language: 'fr',
-      primaryColor: activeCompany.primaryColor,
+      primaryColor: primaryColor,
       visualTemplate: 'CorporatePro',
       autoSendEmail,
       emailSubject,
@@ -190,7 +191,7 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
     subject,
     currency,
     language: 'fr',
-    primaryColor: activeCompany.primaryColor,
+    primaryColor: primaryColor,
     visualTemplate: 'CorporatePro'
   } : null;
 
@@ -433,6 +434,25 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                 />
               )}
             </div>
+
+            {/* Color Select */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">Couleur du document</label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={e => setPrimaryColor(e.target.value)}
+                  className="w-10 h-10 bg-transparent border-none outline-none cursor-pointer p-0 rounded overflow-hidden"
+                />
+                <input
+                  type="text"
+                  value={primaryColor}
+                  onChange={e => setPrimaryColor(e.target.value)}
+                  className="flex-1 bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 transition-all font-mono"
+                />
+              </div>
+            </div>
           </div>
 
 
@@ -485,8 +505,8 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                       <textarea
                         rows={1}
                         className={`w-full bg-transparent outline-none font-medium px-2 py-1 rounded transition-all resize-none overflow-hidden ${item.isSpacer
-                            ? 'text-gray-400 font-bold text-center italic border-none'
-                            : 'text-gray-900 hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 border-b border-dashed border-gray-300'
+                          ? 'text-gray-400 font-bold text-center italic border-none'
+                          : 'text-gray-900 hover:bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-200 border-b border-dashed border-gray-300'
                           }`}
                         placeholder="Désignation..."
                         value={item.description}
