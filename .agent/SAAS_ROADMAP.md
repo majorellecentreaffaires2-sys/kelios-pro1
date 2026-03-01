@@ -97,8 +97,8 @@ RESEND_API_KEY=re_xxxxx
 | ✅ Done | — | Notification Bell | — | — |
 | ❌ Next | 🔴 P0 | Real Payment Gateway (Stripe) | 3–5 days | **Launch blocker** |
 | ❌ Next | 🔴 P0 | Production Email (Resend) | 4 hours | **Deliverability** |
-| ❌ Next | 🟢 P2 | Admin Revenue Dashboard | 1 day | Business insight |
-| ❌ Next | 🟢 P3 | Landing Page | 2–3 days | Marketing |
+| ✅ Done | 🟢 P2 | Admin Revenue Dashboard | 1 day | Business insight |
+| ✅ Done | 🟢 P3 | Landing Page Conversion | 0.5 days | New Visitors |
 | ❌ Next | 🟢 P3 | GDPR Export / Account Deletion | 1 day | Legal |
 | ❌ Next | 🟢 P2 | Responsive PWA | 2 days | Mobile users |
 

@@ -30,6 +30,7 @@ import automationRoutes from './server/routes/automation.js';
 import publicRoutes from './server/routes/public.js';
 import uploadRoutes from './server/routes/upload.js';
 import notificationRoutes from './server/routes/notifications.js';
+import adminRoutes from './server/routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -100,6 +101,7 @@ app.use('/api/automation', automationRoutes);
 app.use('/api', publicRoutes);  // /api/view/:token and /api/invoices/:id/public-link
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Diagnostic route
 app.get('/api/check-uploads', (req, res) => {

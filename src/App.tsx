@@ -39,6 +39,8 @@ import PublicInvoiceView from './components/PublicInvoiceView';
 import ForgotPassword from './components/ForgotPassword';
 import AccountSettings from './components/AccountSettings';
 import UpgradePrompt from './components/UpgradePrompt';
+import AdminDashboard from './components/AdminDashboard';
+import Landing from './components/Landing';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -54,9 +56,9 @@ const App: React.FC = () => {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProgramMode, setIsProgramMode] = useState(false);
-  const [portfolioTab, setPortfolioTab] = useState<'companies' | 'users' | 'clients'>('companies');
+  const [portfolioTab, setPortfolioTab] = useState<'companies' | 'users' | 'clients' | 'admin'>('companies');
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [view, setView] = useState<'login' | 'register' | 'onboarding_steps' | 'app' | 'checkout' | 'public_view' | 'password_reset'>('login');
+  const [view, setView] = useState<'landing' | 'login' | 'register' | 'onboarding_steps' | 'app' | 'checkout' | 'public_view' | 'password_reset'>('landing');
   const [publicViewToken, setPublicViewToken] = useState<string | null>(null);
   const [passwordResetToken, setPasswordResetToken] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
@@ -113,15 +115,15 @@ const App: React.FC = () => {
 
           } else {
             localStorage.removeItem('mj_token');
-            setView('login');
+            setView('landing');
           }
         } catch (e) {
           console.error("Session verification failed", e);
           localStorage.removeItem('mj_token');
-          setView('login');
+          setView('landing');
         }
       } else {
-        setView('login');
+        setView('landing');
       }
       setIsLoading(false);
     };
@@ -837,6 +839,7 @@ const App: React.FC = () => {
   }
 
   if (!isAuthenticated) {
+    if (view === 'landing') return <Landing onNavigateToLogin={() => setView('login')} onNavigateToRegister={() => setView('register')} />;
     if (view === 'register') return <Register onRegister={handleRegister} onNavigateToLogin={() => setView('login')} />;
     return <Login onLogin={handleLogin} onRegister={() => setView('register')} />;
   }
@@ -895,57 +898,64 @@ const App: React.FC = () => {
         {isProgramMode && <Sidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} companies={companies} activeCompany={activeCompany} onSelectCompany={handleEnterCompany} onExit={() => setIsProgramMode(false)} />}
         <main className="flex-1 p-4 overflow-y-auto bg-[var(--app-bg)]">
           {!isProgramMode && activeTab !== 'account' ? (
-            <div className="max-w-7xl mx-auto space-y-12 py-10">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="max-w-7xl mx-auto space-y-8 py-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-2">
                 <div className="animate-in slide-in-from-left-5 duration-700">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-100">
-                      <Shield className="w-4 h-4 text-white" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center shadow-md">
+                      <Shield className="w-3 h-3 text-white" />
                     </div>
-                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Console d'Administration</span>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Console d'Administration</span>
                   </div>
-                  <h1 className="text-6xl font-extrabold text-slate-900 tracking-tighter leading-none mb-3">Portfolio <span className="text-blue-600 italic">Cloud</span>.</h1>
-                  <p className="text-slate-500 font-medium text-lg">Gérez vos environnements de production et structures juridiques.</p>
+                  <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-none mb-2">Portfolio <span className="text-blue-600 italic">Cloud</span>.</h1>
+                  <p className="text-slate-500 font-medium text-sm">Gérez vos environnements de production et structures juridiques.</p>
                 </div>
 
-                <div className="flex items-center gap-4 animate-in slide-in-from-right-5 duration-700">
-                  {user?.role === 'SuperAdmin' && (
-                    <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner mr-4">
-                      <button
-                        onClick={() => setPortfolioTab('companies')}
-                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === 'companies' ? 'bg-white text-blue-600 shadow-lg border border-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
-                      >
-                        Sociétés
-                      </button>
-                      <button
-                        onClick={() => setPortfolioTab('users')}
-                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === 'users' ? 'bg-white text-blue-600 shadow-lg border border-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
-                      >
-                        Clients SaaS
-                      </button>
-                      <button
-                        onClick={() => setPortfolioTab('clients')}
-                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === 'clients' ? 'bg-white text-blue-600 shadow-lg border border-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
-                      >
-                        Centre Client Global
-                      </button>
-                    </div>
-                  )}
-                  <div className="hidden lg:flex flex-col items-end mr-2">
+                <div className="flex items-center gap-5 justify-end mt-4 md:mt-0 animate-in slide-in-from-right-5 duration-700">
+                  <div className="hidden lg:flex flex-col items-end">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opérateur Système</p>
                     <p className="text-sm font-extrabold text-slate-900">{user?.username}</p>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="px-6 py-4 bg-slate-900 text-white rounded-[1.25rem] font-extrabold text-xs uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-3"
+                    className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2"
                   >
                     <LogOut className="w-4 h-4" />
-                    Déconnexion
+                    <span className="hidden sm:inline">Déconnexion</span>
                   </button>
                 </div>
               </div>
 
-              <div className="relative">
+              {user?.role === 'SuperAdmin' && (
+                <div className="flex overflow-x-auto border-b border-slate-200 gap-8 animate-in slide-in-from-bottom-3 duration-700 w-full no-scrollbar pb-1">
+                  <button
+                    onClick={() => setPortfolioTab('companies')}
+                    className={`pb-3 text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${portfolioTab === 'companies' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-800 hover:border-slate-300'}`}
+                  >
+                    🏢 Sociétés
+                  </button>
+                  <button
+                    onClick={() => setPortfolioTab('users')}
+                    className={`pb-3 text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${portfolioTab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-800 hover:border-slate-300'}`}
+                  >
+                    👥 Clients SaaS
+                  </button>
+                  <button
+                    onClick={() => setPortfolioTab('clients')}
+                    className={`pb-3 text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${portfolioTab === 'clients' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-800 hover:border-slate-300'}`}
+                  >
+                    🌍 Centre Client Global
+                  </button>
+                  <button
+                    onClick={() => setPortfolioTab('admin')}
+                    className={`pb-3 text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${portfolioTab === 'admin' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-800 hover:border-slate-300'}`}
+                  >
+                    📈 Revenus & Stats
+                  </button>
+                </div>
+              )}
+
+              <div className="relative pt-2">
                 {/* Visual Accent */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-100/30 blur-[100px] rounded-full pointer-events-none"></div>
 
@@ -963,10 +973,12 @@ const App: React.FC = () => {
                     users={availableUsers}
                     onRefresh={refreshPortfolio}
                   />
-                ) : (
+                ) : portfolioTab === 'clients' ? (
                   <GlobalClientManager
                     clients={allGlobalClients}
                   />
+                ) : (
+                  <AdminDashboard />
                 )}
               </div>
             </div>

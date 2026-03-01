@@ -158,8 +158,11 @@ export const api = {
 
   // Notifications
   getNotifications: () => request<any[]>('/api/notifications'),
-  markNotificationRead: (id: string) => request<{ success: boolean }>(`/api/notifications/${id}/read`, 'PUT'),
-  markAllNotificationsRead: () => request<{ success: boolean }>('/api/notifications/read-all', 'PUT'),
+  markNotificationRead: (id: string) => request<{ success: boolean }>(`/notifications/${id}/read`, 'PUT'),
+  markAllNotificationsRead: () => request<{ success: boolean }>('/notifications/read-all', 'PUT'),
+
+  // Admin
+  getAdminMetrics: () => request<any>(`${API_BASE}/admin/metrics`, 'GET'),
 };
 
 // Generic API client for new endpoints

@@ -85,6 +85,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
         {/* Left Side: Branding & Value Proposition */}
         <div className="hidden lg:flex w-1/2 flex-col justify-between p-20 relative overflow-hidden">
           <div className="relative z-20">
+            <a href="/" className=" text-blue-600 px-4 py-2 rounded-lg font-bold " > BACK TO HOME</a>
+
             <div className="w-56 h-46 bg-white/10 backdrop-blur-md flex items-center justify-center  border border-white/20 overflow-hidden shrink-0">
               <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
             </div>
