@@ -753,11 +753,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
                 <p className="font-black text-gray-800">{displayInvoice.sender.address}</p>
                 <p className="text-gray-900 font-black mb-1">{displayInvoice.sender.postalCode} {displayInvoice.sender.city}</p>
                 <div className="w-full h-px bg-gray-200 mb-1"></div>
-                <p className="flex items-center gap-2 font-black text-gray-800">
-                  <Mail className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.email}
-                </p>
-                <p className="flex items-center gap-2 font-black text-gray-800">
-                  <Phone className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.phone}
+                <p className="flex items-center gap-4 font-black text-gray-800">
+                  <span className="flex items-center gap-2"><Mail className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.email}</span>
+                  <span className="flex items-center gap-2"><Phone className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.phone}</span>
                 </p>
                 {displayInvoice.sender.website && (
                   <p className="flex items-center gap-2 font-black text-blue-600">
@@ -847,6 +845,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           <div className="text-sm space-y-1 text-gray-700">
             <p className="font-bold text-gray-900 text-lg">{displayInvoice.client.name}</p>
             <p className="whitespace-pre-line">{displayInvoice.client.address}</p>
+            <p className="font-bold">{displayInvoice.client.postalCode} {displayInvoice.client.city}</p>
             {displayInvoice.client.ice && <p>{l.ice}: {displayInvoice.client.ice}</p>}
             {displayInvoice.client.email && <p>{displayInvoice.client.email}</p>}
           </div>
@@ -1050,6 +1049,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{billToLabel}</p>
           <p className="font-semibold text-gray-900">{displayInvoice.client.name}</p>
           <p className="text-sm text-gray-600 mt-1 whitespace-pre-line">{displayInvoice.client.address}</p>
+          <p className="text-sm text-gray-900 font-bold mt-1">{displayInvoice.client.postalCode} {displayInvoice.client.city}</p>
           {displayInvoice.client.ice && <p className="text-sm text-gray-500 mt-2">{l.ice}: {displayInvoice.client.ice}</p>}
         </div>
         <div>
@@ -1200,8 +1200,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
                 <p>{displayInvoice.sender.address}</p>
                 <p className="font-bold mb-1">{displayInvoice.sender.postalCode} {displayInvoice.sender.city}</p>
                 <div className="w-full h-px bg-white/20 mb-1"></div>
-                <p className="flex items-center gap-2"><Mail className="w-3 h-3 opacity-50" /> {displayInvoice.sender.email}</p>
-                <p className="flex items-center gap-2"><Phone className="w-3 h-3 opacity-50" /> {displayInvoice.sender.phone}</p>
+                <p className="flex items-center gap-2"><Mail className="w-3 h-3 opacity-50" /> {displayInvoice.sender.email} | <Phone className="w-3 h-3 opacity-50" /> {displayInvoice.sender.phone}</p>
                 {displayInvoice.sender.website && (
                   <p className="flex items-center gap-2 text-blue-400 opacity-100">
                     <Globe className="w-3 h-3 opacity-50" /> {displayInvoice.sender.website}
@@ -1304,6 +1303,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           <p className="text-xs font-bold text-gray-400 uppercase mb-2">{billToLabel}</p>
           <p className="font-bold">{displayInvoice.client.name}</p>
           <p className="text-xs text-gray-600 mt-1 whitespace-pre-line">{displayInvoice.client.address}</p>
+          <p className="text-xs text-gray-900 font-bold mt-1">{displayInvoice.client.postalCode} {displayInvoice.client.city}</p>
           <div className="mt-3 text-xs text-gray-500">
             {displayInvoice.client.ice && <p>{l.ice}: {displayInvoice.client.ice}</p>}
             {displayInvoice.client.ifNum && <p>{l.if}: {displayInvoice.client.ifNum}</p>}
@@ -1474,8 +1474,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
                 <div className="mt-2 pt-2 border-t border-gray-200 min-w-full lg:min-w-0 pr-8">
                   <div className="flex flex-col items-start gap-2">
-                    <p className="flex items-center gap-2"><Mail className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.email}</p>
-                    <p className="flex items-center gap-2"><Phone className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.phone}</p>
+                    <p className="flex items-center gap-4">
+                      <span className="flex items-center gap-2"><Mail className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.email}</span>
+                      <span className="flex items-center gap-2"><Phone className="w-3 h-3 text-gray-400" /> {displayInvoice.sender.phone}</span>
+                    </p>
                     {displayInvoice.sender.website && (
                       <p className="flex items-center gap-2 text-blue-600">
                         <Globe className="w-3 h-3 text-blue-400" /> {displayInvoice.sender.website}
