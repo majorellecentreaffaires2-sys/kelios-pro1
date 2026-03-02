@@ -71,10 +71,17 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
   const [customFile, setCustomFile] = useState<{ name: string, base64: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Computed Values
-  const invoiceNumber = useMemo(() => {
-    if (initialInvoice && initialInvoice.type === currentType && initialInvoice.documentNature === documentNature)
-      return initialInvoice.invoiceNumber;
+  // State for Invoice Number
+  const [invoiceNumber, setInvoiceNumber] = useState<string>(
+    initialInvoice?.invoiceNumber || ''
+  );
+
+  useEffect(() => {
+    // If editing and type hasn't changed, keep the initial one
+    if (initialInvoice && initialInvoice.type === currentType && initialInvoice.documentNature === documentNature) {
+      setInvoiceNumber(initialInvoice.invoiceNumber);
+      return;
+    }
 
     const count = invoices.filter(i => i.type === currentType && i.documentNature === documentNature).length + 1;
     const year = new Date().getFullYear();
@@ -82,10 +89,11 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
 
     // Format: DEVIS-YEAR-SEQUENCE or FACT-YEAR-SEQUENCE
     if (documentNature === 'Devis') {
-      return `DEVIS-${year}-${sequence}`;
+      setInvoiceNumber(`DEVIS-${year}-${sequence}`);
+    } else {
+      setInvoiceNumber(`FACT-${year}-${sequence}`);
     }
-    return `FACT-${year}-${sequence}`;
-  }, [invoices, currentType, documentNature, initialInvoice]);
+  }, [currentType, documentNature, invoices, initialInvoice]);
 
   const totals = useMemo(() => {
     let ht = 0, tva = 0;
@@ -238,9 +246,16 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                 </button>
               ))}
             </div>
-            <p className="text-blue-600 font-bold tracking-widest uppercase text-xs">
-              N° {invoiceNumber}
-            </p>
+            <div className="flex items-center gap-1 group">
+              <span className="text-blue-600 font-bold tracking-widest uppercase text-xs">N°</span>
+              <input
+                type="text"
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                className="text-blue-600 font-bold tracking-widest uppercase text-xs bg-transparent border-b border-dashed border-blue-300 outline-none w-37 focus:border-blue-600 focus:bg-blue-50 transition-all rounded px-1 -ml-1"
+                placeholder="Numéro..."
+              />
+            </div>
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1 shadow-sm">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Devise:</span>
               <div className="flex gap-1">
