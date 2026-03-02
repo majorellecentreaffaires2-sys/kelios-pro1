@@ -52,6 +52,7 @@ export async function initDb() {
       lastPaymentDate DATETIME,
       stripeCustomerId VARCHAR(255) NULL,
       stripeSubscriptionId VARCHAR(255) NULL,
+      extraCompanies INT DEFAULT 0,
       isVerified TINYINT(1) DEFAULT 0,
       verificationCode VARCHAR(10),
       avatarUrl TEXT NULL,
@@ -309,6 +310,7 @@ export async function initDb() {
     await addColumn('users', 'planInterval', "ENUM('monthly','yearly') DEFAULT 'monthly'");
     await addColumn('users', 'avatarUrl', 'TEXT NULL');
     await addColumn('users', 'createdAt', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
+    await addColumn('users', 'extraCompanies', 'INT DEFAULT 0');
 
     // Mises à jour Table Companies (pour VPS existants)
     await addColumn('companies', 'companyType', "VARCHAR(50) DEFAULT 'Standard'");

@@ -1,4 +1,4 @@
-import pool from '../config/db.js';
+/*  */import pool from '../config/db.js';
 import { PLANS } from '../config/plans.js';
 
 /**
@@ -16,7 +16,7 @@ export const checkPlanLimits = (resourceType) => {
 
             // Fetch fresh user data — never trust JWT for plan/status
             const [userRows] = await pool.query(
-                'SELECT role, plan, subscriptionStatus FROM users WHERE id = ?',
+                'SELECT role, plan, subscriptionStatus, extraCompanies FROM users WHERE id = ?',
                 [userId]
             );
 
@@ -30,8 +30,8 @@ export const checkPlanLimits = (resourceType) => {
 
             console.log(`[PlanCheck] user=${userId} status="${status}" plan="${dbUser.plan}" role="${role}" resource="${resourceType}"`);
 
-            // SuperAdmin bypasses all limits
-            if (role === 'SuperAdmin') {
+            // SuperAdmin and Admin bypass all limits
+            if (role === 'SuperAdmin' || role === 'Admin') {
                 return next();
             }
 
@@ -47,15 +47,18 @@ export const checkPlanLimits = (resourceType) => {
                     [userId]
                 );
 
-                console.log(`[PlanCheck] companies owned: ${count} / max: ${limits.maxCompanies}`);
+                const extraCompanies = Number(dbUser.extraCompanies) || 0;
+                const totalMaxCompanies = limits.maxCompanies + extraCompanies;
 
-                if (count >= limits.maxCompanies) {
+                console.log(`[PlanCheck] companies owned: ${count} / max: ${totalMaxCompanies} (Base: ${limits.maxCompanies}, Extra: ${extraCompanies})`);
+
+                if (count >= totalMaxCompanies) {
                     return res.status(403).json({
                         error: 'LIMIT_REACHED',
                         resource: 'company',
-                        message: `Limite de sociétés atteinte (${limits.maxCompanies} max sur votre plan "${limits.label}"). Passez à un plan supérieur pour gérer plus de structures.`,
+                        message: `Limite de sociétés atteinte (${totalMaxCompanies} max au total sur votre plan "${limits.label}"). Vous pouvez ajouter de nouvelles sociétés pour 100 dh par société.`,
                         current: count,
-                        limit: limits.maxCompanies,
+                        limit: totalMaxCompanies,
                         plan: planKey
                     });
                 }

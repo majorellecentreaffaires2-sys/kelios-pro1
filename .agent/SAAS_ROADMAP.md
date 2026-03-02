@@ -18,7 +18,7 @@
 | ✅ 5 | **Users table upgraded** | `server/config/db.js` | Added: `stripeCustomerId`, `stripeSubscriptionId`, `planInterval`, `avatarUrl`, `createdAt` |
 | ✅ 6 | **Logo / File Upload** | `server/routes/upload.js` · `src/components/Coordonnees.tsx` | Multer, 5MB limit, production-ready relative paths, CORS/Helmet compatible |
 | ✅ 7 | **User Profile / Account Settings** | `src/components/AccountSettings.tsx` | Accessible from Portfolio & Dashboard via TopMenu, profile/password updates |
-| ✅ 8 | **Plan Limits Enforcement** | `checkPlanLimits.js` · `UpgradePrompt.tsx` | Middleware gates resource creation (Companies, Invoices, Clients) based on plan status. |
+| ✅ 8 | **Plan Limits Enforcement** | `checkPlanLimits.js` · `UpgradePrompt.tsx` | Middleware gates resource creation (Companies, Invoices, Clients) based on plan status. (200dh = 1 company limit, 100dh = +1 extra company) |
 | ✅ 9 | **Cron Jobs** | `cronJobs.js` | Automation for recurring invoices, overdue reminders, and trial expiry warnings. |
 | ✅ 10 | **In-App Notification Bell** | `NotificationBell.tsx` | MySQL stored notifications, real-time polling, auto-generated from cron & events. |
 
@@ -38,7 +38,8 @@
 - `server/routes/payments.js` — checkout session creation + webhooks
 - Replace fake `Checkout.tsx` form with redirect to Stripe hosted checkout
 - Handle webhooks: `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.deleted`
-- `.env` needs: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `APP_URL`
+- Update checkout logic to support buying extra companies (+100dh each)
+- `.env` needs: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_EXTRA_COMPANY`, `APP_URL`
 
 > 📖 Full instructions: `.agent/skills/stripe-payment/SKILL.md`
 
@@ -130,6 +131,7 @@ STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_MONTHLY=price_...
 STRIPE_PRICE_YEARLY=price_...
+STRIPE_PRICE_EXTRA_COMPANY=price_...
 APP_URL=https://yourdomain.com
 
 # For production email (Resend recommended)

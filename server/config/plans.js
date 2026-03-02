@@ -11,14 +11,14 @@ export const PLANS = {
         maxClients: 10,
     },
     monthly_200: {
-        label: 'Pro Mensuel',
-        maxCompanies: 5,
+        label: 'Pro Mensuel (1 Société)',
+        maxCompanies: 1,
         maxInvoicesPerMonth: 500,
         maxClients: 1000,
     },
     yearly_2000: {
-        label: 'Pro Annuel',
-        maxCompanies: 15,
+        label: 'Pro Annuel (1 Société)',
+        maxCompanies: 1,
         maxInvoicesPerMonth: 5000,
         maxClients: 5000,
     },
