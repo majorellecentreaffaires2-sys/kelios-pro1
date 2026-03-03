@@ -353,11 +353,10 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 mb-1 block">Adresse</label>
-                  <input
-                    type="text"
+                  <textarea
                     value={client.address}
                     onChange={(e) => setClient({ ...client, address: e.target.value })}
-                    className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium outline-none border border-transparent focus:border-blue-500 transition-all"
+                    className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium outline-none border border-transparent focus:border-blue-500 transition-all resize-none min-h-[80px]"
                     placeholder="Adresse complète"
                   />
                 </div>

@@ -579,7 +579,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             {billToLabel}
           </p>
           <h3 className="text-xl font-black text-gray-900 tracking-tight">{displayInvoice.client.name}</h3>
-          <p className="text-sm text-gray-600 mt-2 leading-tight">{displayInvoice.client.address}</p>
+          <p className="text-sm text-gray-600 mt-2 leading-tight whitespace-pre-line">{displayInvoice.client.address}</p>
           <div className="text-sm text-gray-400 font-bold">
             {displayInvoice.client.postalCode} {displayInvoice.client.city}
           </div>
