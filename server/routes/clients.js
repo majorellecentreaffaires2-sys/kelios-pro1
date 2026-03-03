@@ -39,6 +39,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const data = { ...updates, isBlocked: updates.isBlocked ? 1 : 0 };
         delete data.id;
+        delete data.companyName;
+        delete data.ownerName;
         await pool.query('UPDATE clients SET ? WHERE id = ?', [data, req.params.id]);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }

@@ -445,11 +445,11 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
             <div className="flex justify-between items-end">
               <div>
-                <p className="mb-6">Le ____/____/________</p>
+                <p className="mb-4">Le ____/____/________</p>
                 <p>À _______________</p>
               </div>
               <div className="text-center">
-                <div className="h-16 w-32 border border-gray-300 bg-gray-50 rounded flex items-center justify-center text-gray-300 text-[8px]">
+                <div className="h-12 w-32 border border-gray-300 bg-gray-50 rounded flex items-center justify-center text-gray-300 text-[8px]">
                   Cachet & Signature
                 </div>
               </div>
@@ -490,7 +490,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           </div>
           <div className="w-1/2 text-right">
             <div className="inline-block p-4 border-2 border-dashed border-gray-200 rounded-xl">
-              <p className="text-[8px] uppercase text-gray-400 font-bold mb-8">Accord Client (Signature & Cachet)</p>
+              <p className="text-[8px] uppercase text-gray-400 font-bold mb-4">Accord Client (Signature & Cachet)</p>
               <div className="h-12"></div>
             </div>
           </div>
@@ -571,9 +571,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
         </div>
       )}
 
-      <div className="px-12 py-4">
+      <div className="px-12 py-2">
         {/* Bill To */}
-        <div className="w-1/2 bg-gray-50 p-6 rounded-[1.5rem] border border-gray-100 ring-4 ring-gray-50 shadow-inner">
+        <div className="w-1/2 h-[100px] bg-gray-50 p-6 rounded-[1.5rem] border border-gray-100 ring-4 ring-gray-50 shadow-inner">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }}></span>
             {billToLabel}
@@ -664,7 +664,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 py-10 mb-30 flex justify-end">
+      <div className="px-12 py-10 mb-25flex justify-end">
         <div className="w-80">
           {displayInvoice.type?.toLowerCase() === 'batiment' && (
             <div className="space-y-4 text-xs">
@@ -831,7 +831,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Parties */}
-      <div className="px-12 py-4 grid grid-cols-2 gap-8 border-b border-gray-200">
+      <div className="px-12 py-2 grid grid-cols-2 gap-8 border-b border-gray-200">
         <div>
           <div className="space-y-0.5">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-200 pb-1 mb-1">{l.from}</p>
@@ -934,7 +934,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 flex justify-end mb-12">
+      <div className="px-12 flex justify-end mb-8">
         <table className="w-72 border border-gray-300">
           <tbody>
             <tr className="border-b border-gray-200">
@@ -1097,7 +1097,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             }
 
             return (
-              <table key={bIdx} className="w-full mb-8 table-fixed">
+              <table key={bIdx} className="w-full mb-6 table-fixed">
                 <thead>
                   <tr className="border-b-2" style={{ borderBottomColor: primaryColor }}>
                     <th className="text-left text-xs font-semibold uppercase tracking-wider py-4 text-gray-700 w-[55%]">{l.description}</th>
@@ -1134,7 +1134,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-16 py-10 flex justify-end mb-12">
+      <div className="px-16 py-6 flex justify-end mb-7">
         <div className="w-72 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">{l.subtotal}</span>
@@ -1234,7 +1234,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
         <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5" style={{ zIndex: 0 }}>
           <img
             src={displayInvoice.sender.logoUrl}
-            className="w-96 h-96 object-contain absolute bottom-40 right-20"
+            className="w-96 h-100 object-contain absolute top-[300px] left-60"
             alt="watermark"
           />
         </div>
@@ -1248,7 +1248,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
           {displayInvoice.sender.logoUrl ? (
             <img src={displayInvoice.sender.logoUrl} className="h-40 w-auto object-contain" alt="Logo" />
           ) : (
-            <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: primaryColor }}>
+            <div className="w-24 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: primaryColor }}>
               {displayInvoice.sender.name.charAt(0)}
             </div>
           )}
@@ -1334,7 +1334,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
           return blocks.map((block, bIdx) => {
             if (block.type === 'spacer') {
-              return <div key={block.id} className="h-8"></div>;
+              return <div key={block.id} className="h-10"></div>;
             }
 
             return (
