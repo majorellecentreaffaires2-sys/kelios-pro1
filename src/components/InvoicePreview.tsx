@@ -362,9 +362,56 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
+      const pageHeightMM = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      const scale = 2;
+      const canvasHeightPx = canvas.height;
+      const pixelsPerMM = 96 / 25.4;
+      const pageHeightPx = pageHeightMM * pixelsPerMM * scale;
+
+      console.log('Canvas height:', canvasHeightPx, 'Page height px:', pageHeightPx, 'Img height mm:', imgHeight);
+
+      if (imgHeight <= pageHeightMM) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let remainingHeight = canvasHeightPx;
+        let position = 0;
+        let pageNum = 0;
+
+        while (remainingHeight > 0) {
+          if (pageNum > 0) {
+            pdf.addPage();
+          }
+
+          const sliceHeight = Math.min(pageHeightPx, remainingHeight);
+          const sliceY = position;
+
+          const slicedCanvas = document.createElement('canvas');
+          slicedCanvas.width = canvas.width;
+          slicedCanvas.height = Math.ceil(sliceHeight);
+
+          const ctx = slicedCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(
+              canvas,
+              0, sliceY,
+              canvas.width, sliceHeight,
+              0, 0,
+              canvas.width, sliceHeight
+            );
+
+            const sliceImgData = slicedCanvas.toDataURL('image/png');
+            const sliceImgHeight = (slicedCanvas.height * imgWidth) / slicedCanvas.width;
+            pdf.addImage(sliceImgData, 'PNG', 0, 0, imgWidth, sliceImgHeight);
+          }
+
+          remainingHeight -= pageHeightPx;
+          position += pageHeightPx;
+          pageNum++;
+        }
+      }
+
       const pdfBase64 = pdf.output('datauristring');
 
       // 2. Send via API
@@ -409,7 +456,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
   const renderBatimentBlock = () => {
     if (displayInvoice.type?.toLowerCase() !== 'batiment') return null;
     return (
-      <div className="mt-2 text-[10px] text-gray-800 page-break-inside-avoid border-t-2 border-gray-100 pt-2">
+      <div className="mt-2 text-[10px] text-gray-800 break-inside-avoid border-t-2 border-gray-100 pt-2">
         <div className="mb-3 font-medium">
           Arrêtée la présente {docNatureName} à la somme de : <span className="font-bold italic">{formatCurrency(totalTtc)} {displayInvoice.currency}</span>
         </div>
@@ -467,7 +514,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
   const renderDevBlock = () => {
     if (displayInvoice.type?.toLowerCase() !== 'dev') return null;
     return (
-      <div className="mt-4 text-[10px] text-gray-800 page-break-inside-avoid border-t-2 border-gray-100 pt-3">
+      <div className="mt-4 text-[10px] text-gray-800 break-inside-avoid border-t-2 border-gray-100 pt-3">
         <div className="flex justify-between items-start gap-8">
           <div className="w-1/2 space-y-1">
             <h4 className="font-bold border-b border-gray-200 pb-1 mb-1 text-gray-500 uppercase text-[9px]">Plan de Règlement S.D.P</h4>
@@ -501,7 +548,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
   // Template: Professional Standard
   const renderProfessional = () => (
-    <div className="bg-white text-gray-900 w-full min-h-[1100px] p-0 shadow-xl print-area relative" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="bg-white text-gray-900 w-full p-0 shadow-xl print-area relative" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
       {/* Background Watermark Logo */}
       {displayInvoice.sender.logoUrl && (
@@ -617,7 +664,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             }
 
             return (
-              <table key={bIdx} className="w-full border-collapse mb-1 table-fixed">
+              <table key={bIdx} className="w-full border-collapse mb-1 table-fixed invoice-items-table break-inside-avoid">
                 <thead>
                   <tr style={{ backgroundColor: primaryColor }}>
                     <th className="text-left text-white text-[10px] font-bold uppercase py-2 px-2 w-[10%]">{l.ref || 'Code'}</th>
@@ -664,7 +711,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 py-10 mb-25flex justify-end">
+      <div className="px-12 py-6 flex justify-end break-inside-avoid">
         <div className="w-80">
           {displayInvoice.type?.toLowerCase() === 'batiment' && (
             <div className="space-y-4 text-xs">
@@ -722,7 +769,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Notes & Payment Info */}
-      <div className="px-12 pb-8 mt-auto">
+      <div className="px-12 pb-8 mt-auto break-inside-avoid">
         <div className="grid grid-cols-2 gap-8">
           {displayInvoice.notes && (
             <div>
@@ -737,7 +784,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Footer */}
-      <div className="px-12  border-t border-gray-200 text-center text-[10px] text-gray-500 bg-gray-50/50 mt-auto">
+      <div className="px-12 py-4 border-t border-gray-200 text-center text-[10px] text-gray-500 bg-gray-50/50 mt-auto invoice-footer break-inside-avoid">
         <div className="grid grid-cols-3 gap-4">
           <div className="text-left">
             <p className="font-bold uppercase" style={{ color: primaryColor }}>{l.bankDetails}</p>
@@ -788,7 +835,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
   // Template: Classic Corporate
   const renderClassicCorporate = () => (
-    <div className="bg-white text-gray-900 w-full min-h-[1100px] shadow-xl print-area relative" style={{ fontFamily: 'Georgia, serif' }}>
+    <div className="bg-white text-gray-900 w-full shadow-xl print-area relative" style={{ fontFamily: 'Georgia, serif' }}>
 
       {/* Background Watermark Logo */}
       {displayInvoice.sender.logoUrl && (
@@ -895,7 +942,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             }
 
             return (
-              <table key={bIdx} className="w-full border border-gray-300 mb-6 table-fixed">
+              <table key={bIdx} className="w-full border border-gray-300 mb-6 table-fixed invoice-items-table break-inside-avoid">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="text-left text-xs font-bold uppercase py-3 px-4 border-b border-gray-300 w-[45%]">{l.description}</th>
@@ -934,7 +981,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-12 flex justify-end mb-8">
+      <div className="px-12 flex justify-end mb-8 break-inside-avoid">
         <table className="w-72 border border-gray-300">
           <tbody>
             <tr className="border-b border-gray-200">
@@ -974,7 +1021,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       {/* Notes */}
       {
         displayInvoice.notes && (
-          <div className="px-12 py-8">
+          <div className="px-12 py-8 break-inside-avoid">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{l.notes}</p>
             <p className="text-sm text-gray-600 italic whitespace-pre-line">{displayInvoice.notes}</p>
           </div>
@@ -982,7 +1029,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       }
 
       {/* Footer */}
-      <div className="px-12 py-8 mt-auto border-t-2 border-gray-800 bg-gray-50/50">
+      <div className="px-12 py-8 mt-auto border-t-2 border-gray-800 bg-gray-50/50 invoice-footer break-inside-avoid">
         <div className="grid grid-cols-2 gap-8 text-[11px] text-gray-600">
           <div>
             <p className="font-bold uppercase" style={{ color: primaryColor }}>{l.bankDetails}</p>
@@ -1012,7 +1059,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
   // Template: Modern Minimal
   const renderModernMinimal = () => (
-    <div className="bg-white text-gray-900 w-full min-h-[1100px] shadow-xl print-area relative" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="bg-white text-gray-900 w-full shadow-xl print-area relative" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
 
       {/* Background Watermark Logo */}
       {displayInvoice.sender.logoUrl && (
@@ -1097,7 +1144,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             }
 
             return (
-              <table key={bIdx} className="w-full mb-6 table-fixed">
+              <table key={bIdx} className="w-full mb-6 table-fixed invoice-items-table break-inside-avoid">
                 <thead>
                   <tr className="border-b-2" style={{ borderBottomColor: primaryColor }}>
                     <th className="text-left text-xs font-semibold uppercase tracking-wider py-4 text-gray-700 w-[55%]">{l.description}</th>
@@ -1134,7 +1181,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Totals */}
-      <div className="px-16 py-6 flex justify-end mb-7">
+      <div className="px-16 py-6 flex justify-end mb-7 break-inside-avoid">
         <div className="w-72 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">{l.subtotal}</span>
@@ -1174,7 +1221,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       {/* Notes */}
       {
         displayInvoice.notes && (
-          <div className="px-16 pb-8">
+          <div className="px-16 pb-8 break-inside-avoid">
             <div className="bg-gray-50 rounded-lg p-6">
               <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{l.notes}</p>
               <p className="text-sm text-gray-600 whitespace-pre-line">{displayInvoice.notes}</p>
@@ -1184,7 +1231,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       }
 
       {/* Footer */}
-      <div className="px-16 py-10 mt-auto bg-gray-900 text-white rounded-t-[3rem]">
+      <div className="px-16 py-10 mt-auto bg-gray-900 text-white rounded-t-[3rem] invoice-footer break-inside-avoid">
         <div className="flex justify-between items-start text-[10px] opacity-70 leading-relaxed">
           <div className="flex-1 text-left">
             <h4 className="font-black uppercase tracking-widest text-[8px] text-white opacity-40">{l.bankDetails}</h4>
@@ -1227,7 +1274,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
 
   // Template: Detailed Pro
   const renderDetailedPro = () => (
-    <div className="bg-white text-gray-900 w-full min-h-[1100px] shadow-xl print-area relative text-sm" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="bg-white text-gray-900 w-full shadow-xl print-area relative text-sm" style={{ fontFamily: 'system-ui, sans-serif' }}>
 
       {/* Background Watermark Logo */}
       {displayInvoice.sender.logoUrl && (
@@ -1384,7 +1431,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Summary */}
-      <div className="px-10 py-6 flex justify-between mb-12">
+      <div className="px-10 py-6 flex justify-between mb-12 break-inside-avoid">
         {/* VAT Breakdown */}
         {displayInvoice.type?.toLowerCase() === 'batiment' && (
           <div className="text-xs">
@@ -1444,7 +1491,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Amount in words & Notes */}
-      <div className="px-10 pb-4">
+      <div className="px-10 pb-4 break-inside-avoid">
         {displayInvoice.notes && (
           <div className="mt-4 text-xs">
             <p className="font-semibold">{l.notes}:</p>
@@ -1454,7 +1501,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       </div>
 
       {/* Footer */}
-      <div className="px-10 py-6 border-t border-gray-300 bg-gray-50 mt-auto">
+      <div className="px-10 py-6 border-t border-gray-300 bg-gray-50 mt-auto break-inside-avoid">
         <div className="grid grid-cols-4 gap-6 text-[10px] text-gray-500">
           <div className="col-span-1">
             <p className="font-bold uppercase" style={{ color: primaryColor }}>{l.bankDetails}</p>

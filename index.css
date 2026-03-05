@@ -130,7 +130,8 @@ body {
     visibility: visible !important;
     display: block !important;
     width: 210mm !important;
-    min-height: 297mm !important;
+    min-height: auto !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
@@ -138,6 +139,7 @@ body {
     border: none !important;
     page-break-after: auto !important;
     position: relative !important;
+    overflow: visible !important;
   }
 
   /* Ensure all children are visible */
@@ -149,5 +151,43 @@ body {
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Prevent tables from breaking across pages */
+  table, thead, tbody, tr, th, td {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+    page-break-before: auto !important;
+  }
+
+  /* Keep related content together */
+  .invoice-items-table {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure footer stays at bottom of page */
+  .invoice-footer {
+    page-break-before: auto !important;
+    margin-top: auto !important;
+  }
+
+  /* Avoid breaking inside text blocks */
+  p, div, h1, h2, h3, h4, h5, h6 {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Make sure print area grows with content */
+  .print-area {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Footer should not break and should be at end of content */
+  .invoice-footer {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
   }
 }
