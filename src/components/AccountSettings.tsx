@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../apiClient';
 import {
   User, Mail, Lock, Camera, Shield, CheckCircle, X,
-  Save, Upload, Trash2, Calendar, CreditCard, Crown, LogOut
+  Save, Upload, Trash2, Calendar, CreditCard, Crown, LogOut, Download, AlertTriangle
 } from 'lucide-react';
 
 interface AccountSettingsProps {
@@ -24,6 +24,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, onUpdateUser, o
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     setForm({
@@ -125,6 +127,52 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, onUpdateUser, o
 
   const handleRemoveAvatar = () => {
     setAvatarUrl('');
+  };
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:3000'}/api/export`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mj_token')}`
+        }
+      });
+      if (!response.ok) throw new Error("Erreur lors de l'exportation");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mes_donnees_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Erreur d'export ");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT votre compte et toutes vos données (factures, clients, entreprises) ? Cette action est IRREVERSIBLE.')) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:3000'}/api/me`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('mj_token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Erreur lors de la suppression');
+
+      onLogout();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur de suppression');
+      setIsDeleting(false);
+    }
   };
 
   const getPlanLabel = (plan: string) => {
@@ -285,14 +333,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, onUpdateUser, o
 
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</span>
-                  <span className={`font-extrabold uppercase ${
-                    user?.subscriptionStatus === 'active' ? 'text-emerald-400' :
+                  <span className={`font-extrabold uppercase ${user?.subscriptionStatus === 'active' ? 'text-emerald-400' :
                     user?.subscriptionStatus === 'trial' ? 'text-amber-400' :
-                    user?.subscriptionStatus === 'locked' ? 'text-red-400' : 'text-slate-400'
-                  }`}>
+                      user?.subscriptionStatus === 'locked' ? 'text-red-400' : 'text-slate-400'
+                    }`}>
                     {user?.subscriptionStatus === 'active' ? 'Actif' :
-                     user?.subscriptionStatus === 'trial' ? 'Essai Gratuit' :
-                     user?.subscriptionStatus === 'locked' ? 'Verrouillé' : user?.subscriptionStatus}
+                      user?.subscriptionStatus === 'trial' ? 'Essai Gratuit' :
+                        user?.subscriptionStatus === 'locked' ? 'Verrouillé' : user?.subscriptionStatus}
                   </span>
                 </div>
 
@@ -502,23 +549,77 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ user, onUpdateUser, o
             </div>
           </div>
 
-          {/* Logout Button */}
-          <div className="bg-red-50 rounded-[3rem] border border-red-100 p-10 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-[1.25rem] flex items-center justify-center text-red-600">
-                  <LogOut className="w-6 h-6" />
-                </div>
+          {/* GDPR & Data Section */}
+          <div className="bg-white rounded-[3rem] border border-slate-200/60 p-10 shadow-xl space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-50 rounded-[1.25rem] flex items-center justify-center text-indigo-600">
+                <Shield className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Données & Confidentialité</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Conformité RGPD</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100">
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Déconnexion</h3>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Quitter votre session sécurisée</p>
+                  <h4 className="font-extrabold text-slate-900">Exporter mes données</h4>
+                  <p className="text-sm font-medium text-slate-500 mt-1 max-w-sm">
+                    Téléchargez une copie de vos informations personnelles, entreprises, factures et clients.
+                  </p>
                 </div>
+                <button
+                  onClick={handleExportData}
+                  disabled={isExporting}
+                  className="px-6 py-3 bg-white text-slate-900 border-2 border-slate-200 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm whitespace-nowrap disabled:opacity-50"
+                >
+                  {isExporting ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <Download className="w-4 h-4" />}
+                  {isExporting ? 'Exportation...' : 'Télécharger ZIP'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Delete Account */}
+            <div className="bg-red-50 rounded-3xl border border-red-100 p-8 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-red-700">Supprimer</h3>
+              </div>
+              <p className="text-xs text-red-600/70 font-bold mb-6">
+                Suppression définitive de votre compte et toutes les données associées. Action irréversible.
+              </p>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="w-full py-4 px-6 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-700 transition-all shadow-lg shadow-red-200 disabled:opacity-50"
+              >
+                {isDeleting ? 'Suppression...' : 'Supprimer le compte'}
+              </button>
+            </div>
+
+            {/* Logout Button */}
+            <div className="bg-slate-50 rounded-3xl border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center text-slate-600">
+                    <LogOut className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900">Déconnexion</h3>
+                </div>
+                <p className="text-xs text-slate-500 font-bold mb-6">
+                  Fermez votre session sécurisée sur cet appareil.
+                </p>
               </div>
               <button
                 onClick={onLogout}
-                className="px-8 py-4 bg-red-600 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                className="w-full py-4 px-6 bg-white text-slate-900 border-2 border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
               >
-                <LogOut className="w-4 h-4" /> Se déconnecter
+                Se déconnecter
               </button>
             </div>
           </div>

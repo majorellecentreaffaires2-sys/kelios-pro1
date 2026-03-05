@@ -100,8 +100,8 @@ RESEND_API_KEY=re_xxxxx
 | ❌ Next | 🔴 P0 | Production Email (Resend) | 4 hours | **Deliverability** |
 | ✅ Done | 🟢 P2 | Admin Revenue Dashboard | 1 day | Business insight |
 | ✅ Done | 🟢 P3 | Landing Page Conversion | 0.5 days | New Visitors |
-| ❌ Next | 🟢 P3 | GDPR Export / Account Deletion | 1 day | Legal |
-| ❌ Next | 🟢 P2 | Responsive PWA | 2 days | Mobile users |
+| ✅ Done | 🟢 P3 | GDPR Export / Account Deletion | 1 day | Legal |
+| ✅ Done | 🟢 P2 | Responsive PWA | 2 days | Mobile users |
 
 ---
 
