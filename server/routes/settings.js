@@ -42,7 +42,7 @@ router.delete('/vat-rates/:id', authenticateToken, async (req, res) => {
 router.get('/templates', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM templates WHERE companyId = ?', [req.query.companyId]);
-        res.json(rows.map(r => ({ ...r, items: Array.isArray(r.items) ? r.items : JSON.parse(r.items || '[]') })));
+        res.json(rows.map(r => ({ ...r, items: Array.isArray(r.items) ? r.items : (typeof r.items === 'string' ? JSON.parse(r.items || '[]') : (r.items || [])) })));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -75,7 +75,8 @@ router.delete('/templates/:id', authenticateToken, async (req, res) => {
 router.get('/shortcuts', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM shortcuts WHERE companyId = ? AND userId = ?', [req.query.companyId, req.query.userId]);
-        res.json(rows.length > 0 ? JSON.parse(rows[0].shortcuts || '[]') : []);
+        const shortcuts = rows[0]?.shortcuts;
+        res.json(typeof shortcuts === 'string' ? JSON.parse(shortcuts || '[]') : (shortcuts || []));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

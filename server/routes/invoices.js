@@ -8,18 +8,23 @@ const router = express.Router();
 
 const formatDate = (d) => d ? new Date(d).toISOString().split('T')[0] : null;
 
+const parseJson = (val, fallback) => {
+    if (val === null || val === undefined) return fallback;
+    return typeof val === 'string' ? JSON.parse(val) : val;
+};
+
 router.get('/', authenticateToken, async (req, res) => {
     const { companyId } = req.query;
     try {
         const [rows] = await pool.query('SELECT * FROM invoices WHERE companyId = ?', [companyId]);
         res.json(rows.map(row => ({
             ...row,
-            sender: JSON.parse(row.sender || '{}'),
-            client: JSON.parse(row.client || '{}'),
-            items: JSON.parse(row.items || '[]'),
-            payments: JSON.parse(row.payments || '[]'),
-            auditTrail: JSON.parse(row.auditTrail || '[]'),
-            relanceHistory: JSON.parse(row.relanceHistory || '[]'),
+            sender: parseJson(row.sender, {}),
+            client: parseJson(row.client, {}),
+            items: parseJson(row.items, []),
+            payments: parseJson(row.payments, []),
+            auditTrail: parseJson(row.auditTrail, []),
+            relanceHistory: parseJson(row.relanceHistory, []),
             discount: parseFloat(row.discount) || 0
         })));
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -149,10 +154,10 @@ router.get('/overdue', authenticateToken, async (req, res) => {
         );
         res.json(rows.map(row => ({
             ...row,
-            sender: JSON.parse(row.sender || '{}'),
-            client: JSON.parse(row.client || '{}'),
-            items: JSON.parse(row.items || '[]'),
-            payments: JSON.parse(row.payments || '[]')
+            sender: parseJson(row.sender, {}),
+            client: parseJson(row.client, {}),
+            items: parseJson(row.items, []),
+            payments: parseJson(row.payments, [])
         })));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -171,10 +176,10 @@ router.get('/due-soon', authenticateToken, async (req, res) => {
         );
         res.json(rows.map(row => ({
             ...row,
-            sender: JSON.parse(row.sender || '{}'),
-            client: JSON.parse(row.client || '{}'),
-            items: JSON.parse(row.items || '[]'),
-            payments: JSON.parse(row.payments || '[]')
+            sender: parseJson(row.sender, {}),
+            client: parseJson(row.client, {}),
+            items: parseJson(row.items, []),
+            payments: parseJson(row.payments, [])
         })));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

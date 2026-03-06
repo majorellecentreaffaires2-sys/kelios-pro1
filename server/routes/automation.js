@@ -4,6 +4,11 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+const parseJson = (val, fallback) => {
+    if (val === null || val === undefined) return fallback;
+    return typeof val === 'string' ? JSON.parse(val) : val;
+};
+
 // --- RECURRING SCHEDULES ---
 router.get('/recurring-schedules', authenticateToken, async (req, res) => {
     const { companyId } = req.query;
@@ -32,7 +37,7 @@ router.get('/reminder-settings', authenticateToken, async (req, res) => {
             res.json({
                 ...s,
                 enableAutoReminder: s.enableAutoReminder === 1,
-                reminderDays: JSON.parse(s.reminderDays || '[7, 14, 30]')
+                reminderDays: parseJson(s.reminderDays, [7, 14, 30])
             });
         } else {
             res.json({ enableAutoReminder: false, reminderDays: [7, 14, 30] });

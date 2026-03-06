@@ -4,6 +4,11 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+const parseJson = (val, fallback) => {
+    if (val === null || val === undefined) return fallback;
+    return typeof val === 'string' ? JSON.parse(val) : val;
+};
+
 router.get('/reports/monthly', authenticateToken, async (req, res) => {
     const { companyId, month, year } = req.query;
     try {
@@ -17,8 +22,8 @@ router.get('/reports/monthly', authenticateToken, async (req, res) => {
         invoices.forEach(inv => {
             if (inv.status === 'Brouillon' || inv.status === 'Annulée') return;
 
-            const items = JSON.parse(inv.items || '[]');
-            const payments = JSON.parse(inv.payments || '[]');
+            const items = parseJson(inv.items, []);
+            const payments = parseJson(inv.payments, []);
 
             let invHT = 0;
             let invTVA = 0;
