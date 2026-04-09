@@ -1,0 +1,96 @@
+================================================================================
+MISE À JOUR DU SECRET DEPLOY_KEY SUR GITHUB
+================================================================================
+
+VOICI LA CLÉ PRIVÉE À COPIER DANS GITHUB:
+
+-----BEGIN OPENSSH PRIVATE KEY-----
+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
+-----END OPENSSH PRIVATE KEY-----
+
+
+================================================================================
+ÉTAPES POUR METTRE À JOUR SUR GITHUB:
+================================================================================
+
+1. Ouvre : https://github.com/majorellecentreaffaires2-sys/kelios-pro1/settings/secrets/actions
+
+2. Clique sur le secret "DEPLOY_KEY" (celui qui existe déjà)
+
+3. Clique sur "Update secret" ou sur l'icône de modification
+
+4. REMPLACE complètement la valeur par la clé ci-dessus (depuis -----BEGIN à -----END)
+   ⚠️ NE PAS AJOUTER D'ESPACES OU SAUTS DE LIGNE SUPPLÉMENTAIRES
+
+5. Clique "Update secret"
+
+================================================================================
+RÉSULTAT:
+================================================================================
+
+Une fois le secret mis à jour, tu auras:
+✅ HOSTINGER_HOST = 194.164.77.52
+✅ HOSTINGER_USER = devadmin
+✅ DEPLOY_KEY = [nouvelle clé privée sans passphrase]
+
+Le déploiement fonctionnera maintenant! 🚀
+
+
+================================================================================
+TEST FINAL:
+================================================================================
+
+Exécute dans PowerShell:
+```
+git commit --allow-empty -m "Test deployment with new SSH key"
+git push kelios main
+```
+
+Puis vérifiez les logs GitHub Actions:
+https://github.com/majorellecentreaffaires2-sys/kelios-pro1/actions

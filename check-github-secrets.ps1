@@ -22,10 +22,10 @@ Write-Host "   - HOSTINGER_USER" -ForegroundColor Gray
 Write-Host "   - DEPLOY_KEY" -ForegroundColor Gray
 
 Write-Host ""
-Write-Host "💡 Si un secret manque, cliquez 'New repository secret'" -ForegroundColor Green
+Write-Host "Si un secret manque, cliquez 'New repository secret'" -ForegroundColor Green
 Write-Host "   et ajoutez-le avec les valeurs ci-dessus." -ForegroundColor Green
 
 Write-Host ""
 Write-Host "🚀 Après configuration, faites un nouveau commit :" -ForegroundColor Yellow
-Write-Host "git commit --allow-empty -m 'Trigger deployment'" -ForegroundColor White
+Write-Host "git commit --allow-empty -m `"Trigger deployment`"" -ForegroundColor White
 Write-Host "git push kelios main" -ForegroundColor White
