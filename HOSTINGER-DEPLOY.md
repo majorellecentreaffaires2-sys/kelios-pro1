@@ -56,13 +56,16 @@ git push origin main
 
 ---
 
-## 🚀 **GitHub Actions Simplifié**
+## ⚙️ **Configuration GitHub Actions Améliorée**
 
-### Workflow optimisé pour Hostinger :
-- **Build Node.js 18** : Stable et rapide
-- **Cache npm** : Build ultra-rapide
-- **SSH sécurisé** : Déploiement fiable
-- **Nettoyage automatique** : Pas de conflits
+### Workflow optimisé pour Hostinger Ubuntu :
+- **Node.js 18** : Version stable et compatible
+- **Cache npm intelligent** : Installation ultra-rapide
+- **Nettoyage cache automatique** : Évite les conflits de dépendances
+- **Installation robuste** : `--prefer-offline --no-audit`
+- **Vérifications intégrées** : Validation des dépendances et build
+- **Logs détaillés** : Debugging facilité
+- **SSH sécurisé** : Déploiement fiable avec webfactory/ssh-agent@v0.7.0
 
 ---
 
@@ -108,14 +111,21 @@ ssh user@domaine.com
 ```
 
 ### Si build échoue :
-- Vérifiez les **GitHub Secrets**
-- Contrôlez la **version Node.js** (18+)
-- Videz le **cache npm**
+- Vérifiez les **GitHub Secrets** (HOSTINGER_HOST, HOSTINGER_USER, DEPLOY_KEY)
+- Contrôlez la **version Node.js** (18+ obligatoire)
+- Videz le **cache npm** (fait automatiquement)
+- Vérifiez les **logs détaillés** dans GitHub Actions
+- Testez localement : `npm ci && npm run build`
 
-### Si page blanche :
-- Videz le **cache navigateur** (Ctrl+F5)
-- Vérifiez la **console** (F12)
-- Contrôlez les **permissions fichiers**
+### Si erreur "install dependencies" :
+- **Cause** : Conflit de cache npm ou réseau
+- **Solution** : Le workflow nettoie automatiquement le cache
+- **Alternative** : Poussez un commit vide pour relancer : `git commit --allow-empty -m "Trigger rebuild"`
+
+### Si déploiement SSH échoue :
+- Vérifiez la **clé SSH** dans GitHub Secrets
+- Assurez-vous que la **clé publique** est dans `~/.ssh/authorized_keys` sur Hostinger
+- Testez la connexion : `ssh user@domaine.com`
 
 ---
 

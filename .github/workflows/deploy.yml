@@ -7,35 +7,57 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-        
+
+    - name: Clear npm cache
+      run: npm cache clean --force
+
     - name: Install dependencies
-      run: npm ci
-      
+      run: |
+        npm ci --prefer-offline --no-audit
+      continue-on-error: false
+
+    - name: Verify dependencies
+      run: npm list --depth=0
+
     - name: Build application
       run: npm run build
-      
+
+    - name: Verify build output
+      run: ls -la dist/
+
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-        
+
     - name: Deploy to Hostinger
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
           cd public_html
+          echo "Cleaning old deployment..."
           rm -rf app
           mkdir -p app
+          echo "Deployment directory ready"
           exit
         EOF
-        
+
+        echo "Uploading files..."
         scp -o StrictHostKeyChecking=no -r dist/* ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:public_html/app/
+
+        ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
+          cd public_html/app
+          echo "Deployment completed. Files uploaded:"
+          ls -la
+          echo "Application should be accessible at: https://${{ secrets.HOSTINGER_HOST }}/app/"
+          exit
+        EOF
