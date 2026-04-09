@@ -57,21 +57,20 @@ jobs:
     - name: Deploy to Hostinger
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
-          cd public_html
+          mkdir -p ~/public_html/app
+          echo "Deployment directory ready at ~/public_html/app"
           echo "Cleaning old deployment..."
-          rm -rf app
-          mkdir -p app
-          echo "Deployment directory ready"
+          rm -rf ~/public_html/app/*
           exit
         EOF
 
         echo "Uploading files..."
-        scp -o StrictHostKeyChecking=no -r dist/* ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:public_html/app/
+        scp -o StrictHostKeyChecking=no -r dist/* ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~/public_html/app/
 
         ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
-          cd public_html/app
+          cd ~/public_html/app
           echo "Deployment completed. Files uploaded:"
           ls -la
-          echo "Application should be accessible at: https://${{ secrets.HOSTINGER_HOST }}/app/"
+          echo "Application should be accessible at your Hostinger domain"
           exit
         EOF
