@@ -116,7 +116,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
 
           <div className="mt-auto relative z-20 animate-in fade-in duration-1000">
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">
-              &copy; {new Date().getFullYear()} Majorlle Cloud Solutions · V5.0 PRO
+              &copy; {new Date().getFullYear()} Kelios Cloud Solutions · V5.0 PRO
             </p>
           </div>
 
@@ -155,7 +155,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
             {step === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-8">
                 <div className="space-y-2.5">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Identifiant Majorlle</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Identifiant Kelios</label>
                   <div className="relative group">
                     <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-600 transition-colors" />
                     <input
@@ -232,7 +232,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
                     onClick={onRegister}
                     className="w-full py-4 text-slate-400 hover:text-slate-900 font-bold uppercase text-[10px] tracking-widest transition-all"
                   >
-                    Nouveau sur Majorlle ? <span className="text-blue-600 ml-1">Créer un ID</span>
+                    Nouveau sur Kelios ? <span className="text-blue-600 ml-1">Créer un ID</span>
                   </button>
                 </div>
               </form>

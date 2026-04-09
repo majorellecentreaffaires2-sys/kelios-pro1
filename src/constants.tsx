@@ -13,7 +13,7 @@ import {
   Calculator,
 } from "lucide-react";
 
-export const APP_NAME = "Majorlle SaaS ERP";
+export const APP_NAME = "Kelios SaaS ERP";
 
 export const INVOICE_TYPES = [
   {
@@ -47,8 +47,8 @@ export const INVOICE_TYPES = [
     color: "text-red-600",
   },
   {
-    id: "Batiment",
-    label: "Facture Bâtiment",
+    id: "DevisAvecAcompte",
+    label: "BATIMENT",
     icon: <Calculator className="w-4 h-4" />,
     color: "text-blue-500",
   },
@@ -92,7 +92,7 @@ export const UNITS = [
 ];
 
 export const BRAND_COLORS = [
-  { name: "Majorlle Blue", value: "#007AFF" },
+  { name: "Kelios Blue", value: "#007AFF" },
   { name: "Deep Onyx", value: "#1a1a1a" },
   { name: "Royal Gold", value: "#b69329" },
   { name: "Forest", value: "#065f46" },

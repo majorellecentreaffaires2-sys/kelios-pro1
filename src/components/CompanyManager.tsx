@@ -356,7 +356,7 @@ const CompanyManager: React.FC<CompanyManagerProps> = ({ companies, users, onCre
                           onChange={e => setForm({ ...form, companyType: e.target.value as any })}
                         >
                           <option value="Standard">Standard (TPE/PME)</option>
-                          <option value="Batiment">Bâtiment & Construction</option>
+                          <option value="DevisAvecAcompte">BATIMENT</option>
                           <option value="Services">Services & Consulting</option>
                           <option value="Commerce">Commerce & Retail</option>
                           <option value="Dev">Design & Développement (Dev)</option>

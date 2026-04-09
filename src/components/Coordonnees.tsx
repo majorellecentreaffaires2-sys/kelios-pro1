@@ -140,7 +140,7 @@ const Coordonnees: React.FC<CoordonneesProps> = ({ company, onUpdateCompany }) =
                 <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-tight">{company.name}</h2>
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compte Majorlle Actif</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compte Kelios Actif</span>
                 </div>
               </div>
 

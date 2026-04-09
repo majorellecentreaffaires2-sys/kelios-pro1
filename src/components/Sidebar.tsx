@@ -14,6 +14,12 @@ import {
   Settings,
   LayoutDashboard,
   CalendarClock,
+  Package,
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+  Receipt,
+  Search,
 } from "lucide-react";
 import { Company } from "../types";
 
@@ -52,6 +58,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "Document Ventes",
       icon: <ShoppingCart className="w-5 h-5" />,
     },
+    { id: "acomptes", label: "Factures d'Acomptes", icon: <Receipt className="w-5 h-5" /> },
+    { id: "stock", label: "Gestion Stock", icon: <Package className="w-5 h-5" /> },
+    { id: "depenses", label: "Gestion Dépenses", icon: <DollarSign className="w-5 h-5" /> },
+    { id: "commandes", label: "Bons de Commande", icon: <ShoppingCart className="w-5 h-5" /> },
+    { id: "ventes-management", label: "Gestion Ventes", icon: <TrendingUp className="w-5 h-5" /> },
+    { id: "inventaire", label: "Inventaire", icon: <Package className="w-5 h-5" /> },
+    { id: "fournisseurs", label: "Fournisseurs", icon: <Users className="w-5 h-5" /> },
+    { id: "projets", label: "Projets", icon: <CalendarClock className="w-5 h-5" /> },
+    { id: "paiements", label: "Suivi Paiements", icon: <CreditCard className="w-5 h-5" /> },
+    { id: "audit", label: "Audit", icon: <Search className="w-5 h-5" /> },
     { id: "shortcuts", label: "Raccourcis IA", icon: <Zap className="w-5 h-5" /> },
     ...(user?.role === 'Admin' || user?.role === 'SuperAdmin' ? [
       { id: "automation", label: "Automatisation", icon: <CalendarClock className="w-5 h-5" /> }
@@ -91,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 <div className="hidden lg:flex flex-col items-start min-w-0">
                   <span className="font-bold text-[11px] text-slate-900 truncate uppercase tracking-tight">
-                    {activeCompany?.name || "Entité Majorlle"}
+                    {activeCompany?.name || "Entité Kelios"}
                   </span>
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
                     ID Entité #{(activeCompany?.id || '00').toString().slice(-4)}

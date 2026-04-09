@@ -78,7 +78,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, user })
               </div>
               <div className="space-y-2">
                 <h2 className="text-3xl font-extrabold tracking-tighter uppercase leading-none">Configuration</h2>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-200 opacity-80">Majorlle Pro Cloud</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-200 opacity-80">Kelios Pro Cloud</p>
               </div>
 
               <div className="pt-8 relative">
@@ -105,7 +105,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, user })
 
             <div className="relative z-10 p-6 bg-white/10 rounded-[2rem] border border-white/10 mt-10 backdrop-blur-sm">
               <p className="text-[10px] font-bold text-blue-50 leading-relaxed uppercase tracking-wide">
-                Bienvenue sur l'infrastructure Professionnelle Majorlle. Ce wizard configure vos bases de données en temps réel.
+                Bienvenue sur l'infrastructure Professionnelle Kelios. Ce wizard configure vos bases de données en temps réel.
               </p>
             </div>
 
@@ -208,7 +208,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, user })
                         className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4.5 font-bold text-slate-900 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all"
                         value={companyForm.name}
                         onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}
-                        placeholder="Ex: Majorlle Agency SARL AU"
+                        placeholder="Ex: Kelios Agency SARL AU"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-5">

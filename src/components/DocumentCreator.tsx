@@ -76,6 +76,22 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
     initialInvoice?.invoiceNumber || ''
   );
 
+  // State for Payment Schedule
+  const [depositRate, setDepositRate] = useState<number>(initialInvoice?.depositRate || 30);
+  const [firstPayment, setFirstPayment] = useState<number>(30);
+  const [secondPayment, setSecondPayment] = useState<number>(35);
+  const [deliveryPayment, setDeliveryPayment] = useState<number>(5);
+  
+  // State for Proforma Variables
+  const [conversionAmount, setConversionAmount] = useState<number>(0);
+  const [depositReceived, setDepositReceived] = useState<number>(0);
+  const [balanceDue, setBalanceDue] = useState<number>(0);
+  
+  // State for Acompte Variables
+  const [originalInvoiceNumber, setOriginalInvoiceNumber] = useState<string>('');
+  const [acompteAmount, setAcompteAmount] = useState<number>(0);
+  const [acomptePercentage, setAcomptePercentage] = useState<number>(30);
+
   useEffect(() => {
     // If editing and type hasn't changed, keep the initial one
     if (initialInvoice && initialInvoice.type === currentType && initialInvoice.documentNature === documentNature) {
@@ -104,8 +120,34 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       ht += lineHt;
       tva += lineTva;
     });
-    return { ht, tva, ttc: ht + tva };
-  }, [items]);
+    const ttc = ht + tva;
+    
+    // Calcul de l'échéancier
+    const depositAmount = documentNature === 'Devis' ? ttc * (depositRate / 100) : 0;
+    const firstPaymentAmount = documentNature === 'Devis' ? ttc * (firstPayment / 100) : 0;
+    const secondPaymentAmount = documentNature === 'Devis' ? ttc * (secondPayment / 100) : 0;
+    const deliveryPaymentAmount = documentNature === 'Devis' ? ttc * (deliveryPayment / 100) : 0;
+    const remainingAmount = ttc - depositAmount;
+    
+    // Calcul des variables proforma (uniquement pour les factures proforma)
+    const conversionAmount = currentType === 'Proforma' ? ttc * 0.1 : 0; // 10% de conversion
+    const depositReceived = currentType === 'Proforma' ? ttc * 0.2 : 0; // 20% d'acompte reçu
+    const balanceDue = currentType === 'Proforma' ? ttc - conversionAmount - depositReceived : 0;
+    
+    return { 
+      ht, 
+      tva, 
+      ttc,
+      depositAmount,
+      firstPaymentAmount,
+      secondPaymentAmount,
+      deliveryPaymentAmount,
+      remainingAmount,
+      conversionAmount,
+      depositReceived,
+      balanceDue
+    };
+  }, [items, documentNature, currentType, depositRate, firstPayment, secondPayment, deliveryPayment]);
 
   // Handlers
   const handleAddItem = () => {
@@ -164,6 +206,14 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
       payments: initialInvoice?.payments || [],
       auditTrail: initialInvoice?.auditTrail || [],
       discount: 0,
+      depositRate: documentNature === 'Devis' ? depositRate : undefined,
+      firstPayment: documentNature === 'Devis' ? firstPayment : undefined,
+      secondPayment: documentNature === 'Devis' ? secondPayment : undefined,
+      deliveryPayment: documentNature === 'Devis' ? deliveryPayment : undefined,
+      // Variables proforma
+      conversionAmount: currentType === 'Proforma' ? totals.conversionAmount : undefined,
+      depositReceived: currentType === 'Proforma' ? totals.depositReceived : undefined,
+      balanceDue: currentType === 'Proforma' ? totals.balanceDue : undefined,
       notes,
       subject,
       currency,
@@ -195,6 +245,14 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
     payments: [],
     auditTrail: [],
     discount: 0,
+    depositRate: documentNature === 'Devis' ? depositRate : undefined,
+    firstPayment: documentNature === 'Devis' ? firstPayment : undefined,
+    secondPayment: documentNature === 'Devis' ? secondPayment : undefined,
+    deliveryPayment: documentNature === 'Devis' ? deliveryPayment : undefined,
+    // Variables proforma
+    conversionAmount: currentType === 'Proforma' ? totals.conversionAmount : undefined,
+    depositReceived: currentType === 'Proforma' ? totals.depositReceived : undefined,
+    balanceDue: currentType === 'Proforma' ? totals.balanceDue : undefined,
     notes,
     subject,
     currency,
@@ -213,20 +271,20 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
               {isEditing ? `Modifier` : `Nouveau`}
             </h1>
             <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
-              {(['Standard', 'Devis', 'Proforma', 'Avoir', 'Batiment', 'Dev'] as InvoiceType[]).map((t) => (
+              {(['Standard', 'Devis', 'Proforma', 'Acompte', 'Avoir', 'DevisAvecAcompte', 'Dev'] as InvoiceType[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => {
                     setCurrentType(t);
                     if (t === 'Devis') setDocumentNature('Devis');
-                    else if (t === 'Standard') setDocumentNature('Facture');
+                    else if (t === 'Standard' || t === 'Acompte') setDocumentNature('Facture');
                   }}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${currentType === t
                     ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200/50'
                     : 'text-gray-400 hover:text-gray-600'
                     }`}
                 >
-                  {t === 'Standard' ? 'Facture' : t}
+                  {t === 'Standard' ? 'Facture' : t === 'Acompte' ? 'Facture d\'Acompte' : t === 'DevisAvecAcompte' ? 'BATIMENT' : t}
                 </button>
               ))}
             </div>
@@ -679,6 +737,291 @@ const DocumentCreator: React.FC<DocumentCreatorProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Payment Schedule - Échéancier */}
+      {documentNature === 'Devis' && (
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6 shadow-lg border border-amber-200">
+          <h3 className="font-black text-xs uppercase tracking-widest text-amber-700 mb-6 flex items-center gap-2">
+            <Calendar className="w-4 h-4" /> Échéancier de Paiement
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Acompte à la signature */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-sm text-amber-700">Acompte à la signature</h4>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={depositRate}
+                    onChange={(e) => setDepositRate(Number(e.target.value))}
+                    className="w-16 px-2 py-1 border border-amber-300 rounded-lg text-sm font-bold text-center"
+                    min="0"
+                    max="100"
+                  />
+                  <span className="text-sm font-bold text-amber-600">%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-amber-600">
+                  {totals.depositAmount.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+
+            {/* Premier versement */}
+            <div className="bg-white rounded-xl p-4 border border-blue-200">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-sm text-blue-700">Premier versement</h4>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={firstPayment}
+                    onChange={(e) => setFirstPayment(Number(e.target.value))}
+                    className="w-16 px-2 py-1 border border-blue-300 rounded-lg text-sm font-bold text-center"
+                    min="0"
+                    max="100"
+                  />
+                  <span className="text-sm font-bold text-blue-600">%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-blue-600">
+                  {totals.firstPaymentAmount.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+
+            {/* Deuxième versement */}
+            <div className="bg-white rounded-xl p-4 border border-green-200">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-sm text-green-700">Deuxième versement</h4>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={secondPayment}
+                    onChange={(e) => setSecondPayment(Number(e.target.value))}
+                    className="w-16 px-2 py-1 border border-green-300 rounded-lg text-sm font-bold text-center"
+                    min="0"
+                    max="100"
+                  />
+                  <span className="text-sm font-bold text-green-600">%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-green-600">
+                  {totals.secondPaymentAmount.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+
+            {/* Solde à la livraison */}
+            <div className="bg-white rounded-xl p-4 border border-purple-200">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-sm text-purple-700">Solde à la livraison</h4>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={deliveryPayment}
+                    onChange={(e) => setDeliveryPayment(Number(e.target.value))}
+                    className="w-16 px-2 py-1 border border-purple-300 rounded-lg text-sm font-bold text-center"
+                    min="0"
+                    max="100"
+                  />
+                  <span className="text-sm font-bold text-purple-600">%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-purple-600">
+                  {totals.deliveryPaymentAmount.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Résumé de l'échéancier */}
+          <div className="mt-6 p-4 bg-amber-100 rounded-xl border border-amber-300">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <span className="text-xs text-amber-600 font-medium">Total TTC</span>
+                <div className="text-lg font-black text-amber-700">
+                  {totals.ttc.toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-blue-600 font-medium">Total versé</span>
+                <div className="text-lg font-black text-blue-700">
+                  {(totals.depositAmount + totals.firstPaymentAmount + totals.secondPaymentAmount + totals.deliveryPaymentAmount).toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-green-600 font-medium">Reste dû</span>
+                <div className="text-lg font-black text-green-700">
+                  {(totals.ttc - totals.depositAmount - totals.firstPaymentAmount - totals.secondPaymentAmount - totals.deliveryPaymentAmount).toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-purple-600 font-medium">Solde final</span>
+                <div className="text-lg font-black text-purple-700">
+                  {totals.remainingAmount.toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Acompte Variables Section */}
+      {currentType === 'Acompte' && (
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 shadow-lg border border-purple-200">
+          <h3 className="font-black text-xs uppercase tracking-widest text-purple-700 mb-6 flex items-center gap-2">
+            <Calculator className="w-4 h-4" /> Variables Facture d'Acompte
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-4 border border-purple-100">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Facture originale</label>
+              <input
+                type="text"
+                value={originalInvoiceNumber}
+                onChange={(e) => setOriginalInvoiceNumber(e.target.value)}
+                placeholder="Numéro de la facture originale"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-purple-100">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Montant de l'acompte</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={acompteAmount}
+                  onChange={(e) => {
+                    const amount = Number(e.target.value);
+                    setAcompteAmount(amount);
+                    const percentage = totals.ttc > 0 ? (amount / totals.ttc) * 100 : 0;
+                    setAcomptePercentage(percentage);
+                  }}
+                  placeholder="0"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={acomptePercentage}
+                    onChange={(e) => {
+                      const percentage = Number(e.target.value);
+                      setAcomptePercentage(percentage);
+                      const amount = (percentage / 100) * totals.ttc;
+                      setAcompteAmount(amount);
+                    }}
+                    placeholder="30"
+                    className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-center"
+                  />
+                  <span className="text-sm text-gray-600">%</span>
+                </div>
+              </div>
+              <div className="text-right mt-2">
+                <span className="text-lg font-bold text-purple-600">
+                  {acompteAmount.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-white rounded-xl border border-purple-100">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">Reste à payer</span>
+              <span className="text-2xl font-bold text-orange-600">
+                {(totals.ttc - acompteAmount).toLocaleString()} {activeCompany.currency}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Proforma Variables Section */}
+      {currentType === 'Proforma' && (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-6 shadow-lg border border-blue-200">
+          <h3 className="font-black text-xs uppercase tracking-widest text-blue-700 mb-6 flex items-center gap-2">
+            <Calculator className="w-4 h-4" /> Variables Proforma
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl p-4 border border-blue-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Convers</span>
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-blue-600">10%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-blue-600">
+                  {totals.conversionAmount.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-green-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Acompte reçu</span>
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-green-600">20%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-green-600">
+                  {totals.depositReceived.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-purple-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Solde à payer</span>
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-purple-600">70%</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-purple-600">
+                  {totals.balanceDue.toLocaleString()} {activeCompany.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Résumé des variables proforma */}
+          <div className="mt-6 p-4 bg-blue-100 rounded-xl border border-blue-300">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <span className="text-xs text-blue-600 font-medium">Total TTC</span>
+                <div className="text-lg font-black text-blue-700">
+                  {totals.ttc.toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-blue-600 font-medium">Convers</span>
+                <div className="text-lg font-black text-blue-700">
+                  {totals.conversionAmount.toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-green-600 font-medium">Acompte reçu</span>
+                <div className="text-lg font-black text-green-700">
+                  {totals.depositReceived.toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-purple-600 font-medium">Solde dû</span>
+                <div className="text-lg font-black text-purple-700">
+                  {totals.balanceDue.toLocaleString()} {activeCompany.currency}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Email automation */}
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">

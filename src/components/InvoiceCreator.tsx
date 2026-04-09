@@ -74,6 +74,12 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
     "idle" | "saving" | "saved"
   >("idle");
   const [vatRates, setVatRates] = useState<any[]>([]);
+  const [saveDepositPreference, setSaveDepositPreference] = useState(false);
+  
+  // États pour l'échéancier
+  const [firstPayment, setFirstPayment] = useState(30);
+  const [secondPayment, setSecondPayment] = useState(35);
+  const [deliveryPayment, setDeliveryPayment] = useState(5);
 
   const isLocked = false; // Bypassing frontend lock as requested
 
@@ -88,11 +94,21 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       return activeCompany?.defaultVatRates[0] || 20;
     };
 
+    // Charger le taux d'acompte par défaut depuis localStorage pour les devis
+    const getDefaultDepositRate = () => {
+      const isQuoteType = activeCompany?.companyType === 'DevisAvecAcompte' || activeCompany?.companyType === 'Dev';
+      if (isQuoteType) {
+        return parseFloat(localStorage.getItem('defaultDepositRate') || '0');
+      }
+      return 0;
+    };
+
     return {
       id: Math.random().toString(36).substr(2, 9),
       companyId: activeCompany?.id || "",
       invoiceNumber: "AUTO-GENERATE",
-      type: activeCompany?.companyType === 'Batiment' ? 'Batiment' : 'Standard',
+      type: activeCompany?.companyType === 'DevisAvecAcompte' ? 'DevisAvecAcompte' : 'Standard',
+      documentNature: activeCompany?.companyType === 'DevisAvecAcompte' || activeCompany?.companyType === 'Dev' ? 'Devis' : 'Facture',
       status: "En cours",
       date: new Date().toISOString().split("T")[0],
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -132,6 +148,14 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       auditTrail: [],
       relanceHistory: [],
       discount: 0,
+      depositRate: getDefaultDepositRate(), // Utiliser le taux par défaut
+      firstPayment: 30,
+      secondPayment: 35,
+      deliveryPayment: 5,
+      // Variables proforma
+      conversionAmount: 0,
+      balanceDue: 0,
+      depositReceived: 0,
       notes: activeCompany?.companyType === 'Dev'
         ? "Modalités de règlement spécifiques :\n- Accompte à la signature : 30%\n- Versement : 30%\n- Autre versement : 35%\n- Livraison : 5%"
         : "Total HT arrêté à la somme de :",
@@ -139,7 +163,7 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       language: "fr",
       primaryColor: activeCompany?.primaryColor || "#007AFF",
       visualTemplate:
-        activeCompany?.companyType === 'Batiment' ? 'CorporatePro' :
+        activeCompany?.companyType === 'DevisAvecAcompte' ? 'CorporatePro' :
           activeCompany?.companyType === 'Services' ? 'SwissMinimal' :
             activeCompany?.companyType === 'Commerce' ? 'ClassicPrint' :
               activeCompany?.companyType === 'Dev' ? 'DeepOnyx' : 'BlueSky',
@@ -167,6 +191,22 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
     }, 3000);
     return () => clearTimeout(timeout);
   }, [form, isLocked]);
+
+  // Handlers pour l'échéancier
+  const updateFirstPayment = (value: number) => {
+    setFirstPayment(value);
+    setForm(prev => ({ ...prev, firstPayment: value }));
+  };
+
+  const updateSecondPayment = (value: number) => {
+    setSecondPayment(value);
+    setForm(prev => ({ ...prev, secondPayment: value }));
+  };
+
+  const updateDeliveryPayment = (value: number) => {
+    setDeliveryPayment(value);
+    setForm(prev => ({ ...prev, deliveryPayment: value }));
+  };
 
   useEffect(() => {
     if (!initialInvoice && !isLocked) generateNextNumber(form.type);
@@ -234,15 +274,65 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
     });
     const globalDiscount = parseFloat(String(form.discount)) || 0;
     const ttc = totalHt + totalTva + totalEcoContrib - globalDiscount;
+    
+    // Calcul de l'acompte pour les devis
+    const depositRate = parseFloat(String(form.depositRate)) || 0;
+    const depositAmount = (form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') ? ttc * (depositRate / 100) : 0;
+    const remainingAmount = ttc - depositAmount;
+    
+    // Calcul de l'échéancier pour les devis
+    const firstPaymentRate = parseFloat(String(form.firstPayment)) || 30;
+    const secondPaymentRate = parseFloat(String(form.secondPayment)) || 35;
+    const deliveryPaymentRate = parseFloat(String(form.deliveryPayment)) || 5;
+    
+    const firstPaymentAmount = (form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') ? ttc * (firstPaymentRate / 100) : 0;
+    const secondPaymentAmount = (form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') ? ttc * (secondPaymentRate / 100) : 0;
+    const deliveryPaymentAmount = (form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') ? ttc * (deliveryPaymentRate / 100) : 0;
+    const totalPaidAmount = firstPaymentAmount + secondPaymentAmount + deliveryPaymentAmount;
+    const finalRemainingAmount = ttc - totalPaidAmount;
+    
+    // Calcul des variables proforma (uniquement pour les factures proforma)
+    // Utiliser les valeurs manuelles si elles sont définies, sinon calculer automatiquement
+    let conversionAmount = 0;
+    let depositReceived = 0;
+    let balanceDue = 0;
+    
+    if (form.type === 'Proforma') {
+      // Utiliser les valeurs manuelles si elles existent et sont > 0
+      conversionAmount = (form.conversionAmount && form.conversionAmount > 0) ? form.conversionAmount : ttc * 0.1;
+      depositReceived = (form.depositReceived && form.depositReceived > 0) ? form.depositReceived : ttc * 0.2;
+      balanceDue = (form.balanceDue && form.balanceDue > 0) ? form.balanceDue : ttc - conversionAmount - depositReceived;
+    }
+    
     return {
       totalHt: isNaN(totalHt) ? 0 : totalHt,
       totalTva: isNaN(totalTva) ? 0 : totalTva,
       totalEcoContrib: isNaN(totalEcoContrib) ? 0 : totalEcoContrib,
       ttc: isNaN(ttc) ? 0 : ttc,
+      depositAmount: isNaN(depositAmount) ? 0 : depositAmount,
+      remainingAmount: isNaN(remainingAmount) ? 0 : remainingAmount,
+      firstPaymentAmount: isNaN(firstPaymentAmount) ? 0 : firstPaymentAmount,
+      secondPaymentAmount: isNaN(secondPaymentAmount) ? 0 : secondPaymentAmount,
+      deliveryPaymentAmount: isNaN(deliveryPaymentAmount) ? 0 : deliveryPaymentAmount,
+      totalPaidAmount: isNaN(totalPaidAmount) ? 0 : totalPaidAmount,
+      finalRemainingAmount: isNaN(finalRemainingAmount) ? 0 : finalRemainingAmount,
+      conversionAmount: isNaN(conversionAmount) ? 0 : conversionAmount,
+      depositReceived: isNaN(depositReceived) ? 0 : depositReceived,
+      balanceDue: isNaN(balanceDue) ? 0 : balanceDue,
     };
   };
 
-  const { totalHt, totalTva, totalEcoContrib, ttc } = calculateTotals();
+  const { totalHt, totalTva, totalEcoContrib, ttc, depositAmount, remainingAmount, firstPaymentAmount, secondPaymentAmount, deliveryPaymentAmount, totalPaidAmount, finalRemainingAmount, conversionAmount, depositReceived, balanceDue } = calculateTotals();
+
+  // Debug pour voir les données dans InvoiceCreator
+  console.log('Debug Acompte - InvoiceCreator:', {
+    documentNature: form.documentNature,
+    type: form.type,
+    depositRate: form.depositRate,
+    depositAmount,
+    remainingAmount,
+    ttc
+  });
 
   const handleSaveDraft = async () => {
     if (isLocked) return;
@@ -387,10 +477,26 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
                 >
                   <option value="Standard">Facture Standard</option>
                   <option value="Devis">Devis</option>
+                  <option value="Proforma">Facture Proforma</option>
                   <option value="Livraison">Bon de Livraison</option>
                   <option value="Avoir">Avoir</option>
-                  <option value="Batiment">Facture Bâtiment</option>
+                  <option value="DevisAvecAcompte">BATIMENT</option>
                   <option value="Dev">Facture Dev</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-1">
+                  Nature du Document
+                </label>
+                <select
+                  className="w-full bg-white border-2 border-blue-100 rounded-xl px-4 py-3 font-bold outline-none focus:border-blue-600 text-sm"
+                  value={form.documentNature}
+                  onChange={(e) =>
+                    setForm({ ...form, documentNature: e.target.value as any })
+                  }
+                >
+                  <option value="Facture">Facture</option>
+                  <option value="Devis">Devis</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -945,35 +1051,121 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
                   Totaux
                 </h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-gray-600">
-                      Total HT Net:
-                    </span>
-                    <span className="font-black">
-                      {totalHt.toLocaleString()} {form.currency}
-                    </span>
+                  <div className="flex justify-between text-xs p-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full group-hover:scale-125 transition-transform"></div>
+                      <span className="font-bold text-gray-600">Total HT Net:</span>
+                    </div>
+                    <span className="font-black">{totalHt.toLocaleString()} {form.currency}</span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-gray-600">Total TVA:</span>
-                    <span className="font-black">
-                      {totalTva.toLocaleString()} {form.currency}
-                    </span>
+                  <div className="flex justify-between text-xs p-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full group-hover:scale-125 transition-transform"></div>
+                      <span className="font-bold text-gray-600">Total TVA:</span>
+                    </div>
+                    <span className="font-black">{totalTva.toLocaleString()} {form.currency}</span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-gray-600">
-                      Total Éco-Contribution:
-                    </span>
-                    <span className="font-black text-amber-600">
-                      {totalEcoContrib.toLocaleString()} {form.currency}
-                    </span>
+                  <div className="flex justify-between text-xs p-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-amber-400 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full group-hover:scale-125 transition-transform"></div>
+                      <span className="font-bold text-gray-600">Total Éco-Contribution:</span>
+                    </div>
+                    <span className="font-black text-amber-600">{totalEcoContrib.toLocaleString()} {form.currency}</span>
                   </div>
                   <div className="h-px bg-blue-200 my-2"></div>
-                  <div className="flex justify-between">
-                    <span className="font-black text-blue-900">Total TTC:</span>
-                    <span className="text-lg font-black text-blue-600">
-                      {ttc.toLocaleString()} {form.currency}
-                    </span>
+                  <div className="flex justify-between p-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full group-hover:scale-125 transition-transform"></div>
+                      <span className="font-black text-blue-900">Total TTC:</span>
+                    </div>
+                    <span className="text-lg font-black text-blue-600">{ttc.toLocaleString()} {form.currency}</span>
                   </div>
+                  
+                  {/* Contrôle du taux d'acompte - uniquement pour les devis */}
+                  {(form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') && (
+                    <>
+                      <div className="h-px bg-amber-200 my-2"></div>
+                      <div className="space-y-2 p-2 border-2 border-dashed border-amber-300 rounded-lg hover:border-amber-500 transition-colors cursor-pointer group">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full group-hover:scale-125 transition-transform"></div>
+                            <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest ml-1">
+                              Taux d'acompte
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="saveDepositPref"
+                              checked={saveDepositPreference}
+                              onChange={(e) => setSaveDepositPreference(e.target.checked)}
+                              className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              disabled={isLocked}
+                            />
+                            <label htmlFor="saveDepositPref" className="text-[8px] text-gray-500 cursor-pointer">
+                              Par défaut
+                            </label>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={form.depositRate || 0}
+                            onChange={(e) => {
+                              const newRate = parseFloat(e.target.value) || 0;
+                              setForm({ ...form, depositRate: newRate });
+                              // Sauvegarder comme préférence si coché
+                              if (saveDepositPreference) {
+                                localStorage.setItem('defaultDepositRate', newRate.toString());
+                              }
+                            }}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            disabled={isLocked}
+                          />
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={form.depositRate || 0}
+                              onChange={(e) => {
+                                const value = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                                setForm({ ...form, depositRate: value });
+                                // Sauvegarder comme préférence si coché
+                                if (saveDepositPreference) {
+                                  localStorage.setItem('defaultDepositRate', value.toString());
+                                }
+                              }}
+                              className="w-16 bg-white border-2 border-gray-100 rounded-lg px-2 py-1 text-xs font-black text-center outline-none focus:border-blue-600"
+                              disabled={isLocked}
+                            />
+                            <span className="text-xs font-black text-gray-600">%</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {depositAmount > 0 && (
+                        <>
+                          <div className="flex justify-between text-xs">
+                            <span className="font-bold text-amber-600">Montant acompte:</span>
+                            <span className="font-black text-amber-600">
+                              {depositAmount.toLocaleString()} {form.currency}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="font-black text-green-600">Solde à payer:</span>
+                            <span className="font-black text-green-600">
+                              {remainingAmount.toLocaleString()} {form.currency}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -1122,14 +1314,108 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
                         </div>
                       )}
                     </div>
+                    
+                    {/* Contrôle du taux d'acompte - uniquement pour les devis dans le mode wizard */}
+                      {(form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') && (
+                      <>
+                        <div className="h-px bg-amber-400/50 my-4"></div>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-black uppercase text-gray-300 tracking-widest ml-1">
+                              Taux d'acompte
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="saveDepositPrefWizard"
+                                checked={saveDepositPreference}
+                                onChange={(e) => setSaveDepositPreference(e.target.checked)}
+                                className="w-3 h-3 text-blue-400 border-gray-600 rounded focus:ring-blue-500"
+                                disabled={isLocked}
+                              />
+                              <label htmlFor="saveDepositPrefWizard" className="text-[8px] text-gray-300 cursor-pointer">
+                                Par défaut
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={form.depositRate || 0}
+                              onChange={(e) => {
+                                const newRate = parseFloat(e.target.value) || 0;
+                                setForm({ ...form, depositRate: newRate });
+                                if (saveDepositPreference) {
+                                  localStorage.setItem('defaultDepositRate', newRate.toString());
+                                }
+                              }}
+                              className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                              disabled={isLocked}
+                            />
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="1"
+                                value={form.depositRate || 0}
+                                onChange={(e) => {
+                                  const value = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                                  setForm({ ...form, depositRate: value });
+                                  if (saveDepositPreference) {
+                                    localStorage.setItem('defaultDepositRate', value.toString());
+                                  }
+                                }}
+                                className="w-16 bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-xs font-black text-center outline-none focus:border-blue-600"
+                                disabled={isLocked}
+                              />
+                              <span className="text-xs font-black text-gray-300">%</span>
+                            </div>
+                          </div>
+                          
+                          {depositAmount > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs">
+                                <span className="font-bold text-amber-400">Montant acompte:</span>
+                                <span className="font-black text-amber-400">
+                                  {depositAmount.toLocaleString()} {form.currency}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="font-black text-green-400">Solde à payer:</span>
+                                <span className="font-black text-green-400">
+                                  {remainingAmount.toLocaleString()} {form.currency}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                    
                     <div className="flex justify-between items-end border-t border-white/10 pt-8">
                       <p className="text-xs font-black uppercase tracking-widest text-blue-400">
-                        NET À PAYER (TTC)
+                        {(form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') && depositAmount > 0 ? 'SOLDE À PAYER (TTC)' : 'NET À PAYER (TTC)'}
                       </p>
                       <p className="text-5xl font-black italic tracking-tighter">
-                        {ttc.toLocaleString()} {form.currency}
+                        {(form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') && depositAmount > 0 
+                          ? remainingAmount.toLocaleString() 
+                          : ttc.toLocaleString()
+                        } {form.currency}
                       </p>
                     </div>
+                    {(form.documentNature === 'Devis' || form.type === 'Devis' || form.type === 'Dev') && depositAmount > 0 && (
+                      <div className="mt-3 text-xs text-gray-400 text-center">
+                        <span className="font-medium">Total TTC: {ttc.toLocaleString()} {form.currency}</span>
+                        <span className="mx-2">|</span>
+                        <span className="font-medium">Acompte: {depositAmount.toLocaleString()} {form.currency}</span>
+                        <span className="mx-2">|</span>
+                        <span className="font-medium">Reste dû: {remainingAmount.toLocaleString()} {form.currency}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1687,6 +1973,7 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
                   >
                     <option value="Standard">Facture</option>
                     <option value="Devis">Devis</option>
+                    <option value="Proforma">Facture Proforma</option>
                     <option value="Livraison">Bon de Livraison</option>
                     <option value="Avoir">Avoir</option>
                   </select>
@@ -1751,6 +2038,96 @@ const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* TEST ÉCHÉANCIER - INVOICECREATOR */}
+              <div className="mt-6 p-4 bg-red-50 border-2 border-red-500 rounded-xl">
+                <h4 className="text-sm font-black uppercase text-red-700 mb-4">TEST ÉCHÉANCIER</h4>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <strong>form.firstPayment:</strong> {form.firstPayment}
+                  </div>
+                  <div>
+                    <strong>form.secondPayment:</strong> {form.secondPayment}
+                  </div>
+                  <div>
+                    <strong>form.deliveryPayment:</strong> {form.deliveryPayment}
+                  </div>
+                  <div>
+                    <strong>firstPaymentAmount:</strong> {firstPaymentAmount}
+                  </div>
+                  <div>
+                    <strong>secondPaymentAmount:</strong> {secondPaymentAmount}
+                  </div>
+                  <div>
+                    <strong>deliveryPaymentAmount:</strong> {deliveryPaymentAmount}
+                  </div>
+                </div>
+              </div>
+
+            {/* Variables Proforma - uniquement pour les factures proforma */}
+            {form.type === 'Proforma' && (
+              <div className="mt-6 p-6 bg-blue-50 border-2 border-blue-500 rounded-xl">
+                <h4 className="text-sm font-black uppercase text-blue-700 mb-4">Variables Proforma</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-1">
+                      Montant Conversion (10%)
+                    </label>
+                    <input
+                      type="number"
+                      disabled={isLocked}
+                      className="w-full bg-white border-2 border-blue-100 rounded-xl px-4 py-3 text-xs font-black outline-none focus:border-blue-600"
+                      value={form.conversionAmount || 0}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        setForm({ ...form, conversionAmount: value });
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-1">
+                      Acompte Reçu (20%)
+                    </label>
+                    <input
+                      type="number"
+                      disabled={isLocked}
+                      className="w-full bg-white border-2 border-blue-100 rounded-xl px-4 py-3 text-xs font-black outline-none focus:border-blue-600"
+                      value={form.depositReceived || 0}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        setForm({ ...form, depositReceived: value });
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-1">
+                      Solde Dû
+                    </label>
+                    <input
+                      type="number"
+                      disabled={isLocked}
+                      className="w-full bg-white border-2 border-blue-100 rounded-xl px-4 py-3 text-xs font-black outline-none focus:border-blue-600"
+                      value={form.balanceDue || 0}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        setForm({ ...form, balanceDue: value });
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                  <p className="text-xs text-blue-700 font-medium">
+                    Total TTC: {ttc.toLocaleString()} {form.currency} | 
+                    Conversion: {conversionAmount.toLocaleString()} {form.currency} | 
+                    Acompte: {depositReceived.toLocaleString()} {form.currency} | 
+                    Solde: {balanceDue.toLocaleString()} {form.currency}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Client Info Section */}
             <div

@@ -90,7 +90,7 @@ const UpgradePrompt: React.FC<UpgradePromptProps> = ({ isOpen, onClose, onUpgrad
                 {/* Footer Badge */}
                 <div className="bg-blue-50/50 p-4 border-t border-blue-50 flex items-center justify-center gap-4">
                     <ShieldCheck className="w-4 h-4 text-blue-400" />
-                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Infrastructure Majorlle Certifiée</p>
+                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Infrastructure Kelios Certifiée</p>
                 </div>
             </div>
         </div>

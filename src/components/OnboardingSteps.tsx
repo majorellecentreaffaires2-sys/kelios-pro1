@@ -12,7 +12,7 @@ const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onFinish, user }) => 
 
     const steps = [
         {
-            title: "Bienvenue sur Majorlle",
+            title: "Bienvenue sur Kelios",
             desc: "L'outil ultime pour gérer votre business avec une précision professionnelle.",
             icon: <Rocket className="w-12 h-12 text-blue-600" />,
             type: 'intro'
@@ -26,11 +26,34 @@ const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onFinish, user }) => 
     ];
 
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const [selectedCompanyOption, setSelectedCompanyOption] = useState<'monthly' | 'yearly' | null>(null);
+    const [additionalCompanies, setAdditionalCompanies] = useState<number>(0);
 
     const plans = [
-        { id: 'trial', name: 'Free Trial (Essai)', price: '0 DH', saved: '', desc: 'Pour débuter.', limits: '1 Société, 5 Factures/mois' },
-        { id: '1_month', name: 'Pack Mensuel', price: '200 DH', saved: '', desc: 'Flexibilité totale.', limits: '5 Sociétés, Illimité' },
-        { id: '1_year', name: 'Pack Annuel', price: '2000 DH', saved: 'Économisez 400 DH', desc: 'Meilleure valeur.', limits: '15 Sociétés, Illimité' },
+        { 
+            id: 'discovery', 
+            name: '🟢 Offre Découverte – Essai Gratuit', 
+            price: '0 DH HT', 
+            saved: 'valable 3 jours', 
+            desc: 'Idéal pour tester la plateforme sans engagement.',
+            limits: ['1 seule société', 'Accès limité à 3 jours', 'Génération de factures limitée pendant la période d\'essai', 'Intégration de l\'intelligence artificielle', 'Support classique']
+        },
+        { 
+            id: 'monthly', 
+            name: '🔵 Pack Mensuel', 
+            price: '200 DH HT / mois', 
+            saved: '', 
+            desc: 'Une solution flexible pour gérer votre activité au quotidien.',
+            limits: ['1 seule société', 'Génération de factures illimitée', 'Intégration de l\'intelligence artificielle', 'Support technique 7j/7']
+        },
+        { 
+            id: 'yearly', 
+            name: '🟣 Pack Annuel', 
+            price: '2200 DH HT / an', 
+            saved: 'La solution la plus rentable pour une utilisation long terme', 
+            desc: 'La solution la plus rentable pour une utilisation long terme.',
+            limits: ['1 seule société', 'Génération de factures illimitée', 'Intégration de l\'intelligence artificielle', 'Support technique 7j/7']
+        }
     ];
 
     return (
@@ -77,10 +100,12 @@ const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onFinish, user }) => 
                                 </div>
 
                                 <ul className="text-left text-sm text-slate-500 space-y-3 mb-8 w-full border-t border-slate-100 pt-6">
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> {plan.limits.split(',')[0]}</li>
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> {plan.limits.split(',')[1]}</li>
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> Intelligence Artificielle</li>
-                                    <li className="flex items-center gap-3 font-semibold"><Check className="w-4 h-4 text-emerald-500 shrink-0" /> {plan.id === 'trial' ? 'Support Classique' : 'Support VIP 24/7'}</li>
+                                    {plan.limits.map((limit, index) => (
+                                        <li key={index} className="flex items-center gap-3 font-semibold">
+                                            <Check className="w-4 h-4 text-emerald-500 shrink-0" /> 
+                                            {limit}
+                                        </li>
+                                    ))}
                                 </ul>
 
                                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlan === plan.id ? 'border-blue-600 bg-blue-600 shadow-lg shadow-blue-200' : 'border-slate-300 group-hover:border-slate-400'}`}>
@@ -88,6 +113,99 @@ const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onFinish, user }) => 
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {steps[step].type === 'pricing' && (
+                    <div className="mt-8 mb-8 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-200">
+                        <div className={`bg-gradient-to-r from-slate-50 to-blue-50 border ${selectedPlan ? 'border-blue-300' : 'border-slate-200'} rounded-[2rem] p-8 transition-all duration-300 ${!selectedPlan ? 'opacity-50 pointer-events-none' : ''}`}>
+                            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center justify-center gap-3">
+                                <span className="text-2xl">➕</span>
+                                Sociétés Supplémentaires
+                            </h3>
+                            <p className="text-slate-600 text-center mb-6">
+                                Étendez votre activité en ajoutant des sociétés supplémentaires à votre pack
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-8">
+                                <div 
+                                    onClick={() => setSelectedCompanyOption('monthly')}
+                                    className={`bg-white border-2 rounded-[1.5rem] p-6 text-center cursor-pointer transition-all ${selectedCompanyOption === 'monthly' ? 'border-blue-600 scale-105 shadow-lg' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <h4 className="font-bold text-slate-900 mb-2">Option Mensuelle</h4>
+                                    <p className="text-2xl font-extrabold text-blue-600 mb-2">150 DH HT<span className="text-sm font-normal text-slate-500"> / mois</span></p>
+                                    <p className="text-sm text-slate-500">par société supplémentaire</p>
+                                </div>
+                                <div 
+                                    onClick={() => setSelectedCompanyOption('yearly')}
+                                    className={`bg-white border-2 rounded-[1.5rem] p-6 text-center cursor-pointer transition-all ${selectedCompanyOption === 'yearly' ? 'border-blue-600 scale-105 shadow-lg' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <h4 className="font-bold text-slate-900 mb-2">Option Annuelle</h4>
+                                    <p className="text-2xl font-extrabold text-blue-600 mb-2">1600 DH HT<span className="text-sm font-normal text-slate-500"> / an</span></p>
+                                    <p className="text-sm text-slate-500">par société supplémentaire</p>
+                                    <span className="inline-block mt-2 bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+                                        Économisez 200 DH HT
+                                    </span>
+                                </div>
+                            </div>
+
+                            {selectedCompanyOption && (
+                                <div className="max-w-md mx-auto mb-8 animate-in fade-in slide-in-from-bottom-5 duration-300">
+                                    <label className="block text-center text-sm font-medium text-slate-700 mb-4">
+                                        Nombre de sociétés supplémentaires
+                                    </label>
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                            onClick={() => setAdditionalCompanies(Math.max(0, additionalCompanies - 1))}
+                                            className="w-10 h-10 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center font-bold text-slate-700 transition-all"
+                                        >
+                                            -
+                                        </button>
+                                        <div className="w-20 text-center">
+                                            <span className="text-2xl font-bold text-slate-900">{additionalCompanies}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setAdditionalCompanies(additionalCompanies + 1)}
+                                            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center font-bold text-white transition-all"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {additionalCompanies > 0 && selectedCompanyOption && (
+                                <div className="bg-white border-2 border-blue-200 rounded-[1.5rem] p-6 max-w-md mx-auto animate-in fade-in slide-in-from-bottom-5 duration-300">
+                                    <h4 className="text-lg font-bold text-slate-900 mb-4 text-center">Récapitulatif</h4>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-600">Offre principale:</span>
+                                            <span className="font-semibold text-slate-900">
+                                                {plans.find(p => p.id === selectedPlan)?.price}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-600">Sociétés supplémentaires ({additionalCompanies}):</span>
+                                            <span className="font-semibold text-slate-900">
+                                                {additionalCompanies * (selectedCompanyOption === 'monthly' ? 150 : 1600)} DH HT
+                                            </span>
+                                        </div>
+                                        <div className="border-t pt-2 mt-2">
+                                            <div className="flex justify-between text-lg font-bold">
+                                                <span className="text-blue-600">Total:</span>
+                                                <span className="text-blue-600">
+                                                    {(() => {
+                                                        const basePrice = selectedPlan === 'discovery' ? 0 : selectedPlan === 'monthly' ? 200 : 2200;
+                                                        const additionalPrice = additionalCompanies * (selectedCompanyOption === 'monthly' ? 150 : 1600);
+                                                        return basePrice + additionalPrice;
+                                                    })()} DH HT
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

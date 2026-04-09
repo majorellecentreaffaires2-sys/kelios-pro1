@@ -3,10 +3,28 @@ import { Invoice, InvoiceType, InvoiceStatus, Company, ContactInfo } from '../ty
 import {
   Search, Filter, MoreHorizontal, FileText, CheckCircle,
   AlertCircle, Clock, X, Eye, Edit, Trash2, Copy,
-  Printer, ArrowUpRight, DollarSign, Calendar, Mail, Plus, Share2
+  Printer, ArrowUpRight, DollarSign, Calendar, Mail, Plus, Share2,
+  Upload, File, Image, Folder
 } from 'lucide-react';
 import InvoicePreview from './InvoicePreview';
 import { api } from '../apiClient';
+
+// Fonction pour convertir le type en label lisible
+const getInvoiceTypeLabel = (type: InvoiceType) => {
+  switch (type) {
+    case 'Standard': return 'Facture';
+    case 'Devis': return 'Devis';
+    case 'Proforma': return 'Proforma';
+    case 'Acompte': return 'Facture d\'Acompte';
+    case 'Avoir': return 'Avoir';
+    case 'DevisAvecAcompte': return 'BATIMENT';
+    case 'Dev': return 'Facture Dev';
+    case 'Recurrente': return 'Récurrente';
+    case 'Livraison': return 'Livraison';
+    case 'BonCommande': return 'Bon Commande';
+    default: return type;
+  }
+};
 
 interface SalesListProps {
   invoices: Invoice[];
@@ -44,6 +62,79 @@ const SalesList: React.FC<SalesListProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [autoOpenEmail, setAutoOpenEmail] = useState(false);
+
+  // États pour l'upload de documents
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+
+  // Fonctions pour l'upload de documents
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+    
+    const newFiles = Array.from(files);
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFileUpload(e.dataTransfer.files);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadDocuments = async () => {
+    if (uploadedFiles.length === 0) return;
+    
+    try {
+      // Simulation d'upload - dans une vraie application, envoie à un serveur
+      for (const file of uploadedFiles) {
+        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+        
+        // Simulation de progression
+        for (let i = 0; i <= 100; i += 10) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          setUploadProgress(prev => ({ ...prev, [file.name]: i }));
+        }
+      }
+      
+      alert(`${uploadedFiles.length} document(s) uploadé(s) avec succès !`);
+      setUploadedFiles([]);
+      setUploadProgress({});
+      setShowUploadModal(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'upload:', error);
+      alert('Erreur lors de l\'upload des documents');
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Image className="w-8 h-8" />;
+    if (type.includes('pdf')) return <FileText className="w-8 h-8" />;
+    return <File className="w-8 h-8" />;
+  };
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredInvoices.length) {
@@ -207,6 +298,7 @@ const SalesList: React.FC<SalesListProps> = ({
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold uppercase text-gray-600 outline-none focus:border-blue-500"
+            title="Filtrer par type de document"
           >
             <option value="all">Tous les types</option>
             <option value="Standard">Factures</option>
@@ -219,12 +311,22 @@ const SalesList: React.FC<SalesListProps> = ({
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold uppercase text-gray-600 outline-none focus:border-blue-500"
+            title="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
             <option value="Brouillon">Brouillon</option>
             <option value="En cours">En cours</option>
             <option value="Payée">Payée</option>
           </select>
+
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="px-4 py-3 bg-purple-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-purple-700 transition-all flex items-center gap-2 shadow-lg shadow-purple-100"
+            title="Uploader des documents"
+          >
+            <Upload className="w-4 h-4" />
+            Upload
+          </button>
         </div>
       </div>
 
@@ -300,7 +402,7 @@ const SalesList: React.FC<SalesListProps> = ({
                     {/* Type */}
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-[10px] font-bold uppercase">
-                        {invoice.type}
+                        {getInvoiceTypeLabel(invoice.type)}
                       </span>
                     </td>
                     {/* Client */}
@@ -501,6 +603,140 @@ const SalesList: React.FC<SalesListProps> = ({
               >
                 Fermer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Documents Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-black text-lg text-gray-800 flex items-center gap-2">
+                    <Upload className="w-5 h-5 text-purple-600" />
+                    Upload de Documents
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Uploadez des documents pour les associer à vos ventes
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setUploadedFiles([]);
+                    setUploadProgress({});
+                  }}
+                  className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                  title="Fermer"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-auto p-6">
+              {/* Upload Area */}
+              <div className="mb-6">
+                <div
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                    isDragging ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => handleFileUpload(e.target.files)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    title="Sélectionner des fichiers à uploader"
+                  />
+                  <div className="space-y-4">
+                    <Upload className="w-12 h-12 text-purple-400 mx-auto" />
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                        Glissez-déposez vos fichiers ici
+                      </h4>
+                      <p className="text-sm text-gray-500 mb-4">
+                        ou cliquez pour sélectionner des fichiers
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      <p>Formats supportés: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, etc.</p>
+                      <p>Taille maximale: 10MB par fichier</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Files List */}
+              {uploadedFiles.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Fichiers à uploader</h4>
+                  <div className="space-y-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {getFileIcon(file.type)}
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {uploadProgress[file.name] !== undefined && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${uploadProgress[file.name]}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-600">{uploadProgress[file.name]}%</span>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            title="Supprimer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                {uploadedFiles.length} fichier(s) sélectionné(s)
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setUploadedFiles([]);
+                    setUploadProgress({});
+                  }}
+                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={uploadDocuments}
+                  disabled={uploadedFiles.length === 0}
+                  className="px-6 py-2 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Uploader {uploadedFiles.length} fichier(s)
+                </button>
+              </div>
             </div>
           </div>
         </div>

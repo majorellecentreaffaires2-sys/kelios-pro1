@@ -103,7 +103,7 @@ const GlobalReporting: React.FC<GlobalReportingProps> = ({ companies, allInvoice
          <header className="flex flex-col md:flex-row justify-between items-end gap-6">
             <div>
                <h1 className="text-6xl font-black tracking-tighter uppercase italic text-gray-900 leading-none">Dashboard Portfolio</h1>
-               <p className="text-blue-500 font-black text-[10px] uppercase tracking-[0.4em] mt-2">Vue consolidée du groupe Majorlle · Multi-Tenant Monitoring</p>
+               <p className="text-blue-500 font-black text-[10px] uppercase tracking-[0.4em] mt-2">Vue consolidée du groupe Kelios · Multi-Tenant Monitoring</p>
             </div>
             <div className="flex gap-4">
                <button

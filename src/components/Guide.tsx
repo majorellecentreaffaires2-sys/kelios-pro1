@@ -68,7 +68,7 @@ const Guide: React.FC = () => {
         </div>
         <div>
           <h1 className="text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">Guide d'Utilisation</h1>
-          <p className="text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] mt-2">Majorlle ERP - Documentation Complète</p>
+          <p className="text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] mt-2">Kelios ERP - Documentation Complète</p>
         </div>
       </header>
 
@@ -99,12 +99,12 @@ const Guide: React.FC = () => {
           <h2 className="text-3xl font-black">Besoin d'Aide ?</h2>
         </div>
         <p className="text-lg font-medium mb-6 opacity-90">
-          Notre équipe est disponible pour vous accompagner dans l'utilisation de Majorlle ERP.
+          Notre équipe est disponible pour vous accompagner dans l'utilisation de Kelios ERP.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
             <p className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-70">Email Support</p>
-            <p className="font-bold">support@majorlle.com</p>
+            <p className="font-bold">support@kelios.com</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
             <p className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-70">Téléphone</p>

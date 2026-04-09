@@ -5,10 +5,19 @@ interface LockScreenProps {
     onPay: () => void;
     onLogout: () => void;
     trialEndsAt: string;
+    expiresAt?: string;
+    subscriptionStatus?: string;
 }
 
-const LockScreen: React.FC<LockScreenProps> = ({ onPay, onLogout, trialEndsAt }) => {
+const LockScreen: React.FC<LockScreenProps> = ({ onPay, onLogout, trialEndsAt, expiresAt, subscriptionStatus }) => {
     const formatDate = (d: string) => new Date(d).toLocaleDateString();
+    
+    const getExpirationMessage = () => {
+        if (subscriptionStatus === 'active' && expiresAt) {
+            return `Votre abonnement a expiré le ${formatDate(expiresAt)}.`;
+        }
+        return `Votre période d'essai a expiré le ${formatDate(trialEndsAt)}.`;
+    };
 
     return (
         <div className="fixed inset-0 z-[9999] bg-[#020617] flex items-center justify-center p-6 backdrop-blur-xl">
@@ -28,7 +37,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onPay, onLogout, trialEndsAt })
 
                     <h1 className="text-4xl font-black text-white tracking-tighter mb-4">Accès Verrouillé</h1>
                     <p className="text-xl text-slate-400 font-medium mb-10 leading-relaxed max-w-lg">
-                        Votre période d'essai a expiré le <span className="text-white font-bold">{formatDate(trialEndsAt)}</span>.
+                        {getExpirationMessage()}
                         Pour continuer à utiliser la plateforme et accéder à vos données, veuillez régulariser votre abonnement.
                     </p>
 

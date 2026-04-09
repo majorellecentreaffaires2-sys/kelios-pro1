@@ -80,7 +80,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogin }) =>
                             <div className="animate-in slide-in-from-left-10 duration-700">
                                 <h3 className="text-5xl font-extrabold text-slate-900 tracking-tighter leading-none mb-8">Rejoignez l'élite commerciale.</h3>
                                 {step === 'register' ? (
-                                    <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-sm">Activez votre licence professionnelle et accédez à l'infrastructure Majorlle en quelques secondes.</p>
+                                    <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-sm">Activez votre licence professionnelle et accédez à l'infrastructure Kelios en quelques secondes.</p>
                                 ) : (
                                     <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-sm">Un code de sécurité a été transmis à <span className="text-blue-600 font-bold">{email}</span> pour valider votre identité.</p>
                                 )}
@@ -112,7 +112,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogin }) =>
                                 <p className="text-slate-900 font-extrabold text-3xl">200 DH <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">/ mois</span></p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <Sparkles className="w-4 h-4 text-emerald-500" />
-                                    <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">5 Jours d'essai Pro Inclus</p>
+                                    <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">3 Jours d'essai Pro Inclus</p>
                                 </div>
                             </div>
                             <div className="flex -space-x-3 overflow-hidden">
@@ -144,7 +144,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogin }) =>
                             </h1>
                             <p className="text-slate-500 font-medium">
                                 {step === 'register'
-                                    ? "Commencez votre expérience Majorlle Pro dès maintenant."
+                                    ? "Commencez votre expérience Kelios Pro dès maintenant."
                                     : "Validez votre adresse pour activer vos services Cloud."}
                             </p>
                         </div>

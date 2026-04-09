@@ -16,8 +16,9 @@ const LOC_LABELS = {
     invoice: "Facture",
     quote: "Devis",
     proforma: "Facture Proforma",
+    acompte: "Facture d'Acompte",
     creditNote: "Avoir",
-    batiment: "DEVIS",
+    batiment: "BATIMENT",
     dev: "DEVIS",
     date: "Date",
     dueDate: "Échéance",
@@ -51,14 +52,19 @@ const LOC_LABELS = {
     siren: "SIREN",
     naf: "Code NAF",
     tvaIntra: "TVA Intra.",
-    tp: "T.P"
+    tp: "T.P",
+    deposit: "Acompte",
+    remainingAmount: "Solde à payer",
+    totalTtc: "Total TTC"
   },
   en: {
     invoice: "Invoice",
     quote: "Quote",
     proforma: "Proforma Invoice",
+    acompte: "Deposit Invoice",
     creditNote: "Credit Note",
-    batiment: "Building Invoice",
+    batiment: "Quote with Deposit",
+    dev: "Quote",
     date: "Date",
     dueDate: "Due Date",
     number: "No.",
@@ -91,7 +97,10 @@ const LOC_LABELS = {
     siren: "SIREN",
     naf: "NAF Code",
     tvaIntra: "VAT No.",
-    tp: "T.P"
+    tp: "T.P",
+    deposit: "Deposit",
+    remainingAmount: "Balance Due",
+    totalTtc: "Total TTC"
   }
 };
 
@@ -128,8 +137,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
     switch (displayInvoice.type) {
       case 'Devis': return l.quote;
       case 'Proforma': return l.proforma;
+      case 'Acompte': return l.acompte;
       case 'Avoir': return l.creditNote;
-      case 'Batiment': return (l as any).batiment || l.invoice;
+      case 'DevisAvecAcompte': return (l as any).devisAvecAcompte || l.invoice;
       case 'Dev': return (l as any).dev || l.invoice;
       default: return l.invoice;
     }
@@ -224,10 +234,76 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
     const globalDiscount = safeNumber(displayInvoice.discount);
     const totalTtc = subtotalHt + totalTax + totalEcoContrib - globalDiscount;
 
-    return { subtotalHt, taxAmounts, baseHtPerRate, totalEcoContrib, totalTtc: isNaN(totalTtc) ? 0 : totalTtc, totalTax };
+    // Calcul de l'acompte pour les devis
+    const depositRate = safeNumber(displayInvoice.depositRate) || 0;
+    const isQuote = displayInvoice.documentNature === 'Devis' || displayInvoice.type === 'Devis' || displayInvoice.type === 'Dev';
+    const depositAmount = isQuote ? totalTtc * (depositRate / 100) : 0;
+    const remainingAmount = totalTtc - depositAmount;
+    
+    // Calcul de l'échéancier pour les devis
+    const firstPaymentRate = safeNumber(displayInvoice.firstPayment) || 30;
+    const secondPaymentRate = safeNumber(displayInvoice.secondPayment) || 35;
+    const deliveryPaymentRate = safeNumber(displayInvoice.deliveryPayment) || 5;
+    
+    const firstPaymentAmount = isQuote ? totalTtc * (firstPaymentRate / 100) : 0;
+    const secondPaymentAmount = isQuote ? totalTtc * (secondPaymentRate / 100) : 0;
+    const deliveryPaymentAmount = isQuote ? totalTtc * (deliveryPaymentRate / 100) : 0;
+    const totalPaidAmount = firstPaymentAmount + secondPaymentAmount + deliveryPaymentAmount;
+    const finalRemainingAmount = totalTtc - totalPaidAmount;
+    
+    // Debug supplémentaire pour le calcul
+    console.log('Calcul Acompte:', {
+      documentNature: displayInvoice.documentNature,
+      type: displayInvoice.type,
+      depositRate,
+      totalTtc,
+      depositAmount
+    });
+
+    return { 
+      subtotalHt, 
+      taxAmounts, 
+      baseHtPerRate, 
+      totalEcoContrib, 
+      totalTtc: isNaN(totalTtc) ? 0 : totalTtc, 
+      totalTax,
+      depositAmount: isNaN(depositAmount) ? 0 : depositAmount,
+      remainingAmount: isNaN(remainingAmount) ? 0 : remainingAmount,
+      isQuote,
+      firstPaymentAmount: isNaN(firstPaymentAmount) ? 0 : firstPaymentAmount,
+      secondPaymentAmount: isNaN(secondPaymentAmount) ? 0 : secondPaymentAmount,
+      deliveryPaymentAmount: isNaN(deliveryPaymentAmount) ? 0 : deliveryPaymentAmount,
+      totalPaidAmount: isNaN(totalPaidAmount) ? 0 : totalPaidAmount,
+      finalRemainingAmount: isNaN(finalRemainingAmount) ? 0 : finalRemainingAmount
+    };
   };
 
-  const { subtotalHt, taxAmounts, baseHtPerRate, totalEcoContrib, totalTtc, totalTax } = calculateTotals();
+  const { subtotalHt, taxAmounts, baseHtPerRate, totalEcoContrib, totalTtc, totalTax, depositAmount, remainingAmount, isQuote, firstPaymentAmount, secondPaymentAmount, deliveryPaymentAmount, totalPaidAmount, finalRemainingAmount } = calculateTotals();
+
+  // Debug pour voir pourquoi l'acompte ne s'affiche pas
+  console.log('Debug Acompte - InvoicePreview:', {
+    invoiceId: invoice.id,
+    documentNature: displayInvoice.documentNature,
+    type: displayInvoice.type,
+    isQuote,
+    depositRate: displayInvoice.depositRate,
+    depositAmount,
+    totalTtc,
+    fullInvoice: displayInvoice
+  });
+
+  // Debug pour l'échéancier
+  console.log('Debug Échéancier - InvoicePreview:', {
+    isQuote,
+    firstPayment: displayInvoice.firstPayment,
+    secondPayment: displayInvoice.secondPayment,
+    deliveryPayment: displayInvoice.deliveryPayment,
+    firstPaymentAmount,
+    secondPaymentAmount,
+    deliveryPaymentAmount,
+    totalPaidAmount,
+    finalRemainingAmount
+  });
 
   const handleCopyEmail = () => {
     const text = `Subject: ${emailContent.subject}\n\n${emailContent.body}`;
@@ -454,7 +530,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
   };
 
   const renderBatimentBlock = () => {
-    if (displayInvoice.type?.toLowerCase() !== 'batiment') return null;
+    if (displayInvoice.type?.toLowerCase() !== 'devisavecacompte') return null;
     return (
       <div className="mt-2 text-[10px] text-gray-800 break-inside-avoid border-t-2 border-gray-100 pt-2">
         <div className="mb-3 font-medium">
@@ -713,7 +789,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       {/* Totals */}
       <div className="px-12 py-6 flex justify-end break-inside-avoid">
         <div className="w-80">
-          {displayInvoice.type?.toLowerCase() === 'batiment' && (
+          {displayInvoice.type?.toLowerCase() === 'devisavecacompte' && (
             <div className="space-y-4 text-xs">
               <p className="font-black uppercase tracking-widest text-gray-400 mb-2">Récapitulatif TVA</p>
               <table className="w-full border-collapse border border-gray-100">
@@ -758,15 +834,267 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
                 <span>-{formatCurrency(safeNumber(displayInvoice.discount))} {displayInvoice.currency}</span>
               </div>
             )}
+            
+            {/* Acompte pour les devis */}
+            {isQuote && depositAmount > 0 && (
+              <>
+                <div className="flex justify-between py-2 text-amber-600 font-semibold">
+                  <span>{l.deposit} ({displayInvoice.depositRate || 0}%)</span>
+                  <span>{formatCurrency(depositAmount)} {displayInvoice.currency}</span>
+                </div>
+                <div className="flex justify-between py-2 text-green-600 font-bold">
+                  <span>{l.remainingAmount}</span>
+                  <span>{formatCurrency(remainingAmount)} {displayInvoice.currency}</span>
+                </div>
+              </>
+            )}
           </div>
+          
           <div className="mt-4 p-4 bg-black rounded-xl text-white shadow-lg">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-black uppercase tracking-tighter">{l.netToPay}</span>
-              <span className="text-3xl font-black">{formatCurrency(totalTtc)} {displayInvoice.currency}</span>
+              <span className="text-lg font-black uppercase tracking-tighter">
+                {isQuote && depositAmount > 0 ? l.remainingAmount : l.netToPay}
+              </span>
+              <span className="text-3xl font-black">
+                {formatCurrency(isQuote && depositAmount > 0 ? remainingAmount : totalTtc)} {displayInvoice.currency}
+              </span>
             </div>
+            {isQuote && depositAmount > 0 && (
+              <div className="mt-2 text-xs text-gray-300 text-center">
+                {l.totalTtc}: {formatCurrency(totalTtc)} {displayInvoice.currency} | 
+                {l.deposit}: {formatCurrency(depositAmount)} {displayInvoice.currency}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Échéancier de paiement - TEST FORCÉ */}
+      {true && (
+        <div className="px-12 py-6 bg-gradient-to-br from-red-50 to-red-100 break-inside-avoid border-2 border-red-500">
+          <div className="bg-white rounded-xl shadow-sm border border-red-200 p-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-red-700 mb-6 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Échéancier de Paiement (TEST FORCÉ)
+            </h3>
+            
+            {/* Debug info */}
+            <div className="mb-4 p-3 bg-red-100 rounded-lg text-xs">
+              <div><strong>isQuote:</strong> {String(isQuote)}</div>
+              <div><strong>documentNature:</strong> {displayInvoice.documentNature}</div>
+              <div><strong>type:</strong> {displayInvoice.type}</div>
+              <div><strong>firstPayment:</strong> {displayInvoice.firstPayment}</div>
+              <div><strong>secondPayment:</strong> {displayInvoice.secondPayment}</div>
+              <div><strong>deliveryPayment:</strong> {displayInvoice.deliveryPayment}</div>
+              <div><strong>firstPaymentAmount:</strong> {firstPaymentAmount}</div>
+              <div><strong>secondPaymentAmount:</strong> {secondPaymentAmount}</div>
+              <div><strong>deliveryPaymentAmount:</strong> {deliveryPaymentAmount}</div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {/* Acompte à la signature */}
+              <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <div className="text-xs font-medium text-amber-600 mb-1">Acompte à la signature</div>
+                <div className="text-lg font-black text-amber-700">
+                  {displayInvoice.depositRate || 0}%
+                </div>
+                <div className="text-sm font-bold text-amber-600">
+                  {formatCurrency(depositAmount)} {displayInvoice.currency}
+                </div>
+              </div>
+
+              {/* Premier versement */}
+              <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-xs font-medium text-blue-600 mb-1">Premier versement</div>
+                <div className="text-lg font-black text-blue-700">
+                  {displayInvoice.firstPayment || 0}%
+                </div>
+                <div className="text-sm font-bold text-blue-600">
+                  {formatCurrency(firstPaymentAmount)} {displayInvoice.currency}
+                </div>
+              </div>
+
+              {/* Deuxième versement */}
+              <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="text-xs font-medium text-green-600 mb-1">Deuxième versement</div>
+                <div className="text-lg font-black text-green-700">
+                  {displayInvoice.secondPayment || 0}%
+                </div>
+                <div className="text-sm font-bold text-green-600">
+                  {formatCurrency(secondPaymentAmount)} {displayInvoice.currency}
+                </div>
+              </div>
+
+              {/* Solde à la livraison */}
+              <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="text-xs font-medium text-purple-600 mb-1">Solde à la livraison</div>
+                <div className="text-lg font-black text-purple-700">
+                  {displayInvoice.deliveryPayment || 0}%
+                </div>
+                <div className="text-sm font-bold text-purple-600">
+                  {formatCurrency(deliveryPaymentAmount)} {displayInvoice.currency}
+                </div>
+              </div>
+            </div>
+
+            {/* Résumé de l'échéancier */}
+            <div className="mt-4 p-4 bg-amber-100 rounded-lg border border-amber-300">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <span className="text-xs text-amber-600 font-medium">Total TTC</span>
+                  <div className="text-lg font-black text-amber-700">
+                    {formatCurrency(totalTtc)} {displayInvoice.currency}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-blue-600 font-medium">Total versé</span>
+                  <div className="text-lg font-black text-blue-700">
+                    {formatCurrency(totalPaidAmount)} {displayInvoice.currency}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-green-600 font-medium">Reste dû</span>
+                  <div className="text-lg font-black text-green-700">
+                    {formatCurrency(finalRemainingAmount)} {displayInvoice.currency}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-purple-600 font-medium">Solde final</span>
+                  <div className="text-lg font-black text-purple-700">
+                    {formatCurrency(remainingAmount)} {displayInvoice.currency}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Variables Proforma - uniquement pour factures proforma */}
+      {(displayInvoice.type === 'Proforma' || displayInvoice.documentNature === 'Proforma') && (
+        <div className="px-12 py-6 bg-gradient-to-br from-blue-50 to-indigo-100 break-inside-avoid border-2 border-blue-500">
+          <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-6">
+            <h3 className="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Variables Proforma
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">À convers</span>
+                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">10%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-blue-600">
+                    {formatCurrency(displayInvoice.conversionAmount || (totalTtc * 0.1))} {displayInvoice.currency}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">Acompte reçu</span>
+                  <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full">20%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-green-600">
+                    {formatCurrency(displayInvoice.depositReceived || (totalTtc * 0.2))} {displayInvoice.currency}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">Solde à payer</span>
+                  <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full">70%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-purple-600">
+                    {formatCurrency(displayInvoice.balanceDue || (totalTtc * 0.7))} {displayInvoice.currency}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Résumé des variables proforma */}
+            <div className="mt-4 p-4 bg-blue-100 rounded-lg border border-blue-300">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <span className="text-xs text-blue-600 font-medium">Total TTC</span>
+                  <div className="text-lg font-black text-blue-700">
+                    {formatCurrency(totalTtc)} {displayInvoice.currency}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-blue-600 font-medium">Convers</span>
+                  <div className="text-lg font-black text-blue-700">
+                    {formatCurrency(displayInvoice.conversionAmount || (totalTtc * 0.1))} {displayInvoice.currency}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-green-600 font-medium">Acompte reçu</span>
+                  <div className="text-lg font-black text-green-700">
+                    {formatCurrency(displayInvoice.depositReceived || (totalTtc * 0.2))} {displayInvoice.currency}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-purple-600 font-medium">Solde dû</span>
+                  <div className="text-lg font-black text-purple-700">
+                    {formatCurrency(displayInvoice.balanceDue || (totalTtc * 0.7))} {displayInvoice.currency}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Variables Acompte - uniquement pour factures d'acompte */}
+      {displayInvoice.type === 'Acompte' && (
+        <div className="px-12 py-6 bg-gradient-to-br from-purple-50 to-pink-100 break-inside-avoid border-2 border-purple-500">
+          <div className="bg-white rounded-xl shadow-sm border border-purple-200 p-6">
+            <h3 className="text-lg font-bold text-purple-800 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Variables Facture d'Acompte
+            </h3>
+            
+            {displayInvoice.originalInvoiceNumber && (
+              <div className="mb-4 p-3 bg-purple-100 rounded-lg border border-purple-300">
+                <div className="text-sm font-medium text-purple-800">Facture originale</div>
+                <div className="text-lg font-bold text-purple-900">{displayInvoice.originalInvoiceNumber}</div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-4 bg-purple-100 rounded-lg border border-purple-300">
+                <div className="text-sm font-medium text-purple-800 mb-2">Montant de l'acompte</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {formatCurrency(displayInvoice.acompteAmount || 0)} {displayInvoice.currency}
+                </div>
+                {displayInvoice.acomptePercentage && (
+                  <div className="text-sm text-purple-700 mt-1">
+                    ({displayInvoice.acomptePercentage}% du total)
+                  </div>
+                )}
+              </div>
+              
+              <div className="text-center p-4 bg-orange-100 rounded-lg border border-orange-300">
+                <div className="text-sm font-medium text-orange-800 mb-2">Reste à payer</div>
+                <div className="text-2xl font-bold text-orange-900">
+                  {formatCurrency(displayInvoice.remainingAmount || (totalTtc - (displayInvoice.acompteAmount || 0)))} {displayInvoice.currency}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notes & Payment Info */}
       <div className="px-12 pb-8 mt-auto break-inside-avoid">
@@ -828,7 +1156,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
             </div>
           </div>
         </div>
-        <p className="pt-2 border-t border-gray-100 opacity-50 italic">Généré par Majorlle ERP - Document certifié conforme</p>
+        <p className="pt-2 border-t border-gray-100 opacity-50 italic">Généré par Kelios ERP - Document certifié conforme</p>
       </div>
     </div>
   );
@@ -988,7 +1316,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
               <td className="py-2 px-4 text-sm text-gray-600">{l.subtotal}</td>
               <td className="py-2 px-4 text-sm text-right font-medium">{formatCurrency(subtotalHt)} {displayInvoice.currency}</td>
             </tr>
-            {displayInvoice.type?.toLowerCase() === 'batiment' && (
+            {displayInvoice.type?.toLowerCase() === 'devisavecacompte' && (
               <>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <td className="py-2 px-4 text-[10px] font-bold uppercase text-gray-400" colSpan={2}>Récapitulatif TVA</td>
@@ -1433,7 +1761,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, autoOpenEmail 
       {/* Summary */}
       <div className="px-10 py-6 flex justify-between mb-12 break-inside-avoid">
         {/* VAT Breakdown */}
-        {displayInvoice.type?.toLowerCase() === 'batiment' && (
+        {displayInvoice.type?.toLowerCase() === 'devisavecacompte' && (
           <div className="text-xs">
             <p className="font-bold mb-2">Récapitulatif TVA</p>
             <table className="border border-gray-200">

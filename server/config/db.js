@@ -6,6 +6,7 @@ const pool = mysql.createPool({
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'majorlle_erp',
+  port: process.env.DB_PORT || 3307,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -47,12 +48,14 @@ export async function initDb() {
       role VARCHAR(50) DEFAULT 'User',
       subscriptionStatus VARCHAR(20) DEFAULT 'trial',
       trialEndsAt DATETIME,
+      expiresAt DATETIME,
       plan VARCHAR(50) DEFAULT 'monthly_200',
       planInterval ENUM('monthly','yearly') DEFAULT 'monthly',
       lastPaymentDate DATETIME,
       stripeCustomerId VARCHAR(255) NULL,
       stripeSubscriptionId VARCHAR(255) NULL,
       extraCompanies INT DEFAULT 0,
+      totalMonthlyCost DECIMAL(10,2) DEFAULT 0.00,
       isVerified TINYINT(1) DEFAULT 0,
       verificationCode VARCHAR(10),
       avatarUrl TEXT NULL,
@@ -311,6 +314,7 @@ export async function initDb() {
     await addColumn('users', 'avatarUrl', 'TEXT NULL');
     await addColumn('users', 'createdAt', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
     await addColumn('users', 'extraCompanies', 'INT DEFAULT 0');
+    await addColumn('users', 'expiresAt', 'DATETIME');
 
     // Mises à jour Table Companies (pour VPS existants)
     await addColumn('companies', 'companyType', "VARCHAR(50) DEFAULT 'Standard'");
@@ -364,13 +368,14 @@ export async function initDb() {
     await addColumn('companies', 'rcs', 'VARCHAR(50)');
 
     // SuperAdmin par défaut
-    const [rows] = await connection.query('SELECT * FROM users WHERE username = ? OR email = ?', ['admin', 'admin@example.com']);
+    const [rows] = await connection.query('SELECT * FROM users WHERE username = ? OR email = ?', ['admin', 'majorellecentreaffaires@gmail.com']);
     if (rows.length === 0) {
       const bcrypt = await import('bcryptjs');
       const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Majorlle2025!';
       const hashedPassword = await bcrypt.default.hash(initialPassword, 12);
+      const adminId = 'admin_' + Date.now();
       await connection.query('INSERT INTO users (id, username, email, password, role, subscriptionStatus, trialEndsAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        ['u1', 'taha', 'majorellecentreaffaires@gmail.com', hashedPassword, 'SuperAdmin', 'active', new Date(Date.now() + 1000 * 365 * 24 * 60 * 60 * 1000), 1]);
+        [adminId, 'taha', 'majorellecentreaffaires@gmail.com', hashedPassword, 'SuperAdmin', 'active', new Date(Date.now() + 1000 * 365 * 24 * 60 * 60 * 1000), 1]);
       console.log('👑 Compte SuperAdmin initialisé.');
     }
 

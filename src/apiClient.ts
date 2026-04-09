@@ -135,6 +135,8 @@ export const api = {
   resetPassword: (token: string, password: string) => request<any>(`${API_BASE}/reset-password`, 'POST', { token, password }),
   getSubscriptionStatus: () => request<any>(`${API_BASE}/subscription/status`, 'GET'),
   paySubscription: () => request<any>(`${API_BASE}/subscription/pay`, 'POST'),
+  sendBankTransferInstructions: (email: string, planInfo: any) => request<any>(`${API_BASE}/subscription/bank-transfer-instructions`, 'POST', { email, planInfo }),
+  generateInvoice: (invoiceData: any) => request<any>(`${API_BASE}/invoices/generate-subscription`, 'POST', invoiceData),
   generatePublicLink: (invoiceId: string, expiryDays: number = 30) =>
     request<{ url: string; token: string }>(`${API_BASE}/invoices/${invoiceId}/public-link`, 'POST', { expiryDays }),
 

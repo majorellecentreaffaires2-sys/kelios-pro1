@@ -247,10 +247,11 @@ export const processTrialWarnings = async () => {
 
         const [result] = await pool.query(
             `UPDATE users SET subscriptionStatus = 'locked' 
-       WHERE subscriptionStatus = 'trial' AND trialEndsAt < NOW()`
+       WHERE (subscriptionStatus = 'trial' AND trialEndsAt < NOW())
+          OR (subscriptionStatus = 'active' AND expiresAt < NOW())`
         );
         if (result.affectedRows > 0) {
-            console.log(`🔒 [CRON] Locked ${result.affectedRows} expired trial accounts`);
+            console.log(`🔒 [CRON] Locked ${result.affectedRows} expired accounts (trials + subscriptions)`);
         }
     } catch (e) {
         console.error('❌ [CRON] processTrialWarnings error:', e.message);

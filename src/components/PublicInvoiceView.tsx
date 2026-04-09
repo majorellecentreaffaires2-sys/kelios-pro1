@@ -83,7 +83,7 @@ const PublicInvoiceView: React.FC<PublicInvoiceViewProps> = ({ token }) => {
                     </div>
                     <h2 className="text-xl font-extrabold text-slate-900">Lien invalide</h2>
                     <p className="text-slate-500 text-sm leading-relaxed">{error}</p>
-                    <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest">© Majorlle Pro</p>
+                    <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest">© Kelios Pro</p>
                 </div>
             </div>
         );
@@ -140,7 +140,7 @@ const PublicInvoiceView: React.FC<PublicInvoiceViewProps> = ({ token }) => {
                             <FileText className="w-5 h-5" style={{ color }} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Majorlle Pro</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kelios Pro</p>
                             <p className="font-extrabold text-slate-900 text-sm">{typeLabel[invoice.type] || invoice.type}</p>
                         </div>
                     </div>
@@ -328,7 +328,7 @@ const PublicInvoiceView: React.FC<PublicInvoiceViewProps> = ({ token }) => {
                 {/* Footer */}
                 <div className="text-center py-4">
                     <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest">
-                        Document généré par <span style={{ color }}>Majorlle Pro</span> — Lien sécurisé et confidentiel
+                        Document généré par <span style={{ color }}>Kelios Pro</span> — Lien sécurisé et confidentiel
                     </p>
                     {tokenInfo.expiresAt && (
                         <p className="text-[10px] text-slate-300 mt-1 font-medium">

@@ -1,46 +1,54 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Invoice, Company, ContactInfo, InvoiceTemplate, Shortcut, Article } from './types';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import CRMLayout from './components/CRMLayout';
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-// InvoiceCreator replaced by DocumentCreator for simpler interface
+import Dashboard from './components/pages/Dashboard';
 import InvoiceHistory from './components/InvoiceHistory';
-import CompanyManager from './components/CompanyManager';
-import ClientManager from './components/ClientManager';
-import TemplateManager from './components/TemplateManager';
-import ShortcutManager from './components/ShortcutManager';
-import PaymentsManager from './components/PaymentsManager';
-import AuditLogViewer from './components/AuditLogViewer';
-import ArticleManager from './components/ArticleManager';
-import VatManager from './components/VatManager';
 import SalesList from './components/SalesList';
-import Reporting from './components/Reporting';
-import GlobalReporting from './components/GlobalReporting';
-import { shortcuts as defaultShortcuts } from './constants';
-import DocumentCreator from './components/DocumentCreator';
-import { generateInvoiceEmail } from './geminiService';
-import TopMenu from './components/TopMenu';
-import OnboardingWizard from './components/OnboardingWizard';
-import Calculator from './components/Calculator';
+import ClientManager from './components/ClientManager';
+import ArticleManager from './components/ArticleManager';
 import AutomationCenter from './components/AutomationCenter';
+import VatManager from './components/VatManager';
 import Coordonnees from './components/Coordonnees';
+import Reporting from './components/Reporting';
+import PaymentsManager from './components/PaymentsManager';
+import CompanyManager from './components/CompanyManager';
+import AuditLogViewer from './components/AuditLogViewer';
+import ShortcutManager from './components/ShortcutManager';
+import Calculator from './components/Calculator';
+import TemplateManager from './components/TemplateManager';
+import DocumentCreator from './components/DocumentCreator';
+import AccountSettings from './components/AccountSettings';
+import GlobalReporting from './components/GlobalReporting';
+import UpgradePrompt from './components/UpgradePrompt';
+import PublicInvoiceView from './components/PublicInvoiceView';
+import Landing from './components/Landing';
 import Login from './components/Login';
-import UserManager from './components/UserManager';
-import GlobalClientManager from './components/GlobalClientManager';
-import { api, apiClient, LimitReachedError } from './apiClient';
-import { LogOut, Shield, Loader2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
-import { sendInvoiceEmailWithPdf } from './utils/emailService';
-import InvoicePreview from './components/InvoicePreview';
-import { useRef } from 'react';
 import Register from './components/Register';
-import LockScreen from './components/LockScreen';
+import OnboardingWizard from './components/OnboardingWizard';
 import OnboardingSteps from './components/OnboardingSteps';
 import Checkout from './components/Checkout';
-import PublicInvoiceView from './components/PublicInvoiceView';
+import LockScreen from './components/LockScreen';
 import ForgotPassword from './components/ForgotPassword';
-import AccountSettings from './components/AccountSettings';
-import UpgradePrompt from './components/UpgradePrompt';
+import UserManager from './components/UserManager';
+import AcompteManagement from './components/pages/AcompteManagement';
+import StockManagement from './components/pages/StockManagement';
+import ExpenseManagement from './components/pages/ExpenseManagement';
+import OrderManagement from './components/pages/OrderManagement';
+import SalesManagement from './components/pages/SalesManagement';
+import SupplierManagement from './components/pages/SupplierManagement';
+import ProjectManagement from './components/pages/ProjectManagement';
+import PaymentTracking from './components/pages/PaymentTracking';
+import Audit from './components/pages/Audit';
+import GlobalClientManager from './components/GlobalClientManager';
 import AdminDashboard from './components/AdminDashboard';
-import Landing from './components/Landing';
+import InvoicePreview from './components/InvoicePreview';
+import TopMenu from './components/TopMenu';
+import { api, apiClient, LimitReachedError } from './apiClient';
+import type { Company, ContactInfo, Invoice, Article, InvoiceTemplate, Shortcut, AuditEntry } from './types';
+import { shortcuts as defaultShortcuts } from './constants';
+import { generateInvoiceEmail } from './geminiService';
+import { sendInvoiceEmailWithPdf } from './utils/emailService';
+import { LogOut, Shield, Loader2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -803,6 +811,16 @@ const App: React.FC = () => {
         onCreateClient={handleCreateClient}
         onUpdateClient={(id, updates) => api.updateClient(id, updates).then(() => loadCompanyData())}
       />;
+      case 'acomptes': return <AcompteManagement />;
+      case 'stock': return <StockManagement />;
+      case 'depenses': return <ExpenseManagement />;
+      case 'commandes': return <OrderManagement />;
+      case 'ventes-management': return <SalesManagement />;
+      case 'inventaire': return <StockManagement />;
+      case 'fournisseurs': return <SupplierManagement />;
+      case 'projets': return <ProjectManagement />;
+      case 'paiements': return <PaymentTracking />;
+      case 'audit': return <Audit />;
       case 'account': return <AccountSettings user={user} onUpdateUser={handleRefreshUser} onLogout={handleLogout} />;
       default: return <Dashboard invoices={invoices} shortcuts={shortcuts.filter(s => s.enabled)} onShortcut={executeShortcut} />;
     }
@@ -872,6 +890,8 @@ const App: React.FC = () => {
   if (subscriptionStatus && subscriptionStatus.isLocked) {
     return <LockScreen
       trialEndsAt={subscriptionStatus.trialEndsAt}
+      expiresAt={subscriptionStatus.expiresAt}
+      subscriptionStatus={subscriptionStatus.status}
       onPay={() => setView('checkout')}
       onLogout={handleLogout}
     />;
@@ -883,11 +903,17 @@ const App: React.FC = () => {
     ? Math.ceil((new Date(subscriptionStatus.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
+  const subscriptionDaysLeft = subscriptionStatus?.status === 'active' && subscriptionStatus.expiresAt
+    ? Math.ceil((new Date(subscriptionStatus.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
   return (
     <div className="flex flex-col h-screen bg-[var(--app-bg)]">
       <TopMenu
         onAction={(id) => id === 'exit' ? handleLogout() : executeShortcut(id)}
         trialDaysLeft={trialDaysLeft}
+        subscriptionDaysLeft={subscriptionDaysLeft}
+        subscriptionStatus={subscriptionStatus?.status}
         onUpgrade={() => setView('checkout')}
         user={user}
         appActiveTab={activeTab}
@@ -921,7 +947,7 @@ const App: React.FC = () => {
                     className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline">Déconnexion</span>
+                    <span className="hidden sm:inline">Se déconnecter</span>
                   </button>
                 </div>
               </div>

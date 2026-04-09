@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import {
   FileText, Plus, Save, Printer, Copy, Trash2, Users,
   Settings, BarChart3, Calculator, Home, ShoppingCart,
-  Star, FileEdit, FolderOpen, RefreshCw, Download, Eye, Pencil, Building2, LogOut
+  Star, FileEdit, FolderOpen, RefreshCw, Download, Eye, Pencil, Building2, LogOut, CheckCircle
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
 interface TopMenuProps {
   onAction: (id: string) => void;
   trialDaysLeft?: number | null;
+  subscriptionDaysLeft?: number | null;
+  subscriptionStatus?: string;
   onUpgrade?: () => void;
   user?: any;
   appActiveTab?: string;
@@ -22,7 +24,7 @@ interface RibbonButton {
   size?: 'large' | 'small';
 }
 
-const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, user, appActiveTab, isProgramMode }) => {
+const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, subscriptionDaysLeft, subscriptionStatus, onUpgrade, user, appActiveTab, isProgramMode }) => {
   const [activeTab, setActiveTab] = useState('accueil');
   const [showProfile, setShowProfile] = useState(false);
 
@@ -149,6 +151,38 @@ const TopMenu: React.FC<TopMenuProps> = ({ onAction, trialDaysLeft, onUpgrade, u
             </button>
           </div>
         )}
+
+        {/* Active Subscription Section */}
+        {subscriptionStatus === 'active' && subscriptionDaysLeft !== undefined && subscriptionDaysLeft !== null && subscriptionDaysLeft > 0 && (
+          <div className="ml-auto flex items-center gap-3 px-4 py-1 bg-blue-50 rounded-t-lg border-t border-x border-blue-100/50 mr-2">
+            <CheckCircle className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-tight">
+              Abonnement : <span className="font-black">{subscriptionDaysLeft}j restants</span>
+            </span>
+            <button
+              onClick={onUpgrade}
+              className="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded hover:bg-blue-700 transition-colors"
+            >
+              🔄 Renouveler
+            </button>
+          </div>
+        )}
+
+        {/* Free User Section */}
+        {trialDaysLeft === undefined || trialDaysLeft === null || trialDaysLeft <= 0 ? (
+          <div className="ml-auto flex items-center gap-3 px-4 py-1 bg-green-50 rounded-t-lg border-t border-x border-green-100/50 mr-2">
+            <Star className="w-3.5 h-3.5 text-green-600" />
+            <span className="text-[10px] font-bold text-green-700 uppercase tracking-tight">
+              Version <span className="font-black">Gratuite</span>
+            </span>
+            <button
+              onClick={onUpgrade}
+              className="px-2 py-0.5 bg-green-600 text-white text-[9px] font-black uppercase rounded hover:bg-green-700 transition-colors"
+            >
+              🚀 Upgrade
+            </button>
+          </div>
+        ) : null}
 
         {/* Notification Bell */}
         <div className="ml-auto">

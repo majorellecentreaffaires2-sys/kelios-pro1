@@ -122,7 +122,7 @@ const UserManager: React.FC<UserManagerProps> = ({ users, onRefresh }) => {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] bg-white border-b border-slate-50">
-                                <th className="px-8 py-6">Compte Client Majorlle</th>
+                                <th className="px-8 py-6">Compte Client Kelios</th>
                                 <th className="px-8 py-6">Empreinte Cloud</th>
                                 <th className="px-8 py-6">Niveau Système</th>
                                 <th className="px-8 py-6 text-right">Contrôle</th>
