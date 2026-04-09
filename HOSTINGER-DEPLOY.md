@@ -44,6 +44,9 @@ git push origin main
 
 # Linux/Mac
 ./deploy.sh "Description de la mise à jour"
+
+# Avec alias (Windows seulement, après configuration)
+dk "Description de la mise à jour"
 ```
 
 **C''est tout ! Le déploiement se fait automatiquement !** 🎉
