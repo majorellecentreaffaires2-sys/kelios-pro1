@@ -61,8 +61,8 @@ Dans votre repository GitHub :
 2. Ajoutez ces 3 secrets :
 
 ```
-HOSTINGER_HOST = votre-domaine.com
-HOSTINGER_USER = votre-username-ssh  
+HOSTINGER_HOST = 194.164.77.52
+HOSTINGER_USER = devadmin
 DEPLOY_KEY = -----BEGIN OPENSSH PRIVATE KEY-----
 votre-clé-privée-complète-ici
 -----END OPENSSH PRIVATE KEY-----

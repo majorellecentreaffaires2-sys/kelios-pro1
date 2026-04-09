@@ -53,8 +53,8 @@ cat ~/.ssh/id_rsa.pub
 Dans votre repository GitHub → Settings → Secrets and variables → Actions :
 
 ```
-HOSTINGER_HOST=votre-domaine.com
-HOSTINGER_USER=votre-username-ssh
+HOSTINGER_HOST=194.164.77.52
+HOSTINGER_USER=devadmin
 DEPLOY_KEY=votre-clé-ssh-privée-complète
 ```
 

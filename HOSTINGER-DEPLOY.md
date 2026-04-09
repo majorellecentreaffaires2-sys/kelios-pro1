@@ -19,16 +19,105 @@ git branch -M main
 git push -u origin main
 ```
 
-### 2️⃣ **Configurer GitHub Secrets**
-Dans votre repository GitHub → Settings → Secrets and variables → Actions :
+### 2️⃣ **Configuration des Secrets GitHub (OBLIGATOIRE)**
+Dans votre repository GitHub → **Settings** → **Secrets and variables** → **Actions** :
 
+#### **Créer ces 3 secrets :**
 ```
-HOSTINGER_HOST = votre-domaine.com
-HOSTINGER_USER = votre-username-ssh
+HOSTINGER_HOST = 194.164.77.52
+HOSTINGER_USER = devadmin (votre username SSH Hostinger)
 DEPLOY_KEY = -----BEGIN OPENSSH PRIVATE KEY-----
-votre-clé-ssh-privée-complète
+MIIGTAgEAMhNvqY...
+(votre clé SSH privée complète)
 -----END OPENSSH PRIVATE KEY-----
 ```
+
+#### **Scripts d'aide automatique :**
+```bash
+# Génère les clés et affiche tout (recommandé)
+.\setup-ssh.ps1
+
+# OU seulement afficher la DEPLOY_KEY existante
+.\show-deploy-key.ps1
+```
+
+Ces scripts génèrent automatiquement vos clés SSH et affichent les instructions complètes.
+
+#### **🔑 Comment configurer DEPLOY_KEY sur GitHub :**
+
+**ÉTAPE PAR ÉTAPE :**
+
+1. **Allez sur GitHub :**
+   - Ouvrez votre repository
+   - Cliquez sur **Settings** (engrenage)
+   - Dans le menu gauche : **Secrets and variables** → **Actions**
+
+2. **Cliquez sur "New repository secret"**
+
+3. **Pour DEPLOY_KEY :**
+   - **Name** : `DEPLOY_KEY`
+   - **Value** : Collez TOUTE la clé privée ci-dessous (sans rien ajouter ni supprimer)
+
+**VOICI LA CLÉ PRIVÉE À COPIER :**
+```
+-----BEGIN OPENSSH PRIVATE KEY-----
+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
+-----END OPENSSH PRIVATE KEY-----
+```
+
+4. **Cliquez sur "Add secret"**
+
+**⚠️ IMPORTANT :**
+- Copiez **TOUTE** la clé (de `-----BEGIN` à `-----END`)
+- **NE PAS** ajouter d'espaces ou de sauts de ligne supplémentaires
+- **NE PAS** utiliser la clé publique (celle qui commence par `ssh-rsa`)
+- Utilisez uniquement la clé privée pour DEPLOY_KEY
 
 ### 3️⃣ **DÉPLOIEMENT AUTOMATIQUE**
 ```bash
@@ -129,10 +218,13 @@ ssh user@domaine.com
 - Vérifiez les **logs détaillés** dans GitHub Actions
 - Testez localement : `npm ci && npm run build`
 
-### Si erreur "install dependencies" :
-- **Cause** : Conflit de cache npm ou réseau
-- **Solution** : Le workflow nettoie automatiquement le cache
-- **Alternative** : Poussez un commit vide pour relancer : `git commit --allow-empty -m "Trigger rebuild"`
+### Si erreur "The ssh-private-key argument is empty" :
+- **Cause** : Secret `DEPLOY_KEY` manquant ou vide
+- **Solution** : 
+  1. Vérifiez que le secret existe dans **Settings → Secrets and variables → Actions**
+  2. Assurez-vous que la clé SSH privée est complète (commence par `-----BEGIN OPENSSH PRIVATE KEY-----`)
+  3. Vérifiez que la clé n'a pas d'espaces ou sauts de ligne manquants
+- **Test** : La clé doit pouvoir se connecter : `ssh -T git@github.com`
 
 ### Si déploiement SSH échoue :
 - Vérifiez la **clé SSH** dans GitHub Secrets
