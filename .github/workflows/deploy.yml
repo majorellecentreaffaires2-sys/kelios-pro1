@@ -35,6 +35,20 @@ jobs:
     - name: Verify build output
       run: ls -la dist/
 
+    - name: Debug secrets
+      run: |
+        echo "HOSTINGER_HOST length: ${#HOSTINGER_HOST}"
+        echo "HOSTINGER_USER length: ${#HOSTINGER_USER}"
+        echo "DEPLOY_KEY length: ${#DEPLOY_KEY}"
+        if [ -z "$HOSTINGER_HOST" ]; then echo "ERROR: HOSTINGER_HOST is empty"; exit 1; fi
+        if [ -z "$HOSTINGER_USER" ]; then echo "ERROR: HOSTINGER_USER is empty"; exit 1; fi
+        if [ -z "$DEPLOY_KEY" ]; then echo "ERROR: DEPLOY_KEY is empty"; exit 1; fi
+        echo "All secrets are configured correctly"
+      env:
+        HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+        HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.7.0
       with:
