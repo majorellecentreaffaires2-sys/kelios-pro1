@@ -37,6 +37,15 @@ git commit -m "Mise à jour"
 git push origin main
 ```
 
+**OU utilisez le script automatique :**
+```bash
+# Windows (PowerShell)
+.\deploy.ps1 "Description de la mise à jour"
+
+# Linux/Mac
+./deploy.sh "Description de la mise à jour"
+```
+
 **C''est tout ! Le déploiement se fait automatiquement !** 🎉
 
 ---
