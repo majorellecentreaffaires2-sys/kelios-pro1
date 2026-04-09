@@ -779,7 +779,7 @@ const App: React.FC = () => {
       case 'reporting': return <Reporting invoices={invoices} company={activeCompany!} clients={clients} />;
       case 'payments': return <PaymentsManager invoices={invoices} company={activeCompany!} onUpdateInvoice={(inv) => { api.updateInvoice(inv).then(() => { loadCompanyData(); refreshPortfolio(); }); }} />;
       case 'companies': return <CompanyManager companies={companies} onCreate={handleCreateCompany} onSelect={handleEnterCompany} onUpdate={handleUpdateCompany} activeId={activeCompany?.id} />;
-      case 'audit': return <AuditLogViewer companyId={activeCompany?.id} />;
+      case 'audit-log': return <AuditLogViewer companyId={activeCompany?.id} />;
       case 'shortcuts': return <ShortcutManager shortcuts={shortcuts} onSave={(s) => api.saveShortcuts(activeCompany!.id, user.id, s).then(() => loadCompanyData())} />;
       case 'tools': return <Calculator />;
       // case 'help': return <Guide />;
