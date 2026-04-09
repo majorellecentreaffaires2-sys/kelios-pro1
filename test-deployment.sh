@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "🚀 Test de déploiement local pour Kelios Pro"
-echo "==========================================="
+echo "🎉 Test de déploiement local pour Kelios Pro - VERSION FIXE !"
+echo "============================================================"
 
 # Vérifier Node.js
 echo "📦 Vérification Node.js..."
