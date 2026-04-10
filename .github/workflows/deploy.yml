@@ -37,10 +37,10 @@ jobs:
 
     - name: Debug secrets
       run: |
-        echo "VPS_HOST length: ${#VPS_HOST}"
-        echo "VPS_USER length: ${#VPS_USER}"
-        echo "VPS_SSH_KEY length: ${#VPS_SSH_KEY}"
-        echo "VPS_PORT length: ${#VPS_PORT}"
+        echo "Checking VPS_HOST: $VPS_HOST"
+        echo "Checking VPS_USER: $VPS_USER"
+        echo "Checking VPS_SSH_KEY: ${VPS_SSH_KEY:0:10}..."
+        echo "Checking VPS_PORT: $VPS_PORT"
         if [ -z "$VPS_HOST" ]; then echo "ERROR: VPS_HOST is empty"; exit 1; fi
         if [ -z "$VPS_USER" ]; then echo "ERROR: VPS_USER is empty"; exit 1; fi
         if [ -z "$VPS_SSH_KEY" ]; then echo "ERROR: VPS_SSH_KEY is empty"; exit 1; fi
