@@ -1,4 +1,4 @@
-name: Deploy to CPanel Hostinger
+name: Deploy to Hostinger Ubuntu VPS
 
 on:
   push:
@@ -18,38 +18,109 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
+    - name: Clear npm cache
+      run: npm cache clean --force
+        
     - name: Install dependencies
-      run: npm ci
-      
+      run: |
+        npm ci --prefer-offline --no-audit
+      continue-on-error: false
+
+    - name: Verify dependencies
+      run: npm list --depth=0
+
     - name: Build application
       run: npm run build
-      
+
+    - name: Verify build output
+      run: ls -la dist/
+
+    - name: Debug secrets
+      run: |
+        echo "VPS_HOST length: ${#VPS_HOST}"
+        echo "VPS_USER length: ${#VPS_USER}"
+        echo "VPS_SSH_KEY length: ${#VPS_SSH_KEY}"
+        echo "VPS_PORT length: ${#VPS_PORT}"
+        if [ -z "$VPS_HOST" ]; then echo "ERROR: VPS_HOST is empty"; exit 1; fi
+        if [ -z "$VPS_USER" ]; then echo "ERROR: VPS_USER is empty"; exit 1; fi
+        if [ -z "$VPS_SSH_KEY" ]; then echo "ERROR: VPS_SSH_KEY is empty"; exit 1; fi
+        echo "All secrets are configured correctly"
+      env:
+        VPS_HOST: ${{ secrets.VPS_HOST }}
+        VPS_USER: ${{ secrets.VPS_USER }}
+        VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        VPS_PORT: ${{ secrets.VPS_PORT }}
+
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.7.0
       with:
-        ssh-private-key: ${{ secrets.CPANEL_SSH_KEY }}
-        
-    - name: Deploy to CPanel
+        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+    - name: Deploy to Hostinger Ubuntu VPS
       run: |
-        # Nettoyer l'ancienne version
-        ssh -o StrictHostKeyChecking=no ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
-          cd public_html
-          rm -rf kelios-app
-          mkdir -p kelios-app
+        # Connect to VPS and setup deployment
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          # Create deployment directory
+          mkdir -p /var/www/facture-app
+          cd /var/www/facture-app
+          
+          # Stop existing containers
+          docker-compose down --remove-orphans 2>/dev/null || true
+          
+          # Remove old files
+          rm -rf *
+          
           exit
         EOF
-        
-        # Copier les fichiers build vers CPanel
-        scp -o StrictHostKeyChecking=no -r dist/* ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:public_html/kelios-app/
-        
-        # Copier .htaccess pour routing React
-        scp -o StrictHostKeyChecking=no .htaccess ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:public_html/kelios-app/
-        
-        # Fixer les permissions pour CPanel
-        ssh -o StrictHostKeyChecking=no ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
-          cd public_html/kelios-app
-          find . -type d -exec chmod 755 {} \;
-          find . -type f -exec chmod 644 {} \;
-          chmod 644 .htaccess
+
+        # Copy files to VPS
+        echo "Uploading files to VPS..."
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} -r dist/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} Dockerfile ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
+
+        # Deploy with Docker
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd /var/www/facture-app
+          
+          # Build and start containers
+          docker-compose build --no-cache
+          docker-compose up -d
+          
+          # Wait for containers to start
+          sleep 10
+          
+          # Check if containers are running
+          if docker-compose ps | grep -q "Up"; then
+            echo "✅ Containers started successfully"
+          else
+            echo "❌ Error starting containers"
+            docker-compose logs
+            exit 1
+          fi
+          
+          # Clean up unused images
+          docker image prune -f
+          
           exit
         EOF
+
+    - name: Verify deployment
+      run: |
+        echo "Verifying deployment..."
+        sleep 15
+        
+        # Test if application is accessible
+        if curl -f -s "http://${{ secrets.VPS_HOST }}" > /dev/null; then
+          echo "✅ Application is accessible at http://${{ secrets.VPS_HOST }}"
+        else
+          echo "❌ Application is not accessible"
+          echo "Checking container status..."
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /var/www/facture-app
+            docker-compose ps
+            docker-compose logs
+            exit
+          EOF
+          exit 1
+        fi
