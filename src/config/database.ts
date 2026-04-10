@@ -1,67 +1,66 @@
-// Configuration de la base de données pour CPanel Hostinger
-// Compatible MySQL/MariaDB
+// Configuration de la base de données KELIOS IA
+// Adaptée pour Hostinger Ubuntu VPS avec MySQL
 
 export interface DatabaseConfig {
   host: string;
   port: number;
-  database: string;
-  username: string;
+  user: string;
   password: string;
+  database: string;
   ssl?: boolean;
 }
 
-// Configuration CPanel Hostinger
-export const cpanelDbConfig: DatabaseConfig = {
-  host: import.meta.env?.VITE_DB_HOST || 'localhost',
-  port: parseInt(import.meta.env?.VITE_DB_PORT || '3306'),
-  database: import.meta.env?.VITE_DB_NAME || 'kelios_db',
-  username: import.meta.env?.VITE_DB_USER || 'kelios_user',
-  password: import.meta.env?.VITE_DB_PASSWORD || '',
-  ssl: import.meta.env?.VITE_DB_SSL === 'true'
-};
-
-// Configuration locale pour développement
-export const localDbConfig: DatabaseConfig = {
-  host: 'localhost',
+// Configuration pour le VPS Hostinger Ubuntu
+const vpsConfig: DatabaseConfig = {
+  host: 'localhost', // MySQL sur le même VPS
   port: 3306,
+  user: 'kelios_user',
+  password: 'kelios_password_2024',
   database: 'kelios_db',
-  username: 'root',
-  password: '',
   ssl: false
 };
 
-// Configuration en fonction de l'environnement
+// Configuration pour le développement local
+const localConfig: DatabaseConfig = {
+  host: 'localhost',
+  port: 3306,
+  user: 'root',
+  password: '',
+  database: 'kelios_db',
+  ssl: false
+};
+
+// Configuration pour CPanel (backup)
+const cpanelConfig: DatabaseConfig = {
+  host: 'localhost',
+  port: 3306,
+  user: 'kelios_user',
+  password: 'kelios_password_2024',
+  database: 'kelios_db',
+  ssl: false
+};
+
+// Sélection de la configuration en fonction de l'environnement
 export const getDatabaseConfig = (): DatabaseConfig => {
-  const isProduction = import.meta.env?.MODE === 'production';
-  const isCPanel = import.meta.env?.VITE_CPANEL === 'true';  
-  if (isProduction && isCPanel) {
-    return cpanelDbConfig;
-  }
+  const isProduction = import.meta.env.PROD;
+  const isVPS = isProduction && true; // Force VPS mode pour production
   
-  return localDbConfig;
+  if (isVPS) {
+    return vpsConfig;
+  } else if (isProduction) {
+    return cpanelConfig;
+  } else {
+    return localConfig;
+  }
 };
 
-// Validation de la configuration
-export const validateDatabaseConfig = (config: DatabaseConfig): boolean => {
-  return !!(
-    config.host &&
-    config.database &&
-    config.username &&
-    config.password &&
-    config.port
-  );
+// Export de la configuration par défaut
+export const databaseConfig = getDatabaseConfig();
+
+// Connexion string pour MySQL
+export const getConnectionString = (): string => {
+  const config = getDatabaseConfig();
+  return `mysql://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}`;
 };
 
-// URL de connexion pour phpMyAdmin CPanel
-export const getPhpMyAdminUrl = (): string => {
-  const domain = import.meta.env?.VITE_CPANEL_DOMAIN || 'votre-domaine.com';
-  return `https://${domain}:2083/cpsessXXXXXXXX/frontend/phpmyadmin/index.php`;
-};
-
-export default {
-  cpanelDbConfig,
-  localDbConfig,
-  getDatabaseConfig,
-  validateDatabaseConfig,
-  getPhpMyAdminUrl
-};
+export default databaseConfig;
