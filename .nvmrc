@@ -1,0 +1,8 @@
+# Configuration Node.js pour le projet KELIOS IA
+# Assure la compatibilité avec toutes les dépendances
+
+# Version Node.js recommandée pour la production
+18.17.0
+
+# Version LTS la plus récente
+lts/hydrogen

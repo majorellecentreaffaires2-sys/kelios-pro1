@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Application React optimisée pour Hostinger
+  # Application React optimisée pour Hostinger Ubuntu
   app:
     build: .
     container_name: facture-app
@@ -9,10 +9,22 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:5000
     restart: unless-stopped
     networks:
       - app-network
+    volumes:
+      - ./nginx-logs:/var/log/nginx
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  nginx-logs:
+    driver: local

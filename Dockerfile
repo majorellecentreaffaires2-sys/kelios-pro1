@@ -24,7 +24,7 @@ RUN rm -rf /etc/nginx/conf.d/default.conf
 # Copier build
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Configuration Nginx optimisée pour Hostinger
+# Configuration Nginx optimisée pour Hostinger Ubuntu
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Permissions pour Hostinger
