@@ -35,41 +35,46 @@ jobs:
     - name: Verify build output
       run: ls -la dist/
 
-    - name: Setup environment variables
+    - name: Debug secrets
       run: |
-        echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
-        echo "VPS_USER=${{ secrets.VPS_USER }}" >> $GITHUB_ENV
-        echo "VPS_PORT=${{ secrets.VPS_PORT }}" >> $GITHUB_ENV
-        echo "VPS_SSH_KEY_SET=true" >> $GITHUB_ENV
-
-    - name: Debug environment
-      run: |
-        echo "=== DEBUG ENVIRONMENT ==="
-        echo "VPS_HOST: $VPS_HOST"
-        echo "VPS_USER: $VPS_USER"
-        echo "VPS_PORT: $VPS_PORT"
-        echo "VPS_SSH_KEY_SET: $VPS_SSH_KEY_SET"
-        echo "=== END DEBUG ==="
-        
-        if [ -z "$VPS_HOST" ]; then 
-          echo "ERROR: VPS_HOST is empty"
-          echo "Please configure VPS_HOST secret in GitHub repository"
+        echo "=== DEBUG SECRETS ==="
+        if [ -n "${{ secrets.VPS_HOST }}" ]; then
+          echo "VPS_HOST: ***CONFIGURED***"
+        else
+          echo "VPS_HOST: ***EMPTY***"
+          echo "ERROR: VPS_HOST secret is not configured"
+          echo "Please configure VPS_HOST secret in GitHub repository settings"
           exit 1
         fi
         
-        if [ -z "$VPS_USER" ]; then 
-          echo "ERROR: VPS_USER is empty"
-          echo "Please configure VPS_USER secret in GitHub repository"
+        if [ -n "${{ secrets.VPS_USER }}" ]; then
+          echo "VPS_USER: ***CONFIGURED***"
+        else
+          echo "VPS_USER: ***EMPTY***"
+          echo "ERROR: VPS_USER secret is not configured"
+          echo "Please configure VPS_USER secret in GitHub repository settings"
           exit 1
         fi
         
-        if [ -z "$VPS_PORT" ]; then 
-          echo "ERROR: VPS_PORT is empty"
-          echo "Please configure VPS_PORT secret in GitHub repository"
+        if [ -n "${{ secrets.VPS_PORT }}" ]; then
+          echo "VPS_PORT: ***CONFIGURED***"
+        else
+          echo "VPS_PORT: ***EMPTY***"
+          echo "ERROR: VPS_PORT secret is not configured"
+          echo "Please configure VPS_PORT secret in GitHub repository settings"
           exit 1
         fi
         
-        echo "✅ All environment variables are configured correctly"
+        if [ -n "${{ secrets.VPS_SSH_KEY }}" ]; then
+          echo "VPS_SSH_KEY: ***CONFIGURED***"
+        else
+          echo "VPS_SSH_KEY: ***EMPTY***"
+          echo "ERROR: VPS_SSH_KEY secret is not configured"
+          echo "Please configure VPS_SSH_KEY secret in GitHub repository settings"
+          exit 1
+        fi
+        
+        echo "=== ALL SECRETS CONFIGURED CORRECTLY ==="
 
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.7.0
@@ -78,10 +83,10 @@ jobs:
 
     - name: Deploy to Hostinger Ubuntu VPS
       run: |
-        echo "Starting deployment to $VPS_HOST:$VPS_PORT"
+        echo "Starting deployment to ${{ secrets.VPS_HOST }}:${{ secrets.VPS_PORT }}"
         
         # Connect to VPS and setup deployment
-        ssh -o StrictHostKeyChecking=no -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
           # Create deployment directory
           mkdir -p /var/www/facture-app
           cd /var/www/facture-app
@@ -97,12 +102,12 @@ jobs:
 
         # Copy files to VPS
         echo "Uploading files to VPS..."
-        scp -o StrictHostKeyChecking=no -P $VPS_PORT -r dist/* $VPS_USER@$VPS_HOST:/var/www/facture-app/
-        scp -o StrictHostKeyChecking=no -P $VPS_PORT docker-compose.yml $VPS_USER@$VPS_HOST:/var/www/facture-app/
-        scp -o StrictHostKeyChecking=no -P $VPS_PORT Dockerfile $VPS_USER@$VPS_HOST:/var/www/facture-app/
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} -r dist/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} Dockerfile ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
 
         # Deploy with Docker
-        ssh -o StrictHostKeyChecking=no -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd /var/www/facture-app
           
           # Build and start containers
@@ -114,9 +119,9 @@ jobs:
           
           # Check if containers are running
           if docker-compose ps | grep -q "Up"; then
-            echo "✅ Containers started successfully"
+            echo "Direct deployment successful"
           else
-            echo "❌ Error starting containers"
+            echo "Error starting containers"
             docker-compose logs
             exit 1
           fi
@@ -133,12 +138,12 @@ jobs:
         sleep 15
         
         # Test if application is accessible
-        if curl -f -s "http://$VPS_HOST" > /dev/null; then
-          echo "✅ Application is accessible at http://$VPS_HOST"
+        if curl -f -s "http://${{ secrets.VPS_HOST }}" > /dev/null; then
+          echo "Application is accessible at http://${{ secrets.VPS_HOST }}"
         else
-          echo "❌ Application is not accessible"
+          echo "Application is not accessible"
           echo "Checking container status..."
-          ssh -o StrictHostKeyChecking=no -p $VPS_PORT $VPS_USER@$VPS_HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd /var/www/facture-app
             docker-compose ps
             docker-compose logs
@@ -146,7 +151,3 @@ jobs:
           EOF
           exit 1
         fi
-      env:
-        VPS_HOST: ${{ secrets.VPS_HOST }}
-        VPS_USER: ${{ secrets.VPS_USER }}
-        VPS_PORT: ${{ secrets.VPS_PORT }}
