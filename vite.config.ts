@@ -9,6 +9,9 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  css: {
+    devSourcemap: true,
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -26,11 +29,15 @@ export default defineConfig({
           router: ['react-router-dom'],
           utils: ['axios', 'date-fns'],
           ui: ['lucide-react'],
+          charts: ['recharts'],
         },
       },
     },
     chunkSizeWarningLimit: 1000,
     assetsInlineLimit: 4096,
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
   },
   server: {
     port: 3000,

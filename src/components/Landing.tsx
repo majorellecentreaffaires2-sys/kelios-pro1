@@ -2,12 +2,6 @@ import React, { useEffect, useRef } from 'react';
 
 // ─── LOCAL FONT IMPORTS (install with commands below) ───────────────────────
 // npm install @fontsource/inter @fontsource/syne @fontsource/jetbrains-mono
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/syne/600.css';
-import '@fontsource/syne/700.css';
-import '@fontsource/jetbrains-mono/400.css';
 
 // ─── ALL ICONS INLINED — no external iconify script needed ──────────────────
 const IconLayers = () => (
