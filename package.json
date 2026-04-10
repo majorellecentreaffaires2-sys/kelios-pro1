@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "docker:build": "docker build -t facture-app .",
-    "docker:run": "docker run -p 80:80 facture-app"
+    "docker:run": "docker run -p 8080:8080 facture-app",
+    "deploy:cpanel": "./deploy-cpanel.sh"
   },
   "dependencies": {
     "react": "^18.2.0",

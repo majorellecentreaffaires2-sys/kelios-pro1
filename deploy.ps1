@@ -1,31 +1,14 @@
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$CommitMessage
+    [string]$CommitMessage = "Update for cPanel"
 )
 
-Write-Host "Deploying Kelios Pro to GitHub..." -ForegroundColor Green
+Write-Host "Preparing cPanel deployment (local build)..." -ForegroundColor Green
 
-$status = git status --porcelain
-if (-not $status) {
-    Write-Host "No changes detected" -ForegroundColor Blue
-    exit 0
-}
-
-Write-Host "Building project..." -ForegroundColor Yellow
-& npm run build
-
+npm run build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed" -ForegroundColor Red
     exit 1
 }
 
-git add .
-git commit -m $CommitMessage
-git push kelios main
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Deployment successful!" -ForegroundColor Green
-} else {
-    Write-Host "Push failed" -ForegroundColor Red
-    exit 1
-}
+Write-Host "✅ Build complete. Use deploy-cpanel.sh or manual ZIP."
+Write-Host "Upload to cPanel public_html/ then: npm install && pm2 restart all" -ForegroundColor Green

@@ -2,14 +2,18 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { authenticateToken } from '../middleware/auth.js';
 import pool from '../config/db.js';
 import crypto from 'crypto';
 import 'dotenv/config';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const router = express.Router();
 
-const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+const defaultUploadDir = path.join(__dirname, '..', 'uploads');
+const uploadDir = process.env.UPLOAD_DIR ? path.resolve(process.env.UPLOAD_DIR) : defaultUploadDir;
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({

@@ -1,20 +1,61 @@
 import mysql from 'mysql2/promise';
 import 'dotenv/config';
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'majorlle_erp',
-  port: process.env.DB_PORT || 3307,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_USER = process.env.DB_USER || 'root';
+const DB_PASSWORD = process.env.DB_PASSWORD || '';
+const DB_NAME = process.env.DB_NAME || 'majorlle_erp';
+const DB_PORT = process.env.DB_PORT || 3306;
+const DB_CHARSET = process.env.DB_CHARSET || 'utf8mb4';
+const DB_COLLATION = process.env.DB_COLLATION || 'utf8mb4_unicode_ci';
+const DB_CREATE_IF_NOT_EXISTS = process.env.DB_CREATE_IF_NOT_EXISTS === 'true';
+const DB_SECONDARY_NAME = process.env.DB_SECONDARY_NAME || '';
+
+let pool;
+
+async function ensureDatabaseExists(databaseName) {
+  const adminConnection = await mysql.createConnection({
+    host: DB_HOST,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    port: DB_PORT,
+    multipleStatements: true,
+  });
+
+  await adminConnection.query(
+    `CREATE DATABASE IF NOT EXISTS \`${databaseName}\` CHARACTER SET ${DB_CHARSET} COLLATE ${DB_COLLATION}`
+  );
+
+  console.log(`✅ Base de données vérifiée/créée: ${databaseName}`);
+  await adminConnection.end();
+}
+
+async function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: DB_HOST,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      database: DB_NAME,
+      port: DB_PORT,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+  }
+  return pool;
+}
 
 export async function initDb() {
   try {
-    const connection = await pool.getConnection();
+    if (DB_CREATE_IF_NOT_EXISTS) {
+      await ensureDatabaseExists(DB_NAME);
+      if (DB_SECONDARY_NAME) {
+        await ensureDatabaseExists(DB_SECONDARY_NAME);
+      }
+    }
+
+    const connection = await (await getPool()).getConnection();
     console.log('✅ Connecté à MySQL avec succès.');
 
     const addColumn = async (table, column, definition) => {
@@ -271,6 +312,33 @@ export async function initDb() {
       path VARCHAR(500) NOT NULL,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX (userId)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS app_settings (
+      id VARCHAR(255) PRIMARY KEY,
+      companyId VARCHAR(255) NULL,
+      keyName VARCHAR(255) NOT NULL,
+      value TEXT,
+      category VARCHAR(100),
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX (companyId),
+      INDEX (keyName)
+    )`);
+
+    await connection.query(`CREATE TABLE IF NOT EXISTS payment_logs (
+      id VARCHAR(255) PRIMARY KEY,
+      companyId VARCHAR(255),
+      userId VARCHAR(255),
+      invoiceId VARCHAR(255),
+      paymentMethod VARCHAR(100),
+      amount DECIMAL(15,2),
+      currency VARCHAR(10),
+      status VARCHAR(50),
+      reference VARCHAR(255),
+      metadata JSON,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX (companyId),
+      INDEX (invoiceId)
     )`);
 
     await connection.query(`CREATE TABLE IF NOT EXISTS reminder_settings (
