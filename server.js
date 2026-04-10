@@ -33,11 +33,27 @@ import notificationRoutes from './server/routes/notifications.js';
 import adminRoutes from './server/routes/admin.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
+const distPath = path.join(__dirname, 'dist');
+const hasDist = fs.existsSync(distPath);
+
+const startServer = () => {
+if (process.env.NODE_ENV === 'production' && process.argv[1] !== 'pm2') {
+  console.log('PM2 detected or use pm2 start ecosystem.config.js');
+  process.exit(0);
+}
+app.listen(PORT, () => {
+    console.log(`\n  🚀 Server Majorlle Pro is running`);
+    console.log(`  🔹 Port: ${PORT}`);
+    console.log(`  🔹 URL: ${process.env.APP_URL || 'Not Set (using fallback)'}`);
+    console.log(`  🔹 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+  });
+};
 
 // --- INITIALIZATION ---
 initDb().then(() => {
   initCronJobs();
+  startServer();
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
@@ -66,8 +82,6 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 // --- STATIC FILES & SECURITY ---
-app.use(express.static(path.join(__dirname, 'dist')));
-
 // Middleware to log requests to static files for debugging
 app.use((req, res, next) => {
   if (req.path.startsWith('/uploads/')) {
@@ -78,10 +92,10 @@ app.use((req, res, next) => {
 
 app.use((req, res, next) => {
   const sensitiveFiles = ['.env', '.git', 'server.js', 'package.json', 'node_modules'];
-  const path = req.path.toLowerCase();
-  const segments = path.split('/');
+  const requestPath = req.path.toLowerCase();
+  const segments = requestPath.split('/');
 
-  if (sensitiveFiles.some(file => segments.includes(file.toLowerCase()) || path.endsWith('/' + file.toLowerCase()))) {
+  if (sensitiveFiles.some(file => segments.includes(file.toLowerCase()) || requestPath.endsWith('/' + file.toLowerCase()))) {
     console.warn(`🔒 Access blocked to: ${req.path}`);
     return res.status(403).json({ error: 'Access Denied' });
   }
@@ -114,8 +128,12 @@ app.get('/api/check-uploads', (req, res) => {
   }
 });
 
-// Debug route for Cron Jobs (REMOVE BEFORE PRODUCTION)
+// Debug route for Cron Jobs (disabled by default)
 app.get('/api/debug/run-cron', async (req, res) => {
+  if (process.env.ENABLE_DEBUG_CRON_ROUTE !== 'true') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
   const { processRecurringSchedules, processReminders, processTrialWarnings, cleanupOldTokens } = await import('./server/jobs/cronJobs.js');
 
   const results = {
@@ -144,11 +162,18 @@ app.get('/api/debug/run-cron', async (req, res) => {
 // Serve uploaded files (logos etc.) with absolute path
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Fallback for SPA
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Endpoint not found' });
-  res.sendFile('index.html', { root: 'dist' });
-});
+if (hasDist) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Endpoint not found' });
+    res.sendFile('index.html', { root: distPath });
+  });
+} else {
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Endpoint not found' });
+    res.status(404).send('Front-end not built. Run npm run build or deploy the frontend to this server.');
+  });
+}
 
 // --- GLOBAL ERROR HANDLER ---
 app.use((err, req, res, next) => {
@@ -156,13 +181,4 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
     error: err.message || 'Internal Server Error'
   });
-});
-
-app.listen(PORT, () => {
-  console.log(`
-  🚀 Server Majorlle Pro is running
-  🔹 Port: ${PORT}
-  🔹 URL: ${process.env.APP_URL || 'Not Set (using fallback)'}
-  🔹 Environment: ${process.env.NODE_ENV || 'development'}
-  `);
 });

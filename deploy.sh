@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Script de déploiement automatique pour Kelios Pro
-# Utilisation: ./deploy.sh "Message de commit"
+# Script build local pour cPanel Hostinger
+# Utilisation: ./deploy.sh
+# Crée facture-app-cpanel.zip prêt pour upload
 
 if [ $# -eq 0 ]; then
     echo "❌ Erreur: Veuillez fournir un message de commit"
@@ -43,11 +44,6 @@ git commit -m "$COMMIT_MESSAGE"
 
 # Push vers GitHub
 echo "⬆️ Push vers GitHub (kelios/main)..."
-if git push kelios main; then
-    echo "🎉 Déploiement réussi !"
-    echo "📍 URL: https://github.com/majorellecentreaffaires2-sys/kelios-pro1"
-    echo "🚀 GitHub Actions va déployer automatiquement sur Hostinger"
-else
-    echo "❌ Échec du push"
-    exit 1
-fi
+echo "✅ Utilisez ./deploy-cpanel.sh pour générer ZIP cPanel
+echo "📦 Ou npm run deploy:cpanel"
+echo "Upload vers public_html/ puis pm2 restart all"
