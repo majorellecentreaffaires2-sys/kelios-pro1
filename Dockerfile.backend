@@ -1,0 +1,35 @@
+# Backend Node.js pour KELIOS IA
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Installer curl pour healthcheck
+RUN apk add --no-cache curl
+
+# Copier package files
+COPY package*.json ./
+
+# Installer les dépendances backend uniquement
+RUN npm ci --silent --only=production
+
+# Copier le serveur backend
+COPY local-server-fixed.js server.js
+
+# Créer le répertoire de données
+RUN mkdir -p /app/data
+
+# Permissions
+RUN chown -R node:node /app
+
+# Utiliser l'utilisateur node
+USER node
+
+# Exposer le port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/api/test || exit 1
+
+# Démarrer le serveur
+CMD ["node", "server.js"]
