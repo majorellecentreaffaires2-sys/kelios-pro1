@@ -105,6 +105,7 @@ jobs:
         scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} -r dist/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
         scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
         scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} Dockerfile ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
+        scp -o StrictHostKeyChecking=no -P ${{ secrets.VPS_PORT }} Dockerfile.backend ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/facture-app/
 
         # Deploy with Docker
         ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
