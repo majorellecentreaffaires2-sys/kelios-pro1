@@ -81,12 +81,17 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+    - name: Test SSH connection
+      run: |
+        echo "Testing SSH connection to ${{ secrets.VPS_HOST }}:${{ secrets.VPS_PORT }}..."
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
+
     - name: Deploy to Hostinger Ubuntu VPS
       run: |
         echo "Starting deployment to ${{ secrets.VPS_HOST }}:${{ secrets.VPS_PORT }}"
         
         # Connect to VPS and setup deployment
-        ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
           # Create deployment directory
           mkdir -p /var/www/facture-app
           cd /var/www/facture-app
