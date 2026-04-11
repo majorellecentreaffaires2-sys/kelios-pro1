@@ -12,12 +12,12 @@ echo "======================================"
 echo ""
 
 echo "🔴 ÉTAPE 1 : CONNEXION AU VPS"
-echo "ssh root@194.164.77.52"
-echo "Mot de passe : MaKrame2121@"
+echo "ssh devadmin@194.164.77.52"
+echo "Utilisez votre clé SSH ou mot de passe devadmin"
 echo ""
 
 echo "🔴 ÉTAPE 2 : NAVIGATION VERS LE RÉPERTOIRE"
-echo "cd /var/www/"
+echo "cd /home/devadmin/"
 echo ""
 
 echo "🔴 ÉTAPE 3 : CRÉATION DU RÉPERTOIRE KELIOS-PRO"
