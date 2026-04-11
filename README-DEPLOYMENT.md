@@ -90,7 +90,14 @@ facture-app/
 ├── nginx.conf               # Configuration Nginx
 ├── docker-compose.yml        # Services Docker
 ├── .github/workflows/deploy.yml # CI/CD GitHub
-├── README-DEPLOYMENT.md     # Ce fichier
+├── README-# DÉPLOIEMENT KELIOS IA - GUIDE COMPLET
+
+## 🚀 MÉTHODES DE DÉPLOIEMENT
+
+### 📋 RÉSUMÉ
+L'application KELIOS IA peut être déployée de deux manières :
+1. **Automatique** : GitHub Actions (recommandé)
+2. **Manuel** : Script local (alternative)
 └── src/                    # Code source
 ```
 
