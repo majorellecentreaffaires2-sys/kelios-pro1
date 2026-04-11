@@ -101,18 +101,9 @@ function createTables() {
         }
 
         if (row.count === 0) {
-          const hashedPassword = bcrypt.hashSync('password123', 10);
-          db.run(`
-            INSERT INTO users (username, email, password, emailVerified) 
-            VALUES ('demo', 'demo@kelios.local', ?, 1)
-          `, [hashedPassword], (err) => {
-            if (err) {
-              reject(err);
-            } else {
-              console.log('Utilisateur de test créé: demo@kelios.local / password123');
-              resolve();
-            }
-          });
+          // Utilisateur de test retiré pour la production
+          // Les données existantes seront conservées
+          resolve();
         } else {
           resolve();
         }
