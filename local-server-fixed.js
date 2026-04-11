@@ -17,7 +17,8 @@ let db;
 // Initialisation de la base de données SQLite
 function initDatabase() {
   return new Promise((resolve, reject) => {
-    db = new sqlite3.Database('./kelios-local.db', (err) => {
+    const dbPath = process.env.DB_PATH || './kelios-local.db';
+    db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         console.error('Erreur de connexion à SQLite:', err);
         reject(false);
@@ -407,9 +408,34 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Gestionnaire d'erreurs global
+app.use((err, req, res, next) => {
+  console.error('Erreur serveur:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Erreur serveur interne',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// Gestionnaire 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route non trouvée',
+    path: req.path
+  });
+});
+
 // Démarrage du serveur
 async function startServer() {
   try {
+    console.log('Démarrage du serveur KELIOS IA...');
+    console.log('Node.js version:', process.version);
+    console.log('Environment:', process.env.NODE_ENV || 'development');
+    console.log('Port:', PORT);
+    console.log('DB Path:', process.env.DB_PATH || './kelios-local.db');
+    
     const dbInitialized = await initDatabase();
     
     if (!dbInitialized) {
@@ -417,15 +443,16 @@ async function startServer() {
       process.exit(1);
     }
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n  Serveur local KELIOS IA démarré`);
       console.log(`  Port: ${PORT}`);
-      console.log(`  URL: http://localhost:${PORT}`);
-      console.log(`  Base de données: SQLite (kelios-local.db)\n`);
+      console.log(`  URL: http://0.0.0.0:${PORT}`);
+      console.log(`  Base de données: SQLite (${process.env.DB_PATH || './kelios-local.db'})\n`);
       console.log(`  Utilisateur de test: demo@kelios.local / password123\n`);
     });
   } catch (error) {
     console.error('Erreur de démarrage:', error);
+    console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 }
