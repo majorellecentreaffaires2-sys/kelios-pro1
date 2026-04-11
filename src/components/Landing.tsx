@@ -1,8 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 
-// ─── LOCAL FONT IMPORTS (install with commands below) ───────────────────────
-// npm install @fontsource/inter @fontsource/syne @fontsource/jetbrains-mono
-
 // ─── ALL ICONS INLINED — no external iconify script needed ──────────────────
 const IconLayers = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -225,9 +222,9 @@ const Landing: React.FC<{
 
       {/* ── Inline critical CSS (no flash of unstyled content) ── */}
       <style>{`
-        /* Fonts are loaded via @fontsource npm packages — no external requests */
-        .font-syne  { font-family: "Syne", sans-serif; }
-        .font-mono  { font-family: "JetBrains Mono", monospace; }
+        /* Fonts -- using web-safe fallbacks */
+        .font-syne  { font-family: "Inter", sans-serif; }
+        .font-mono  { font-family: "Courier New", monospace; }
 
         /* Fluid hero type */
         .text-huge  { font-size: clamp(2.8rem, 10vw, 18rem); }

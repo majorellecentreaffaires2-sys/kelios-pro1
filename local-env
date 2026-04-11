@@ -1,0 +1,15 @@
+# Configuration locale pour KELIOS IA
+NODE_ENV=development
+PORT=3001
+
+# Configuration base de données locale
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_DATABASE=kelios_local
+
+# Configuration JWT
+JWT_SECRET=kelios_jwt_secret_local_2024
+
+# Configuration API
+API_BASE=http://localhost:3001

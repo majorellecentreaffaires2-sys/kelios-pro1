@@ -9,7 +9,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +24,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
     setError('');
 
     try {
-      const data = await api.login({ username, password });
+      const data = await api.login({ email, password });
       if (data.success) {
         onLogin(data.user, data.token);
       } else if (data.needsVerification) {
@@ -163,8 +163,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
                       required
                       placeholder="nom@entreprise.pro"
                       className="w-full bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] py-5 pl-16 pr-6 text-slate-900 placeholder:text-slate-300 outline-none focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all font-bold"
-                      value={username}
-                      onChange={e => setUsername(e.target.value)}
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
