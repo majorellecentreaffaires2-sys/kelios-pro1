@@ -1,6 +1,6 @@
 import { Invoice, Company, ContactInfo, InvoiceTemplate, Shortcut, AuditEntry, Article } from './types';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'https://www.kelios-pro.com/api';
 
 const getAuthToken = () => localStorage.getItem('mj_token');
 
