@@ -98,6 +98,32 @@ Dans **Settings → Secrets and variables → Actions** du dépôt GitHub, ajout
 Ne commitez jamais ces valeurs dans le code : le workflow lit uniquement `${{ secrets.* }}`.  
 Collez chaque secret **sans espace ni ligne vide** avant ou après (sinon la connexion SSH échoue).
 
+#### Erreur GitHub Actions : `Permission denied (publickey,password)`
+
+Cela signifie que le serveur **refuse la clé** : la connexion réseau fonctionne, mais **`VPS_SSH_KEY` ne correspond pas** à ce qui est autorisé pour **`VPS_USER`** (`devadmin`).
+
+1. **Clé privée, pas publique**  
+   Le secret doit être le contenu du fichier **sans** extension `.pub` (ex. `~/.ssh/id_ed25519` ou `id_rsa`), avec les lignes `-----BEGIN … PRIVATE KEY-----` et `-----END …-----` **entières**. Ne pas mettre le fichier `.pub`.
+
+2. **Même paire que sur le VPS**  
+   Sur le VPS, connectez-vous (console Hostinger ou autre accès) et vérifiez que la **clé publique** associée à cette clé privée est bien dans :
+   ```bash
+   /home/devadmin/.ssh/authorized_keys
+   ```
+   Droits recommandés : `chmod 700 ~/.ssh` et `chmod 600 ~/.ssh/authorized_keys`.
+
+3. **Utilisateur cohérent**  
+   Si la clé est seulement dans `authorized_keys` de `root`, le déploiement en tant que `devadmin` échouera. Ajoutez la **même ligne `.pub`** dans le fichier de `devadmin`, ou changez `VPS_USER` pour l’utilisateur qui possède cette clé.
+
+4. **Test depuis votre PC** (avant de remettre la clé dans GitHub) :
+   ```bash
+   ssh -i chemin/vers/id_ed25519 -p 22 devadmin@194.164.77.52
+   ```
+   Si ça échoue ici, corrigez d’abord le VPS ou la paire de clés.
+
+5. **Phrase secrète**  
+   Si la clé privée est protégée par une passphrase, l’action `webfactory/ssh-agent` peut en avoir besoin : voir [ssh-agent](https://github.com/webfactory/ssh-agent#usage) (`passphrase` dans le workflow). Pour la CI, une clé **dédiée au déploiement sans passphrase** est souvent plus simple.
+
 Chaque `git push` sur `main` déclenchera un déploiement automatique.
 
 ### Commandes utiles

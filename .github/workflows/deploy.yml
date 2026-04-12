@@ -35,6 +35,22 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      - name: Vérifier clé privée et agent SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          KEY_BYTES=$(printf '%s' "$VPS_SSH_KEY" | wc -c)
+          if [ "$KEY_BYTES" -lt 80 ]; then
+            echo "::error::VPS_SSH_KEY semble vide ou tronqué. Collez la clé PRIVÉE complète (id_ed25519 / id_rsa), pas le fichier .pub."
+            exit 1
+          fi
+          if ! printf '%s' "$VPS_SSH_KEY" | grep -q 'BEGIN.*PRIVATE KEY'; then
+            echo "::error::VPS_SSH_KEY ne ressemble pas à une clé privée (lignes BEGIN/END PRIVATE KEY). Souvent : clé publique .pub collée par erreur."
+            exit 1
+          fi
+          echo "Identités dans ssh-agent (empreinte seulement) :"
+          ssh-add -l
+
       - name: Deploy to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -54,7 +70,8 @@ jobs:
             exit 1
           fi
           # Évite ssh-keyscan (échec fréquent : timeout, pare-feu). OpenSSH ≥7.6 sur ubuntu-latest.
-          SSH_OPTS="-p ${VPS_PORT_TR} -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+          # BatchMode=yes : pas de prompt mot de passe (échec clair si mauvaise clé).
+          SSH_OPTS="-p ${VPS_PORT_TR} -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 -o BatchMode=yes"
 
           echo "📦 Syncing files to VPS..."
           rsync -avz --delete \
@@ -99,6 +116,6 @@ jobs:
           VPS_PORT_TR=$(printf '%s' "$VPS_PORT" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           VPS_USER_TR=$(printf '%s' "$VPS_USER" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           VPS_PORT_TR="${VPS_PORT_TR:-22}"
-          SSH_OPTS="-p ${VPS_PORT_TR} -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+          SSH_OPTS="-p ${VPS_PORT_TR} -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 -o BatchMode=yes"
           sleep 5
           ssh $SSH_OPTS ${VPS_USER_TR}@${VPS_HOST_TR} "pm2 status kelios-pro"
