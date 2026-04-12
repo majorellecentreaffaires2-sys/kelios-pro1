@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+server.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.sw?
+*.suo
+
+# SSH keys (NEVER commit)
+.ssh/
+
+# Database files
+*.db
+*.sqlite
+
+# Uploads (managed on server)
+uploads/
+
+# PM2
+.pm2/
+
+# Temp files
+tmp_*
+*.tmp

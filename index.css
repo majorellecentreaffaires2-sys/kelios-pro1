@@ -1,0 +1,193 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Premium Pro Light Palette */
+  --pro-primary: #2563eb;
+  --pro-primary-hover: #1d4ed8;
+  --pro-bg: #f8fafc;
+  --pro-card-bg: rgba(255, 255, 255, 0.8);
+  --pro-card-border: rgba(226, 232, 240, 0.6);
+  --pro-text-main: #0f172a;
+  --pro-text-muted: #64748b;
+  --pro-accent: #8b5cf6;
+
+  /* Legacy EBP / Office Style Palette (kept for compatibility if needed) */
+  --ribbon-bg: #f3f4f6;
+  --ribbon-border: #e5e7eb;
+  --ribbon-tab-active: #ffffff;
+  --ribbon-tab-text: #374151;
+  --ribbon-tab-active-text: #2563eb;
+
+  --grid-header-bg: #e2e8f0;
+  --grid-header-text: #1e293b;
+  --grid-border: #cbd5e1;
+  --grid-row-hover: #eff6ff;
+  --grid-row-alt: #f8fafc;
+  --grid-selected: #bfdbfe;
+
+  --app-bg: #f1f5f9;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  background-color: var(--app-bg);
+  color: var(--pro-text-main);
+}
+
+/* EBP Grid Style Utility */
+.ebp-grid {
+  @apply w-full border-collapse border border-[--grid-border] bg-white text-[11px] font-medium;
+}
+
+.ebp-grid th {
+  @apply bg-[--grid-header-bg] text-[--grid-header-text] border border-[--grid-border] px-2 py-1 text-left font-bold select-none cursor-default;
+  background-image: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+}
+
+.ebp-grid td {
+  @apply border border-[--grid-border] px-2 py-0.5 text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis h-6;
+}
+
+.ebp-grid tr:nth-child(even) {
+  @apply bg-[--grid-row-alt];
+}
+
+.ebp-grid tr:hover td {
+  @apply bg-[--grid-row-hover];
+}
+
+.ebp-grid tr.selected td {
+  @apply bg-[--grid-selected] border-blue-300;
+}
+
+/* Custom Scrollbar for dense data */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border: 2px solid #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Standard Print Approach for SPAs */
+/* ============================================================
+   ROBUST SPA PRINT STRATEGY (V3 - Absolute & Clean)
+   Combines absolute positioning reliability with clean margins
+   ============================================================ */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Reset page */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: auto !important;
+  }
+
+  /* Hide UI elements but preserve layout structure */
+  .no-print,
+  button,
+  [class*="toolbar"],
+  [class*="controls"],
+  nav, aside, header, footer,
+  [role="navigation"],
+  .preview-controls {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Show the invoice ref container and flex wrapper */
+  div[class*="flex"][class*="justify-center"] {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  /* Ensure print area is fully visible and sized correctly */
+  .print-area {
+    visibility: visible !important;
+    display: block !important;
+    width: 210mm !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: auto !important;
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure all children are visible */
+  .print-area * {
+    visibility: visible !important;
+  }
+
+  /* Preserve colors and styling */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent tables from breaking across pages */
+  table, thead, tbody, tr, th, td {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+    page-break-before: auto !important;
+  }
+
+  /* Keep related content together */
+  .invoice-items-table {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure footer stays at bottom of page */
+  .invoice-footer {
+    page-break-before: auto !important;
+    margin-top: auto !important;
+  }
+
+  /* Avoid breaking inside text blocks */
+  p, div, h1, h2, h3, h4, h5, h6 {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Make sure print area grows with content */
+  .print-area {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Footer should not break and should be at end of content */
+  .invoice-footer {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+  }
+}

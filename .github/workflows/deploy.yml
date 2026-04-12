@@ -1,0 +1,90 @@
+name: Deploy to Hostinger VPS (PM2)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Verify build
+        run: |
+          test -d dist && echo "✅ Build successful" || (echo "❌ Build failed" && exit 1)
+          ls -la dist/
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          APP_DIR="/var/www/kelios-pro"
+
+          echo "📦 Syncing files to VPS..."
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='uploads' \
+            --exclude='logs' \
+            -e "ssh -p $VPS_PORT" \
+            ./ ${VPS_USER}@${VPS_HOST}:${APP_DIR}/
+
+          echo "🔧 Installing dependencies and restarting..."
+          ssh -p $VPS_PORT ${VPS_USER}@${VPS_HOST} << REMOTE
+            cd ${APP_DIR}
+
+            # Create required directories
+            mkdir -p uploads logs
+
+            # Install production dependencies
+            npm install --omit=dev --no-audit
+
+            # Restart PM2
+            if pm2 list | grep -q "kelios-pro"; then
+              pm2 restart kelios-pro --update-env
+            else
+              pm2 start ecosystem.config.cjs --env production
+            fi
+
+            pm2 save
+
+            echo "✅ Deployment complete!"
+            pm2 status
+          REMOTE
+
+      - name: Verify deployment
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          sleep 5
+          ssh -p $VPS_PORT ${VPS_USER}@${VPS_HOST} "pm2 status kelios-pro"
