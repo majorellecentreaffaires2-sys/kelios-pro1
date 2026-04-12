@@ -91,8 +91,8 @@ Dans **Settings → Secrets and variables → Actions** du dépôt GitHub, ajout
 | Secret | Valeur pour ce projet |
 |--------|------------------------|
 | `VPS_HOST` | `194.164.77.52` |
-| `VPS_USER` | utilisateur SSH (ex. `root` ou celui créé sur le VPS) |
-| `VPS_PORT` | `22` (sauf si Hostinger vous a indiqué un autre port) |
+| `VPS_USER` | `devadmin` |
+| `VPS_PORT` | `22` |
 | `VPS_SSH_KEY` | contenu **complet** de la clé privée (fichier type `id_rsa` ou `id_ed25519`) correspondant à la clé publique déjà dans `~/.ssh/authorized_keys` sur le VPS |
 
 Ne commitez jamais ces valeurs dans le code : le workflow lit uniquement `${{ secrets.* }}`.
