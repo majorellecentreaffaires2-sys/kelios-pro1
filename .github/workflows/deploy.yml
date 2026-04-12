@@ -35,11 +35,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: Add host key
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
       - name: Deploy to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -47,6 +42,19 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
           APP_DIR="/var/www/kelios-pro"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # Nettoyage espaces / retours ligne souvent collés par erreur dans les secrets GitHub
+          VPS_HOST_TR=$(printf '%s' "$VPS_HOST" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          VPS_PORT_TR=$(printf '%s' "$VPS_PORT" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          VPS_USER_TR=$(printf '%s' "$VPS_USER" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          VPS_PORT_TR="${VPS_PORT_TR:-22}"
+          if [ -z "$VPS_HOST_TR" ] || [ -z "$VPS_USER_TR" ]; then
+            echo "::error::Secrets VPS_HOST et VPS_USER doivent être définis (non vides)."
+            exit 1
+          fi
+          # Évite ssh-keyscan (échec fréquent : timeout, pare-feu). OpenSSH ≥7.6 sur ubuntu-latest.
+          SSH_OPTS="-p ${VPS_PORT_TR} -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
 
           echo "📦 Syncing files to VPS..."
           rsync -avz --delete \
@@ -55,11 +63,11 @@ jobs:
             --exclude='.env' \
             --exclude='uploads' \
             --exclude='logs' \
-            -e "ssh -p $VPS_PORT" \
-            ./ ${VPS_USER}@${VPS_HOST}:${APP_DIR}/
+            -e "ssh $SSH_OPTS" \
+            ./ ${VPS_USER_TR}@${VPS_HOST_TR}:${APP_DIR}/
 
           echo "🔧 Installing dependencies and restarting..."
-          ssh -p $VPS_PORT ${VPS_USER}@${VPS_HOST} << REMOTE
+          ssh $SSH_OPTS ${VPS_USER_TR}@${VPS_HOST_TR} << REMOTE
             cd ${APP_DIR}
 
             # Create required directories
@@ -87,5 +95,10 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
+          VPS_HOST_TR=$(printf '%s' "$VPS_HOST" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          VPS_PORT_TR=$(printf '%s' "$VPS_PORT" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          VPS_USER_TR=$(printf '%s' "$VPS_USER" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          VPS_PORT_TR="${VPS_PORT_TR:-22}"
+          SSH_OPTS="-p ${VPS_PORT_TR} -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
           sleep 5
-          ssh -p $VPS_PORT ${VPS_USER}@${VPS_HOST} "pm2 status kelios-pro"
+          ssh $SSH_OPTS ${VPS_USER_TR}@${VPS_HOST_TR} "pm2 status kelios-pro"

@@ -95,7 +95,8 @@ Dans **Settings → Secrets and variables → Actions** du dépôt GitHub, ajout
 | `VPS_PORT` | `22` |
 | `VPS_SSH_KEY` | contenu **complet** de la clé privée (fichier type `id_rsa` ou `id_ed25519`) correspondant à la clé publique déjà dans `~/.ssh/authorized_keys` sur le VPS |
 
-Ne commitez jamais ces valeurs dans le code : le workflow lit uniquement `${{ secrets.* }}`.
+Ne commitez jamais ces valeurs dans le code : le workflow lit uniquement `${{ secrets.* }}`.  
+Collez chaque secret **sans espace ni ligne vide** avant ou après (sinon la connexion SSH échoue).
 
 Chaque `git push` sur `main` déclenchera un déploiement automatique.
 
