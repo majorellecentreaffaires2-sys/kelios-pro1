@@ -110,6 +110,8 @@ pm2 monit               # Monitoring en temps réel
 ## 🔧 Développement local
 ```bash
 npm install
+# Optionnel : commitez le package-lock.json généré pour activer le cache npm dans GitHub Actions
+# (sinon le workflow fonctionne sans, sans cache).
 # Terminal 1 — API (port 5000, charge le fichier .env)
 npm start
 # Terminal 2 — interface Vite (port 3000, proxy /api et /uploads vers 5000)
